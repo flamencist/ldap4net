@@ -106,15 +106,46 @@ using (var cn = new LdapConnection())
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
-	// bind using kerberos credential cache file
 	cn.Bind();
-	
+	//search all objects in catalog (default search scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
 	var entries = cn.Search("dc=example,dc=com","(objectClass=*)");
 }
 ```
 
 
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  objects in catalog at first level scope
+	var entries = cn.Search("dc=example,dc=com","(objectClass=*)", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+}
+```
+
 ### SearchByCn  
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  by CN, get @base from machine hostname (my.example.com => dn=example,dn=com )
+	var entries = cn.SearchByCn("read-only-admin");
+}
+```
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  by CN)
+	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "read-only-admin");
+}
+```
 
 
 Contributions and bugs reports are welcome.
