@@ -8,3 +8,9 @@ script:
   - dotnet build LdapForNet.sln
   - dotnet test ./LdapForNet.Tests/
   - dotnet pack
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg $NUGET_API_KEY $NUGET_SOURCE
+  on:
+    branch: master
