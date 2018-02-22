@@ -7,3 +7,4 @@ install:
 script:
   - dotnet build LdapForNet.sln
   - dotnet test ./LdapForNet.Tests/
+  - dotnet pack
