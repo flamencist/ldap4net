@@ -5,6 +5,14 @@
     <RootNamespace>LdapForNet</RootNamespace>
     <Version>0.0.1</Version>
     <VersionSufix>prerelease</VersionSufix>
+    <Authors>Alexander Chermyanin</Authors>
+    <Company>flamencist</Company>
+    <Description>Porting of OpenLdap native lib for .NET Core. Supported Ubuntu only (14.04, 16.04, 18.04).</Description>
+    <Product>ldap4net</Product>
+    <PackageLicenseUrl>https://github.com/flamencist/ldap4net</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
+    <PackageReleaseNotes>Add support GSSAPI, Simple authentication methods</PackageReleaseNotes>
     <!--<RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>-->
   </PropertyGroup>
   <ItemGroup>
