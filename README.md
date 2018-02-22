@@ -1,5 +1,8 @@
 # ldap4net
 
+[![Build Status](https://travis-ci.org/flamencist/ldap4net.svg?branch=master)](https://travis-ci.org/flamencist/ldap4net)
+[![NuGet](https://img.shields.io/nuget/v/LdapForNet.svg)](https://www.nuget.org/packages/LdapForNet/)
+
 Port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap) to DotNet Core (Ubuntu only)
 Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono.
 Supported platforms:
@@ -8,8 +11,7 @@ Supported platforms:
   
 It works with any LDAP protocol compatible directory server (including Microsoft Active Directory).
 
-[![Build Status](https://travis-ci.org/flamencist/ldap4net.svg?branch=master)](https://travis-ci.org/flamencist/ldap4net) - Linux Build <br />
-[![NuGet](https://img.shields.io/nuget/v/LdapForNet.svg)](https://www.nuget.org/packages/LdapForNet/)
+
 
 Supported SASL GSSAPI (Kerberos) authentication!
 
