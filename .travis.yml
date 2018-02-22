@@ -1,0 +1,9 @@
+language: csharp
+mono: none
+dotnet: 2.1.4
+dist: trusty
+install:
+  - dotnet restore
+script:
+  - dotnet build LdapForNet.sln
+  - dotnet test ./LdapForNet.Tests/

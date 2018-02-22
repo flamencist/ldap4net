@@ -1,0 +1,3 @@
+dn: ou=Developers, dc=example, dc=com
+objectclass: organizationalUnit
+ou: Developers
