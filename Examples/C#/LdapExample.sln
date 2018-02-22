@@ -1,0 +1,15 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.0.0
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LdapExample", "LdapExample.csproj", "{DE7C86D7-C507-4B1A-A8D6-9178A7F37CA6}"
+EndProject
+Global
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE7C86D7-C507-4B1A-A8D6-9178A7F37CA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE7C86D7-C507-4B1A-A8D6-9178A7F37CA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+EndGlobal

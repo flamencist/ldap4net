@@ -61,7 +61,11 @@ namespace LdapCheck
                 }
                 else
                 {
-                    cn.Bind(LdapAuthMechanism.SIMPLE,cmds["who"],cmds["password"]);
+                    cmds.TryGetValue("who", out var who);
+                    cmds.TryGetValue("password", out var password);
+                    who = who ?? "cn=read-only-admin,dc=example,dc=com";
+                    password = password ?? "password";
+                    cn.Bind(LdapAuthMechanism.SIMPLE,who,password);
                 }
                 var entries = cn.Search(@base, filter);
                 foreach (var ldapEntry in entries)

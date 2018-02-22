@@ -5,9 +5,7 @@
     <!--<RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>-->
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="LdapForNet" Version="0.0.1" />
     <PackageReference Include="Microsoft.NETCore.App" Version="2.0.5" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\OpenLdapSearch\OpenLdapSearch.csproj" />
   </ItemGroup>
 </Project>
