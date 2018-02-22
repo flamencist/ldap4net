@@ -13,4 +13,5 @@ deploy:
   provider: script
   script: dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg $NUGET_API_KEY $NUGET_SOURCE
   on:
-    branch: master
+    tags: true
+    all_branches: true
