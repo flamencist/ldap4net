@@ -18,7 +18,7 @@ Sample usage (GSSAPI authentication)
 using (var cn = new LdapConnection())
 {
 	// connect
-	cn.Connect("<<hostname>>", 389);
+	cn.Connect();
 	// bind using kerberos credential cache file
 	cn.Bind();
 	// call ldap op
@@ -65,9 +65,8 @@ using (var cn = new LdapConnection())
 ```cs
 using (var cn = new LdapConnection())
 {
-	// connect use Domain Controller host from computer hostname and default port 389
-	// Computer hostname - mycomp.example.com => DC host - example.com
-	cn.Connect("<<hostname>>","<<port>>");
+	// connect use hostname and port
+	cn.Connect("dc.example.com",636);
 	....
 }
 
@@ -75,7 +74,46 @@ using (var cn = new LdapConnection())
 
 
 ### Bind
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	// bind using kerberos credential cache file
+	cn.Bind();
+	...
+}
+
+```
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect("ldap.forumsys.com");
+	// bind using userdn and password
+	cn.Bind(LdapAuthMechanism.SIMPLE,"cn=read-only-admin,dc=example,dc=com","password");
+	...
+}
+
+```
+
+
 ### Search
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	// bind using kerberos credential cache file
+	cn.Bind();
+	
+	var entries = cn.Search("dc=example,dc=com","(objectClass=*)");
+}
+```
+
+
 ### SearchByCn  
 
 
