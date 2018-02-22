@@ -32,20 +32,51 @@ using (var cn = new LdapConnection())
 * [Supported platforms](#supported-platforms)
 * [Installation](#installation)
 * [API](#api)
+	* [Connect](#connect)
+	* [Bind](#bind)
+	* [Search](#search)
+	* [SearchByCn](#searchbycn)
+	* 
 
 ## Supported platforms
 
 * Ubuntu 14.04, 16.04, 18.04
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono.
 
+## Installation
+``` Install-Package LdapForNet -Version 0.0.1-alpha ``` (https://www.nuget.org/packages/LdapForNet)
+
 ## Api
 
-Supported API:
+### Connect
 
-  * Connect
-  * Bind
-  * Search
-  
+```cs
+using (var cn = new LdapConnection())
+{
+	// connect use Domain Controller host from computer hostname and default port 389
+	// Computer hostname - mycomp.example.com => DC host - example.com
+	cn.Connect();
+	....
+}
+
+```
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	// connect use Domain Controller host from computer hostname and default port 389
+	// Computer hostname - mycomp.example.com => DC host - example.com
+	cn.Connect("<<hostname>>","<<port>>");
+	....
+}
+
+```
+
+
+### Bind
+### Search
+### SearchByCn  
 
 
 Contributions and bugs reports are welcome.
