@@ -45,6 +45,7 @@ using (var cn = new LdapConnection())
 
 ## Installation
 ``` Install-Package LdapForNet -Version 0.0.1-alpha ``` (https://www.nuget.org/packages/LdapForNet)
+``` dotnet add package LdapForNet --version 0.0.1 ```
 
 ## Api
 
