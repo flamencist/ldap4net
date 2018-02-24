@@ -168,7 +168,7 @@ using (var cn = new LdapConnection())
 
 ### GetNativeLdapPtr
 
-For own implementations or not implemented OpenLdap functions use GetNativeLdapPtr. It's provided pointer to native structure LDAP. So we can you this pointer in own implementations.
+For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can you this pointer in own implementations.
 For example, implement "DIGEST-MD5" authentication 
 
 ```cs
@@ -195,7 +195,7 @@ using (var cn = new LdapConnection())
 
 ### Native
 
-OpenLdap native methods can be used directly. Native methods implemented in static class LdapForNet.Native.Native:
+OpenLdap native methods can be used directly. Native methods implemented in static class ```LdapForNet.Native.Native```:
 
 
 ```cs
