@@ -36,7 +36,9 @@ using (var cn = new LdapConnection())
 	* [Bind](#bind)
 	* [Search](#search)
 	* [SearchByCn](#searchbycn)
-	* 
+	* [SetOption](#setoption)
+	* [GetNativeLdapPtr](#getnativeldapptr)
+	* [Native](#native)
 
 ## Supported platforms
 
@@ -143,10 +145,74 @@ using (var cn = new LdapConnection())
 {
 	cn.Connect();
 	cn.Bind();
-	//search  by CN)
+	//search  by CN
 	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "read-only-admin");
 }
+
 ```
+
+
+### SetOption
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	var ldapVersion = (int)LdapVersion.LDAP_VERSION3;
+	cn.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion);
+	cn.Bind();
+}
+```
+
+
+### GetNativeLdapPtr
+
+For own implementations or not implemented OpenLdap functions use GetNativeLdapPtr. It's provided pointer to native structure LDAP. So we can you this pointer in own implementations.
+For example, implement "DIGEST-MD5" authentication 
+
+```cs
+using static LdapForNet.Native.Native;
+
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	var ld = cn.GetNativeLdapPtr();
+	var defaults = new LdapSaslDefaults { 
+		mech = "DIGEST-MD5",
+		passwd="password",
+        	authcid="user",
+        	realm="realm.com",
+        	authzid="user"
+	};
+	var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(defaults));
+            Marshal.StructureToPtr(defaults, ptr, false);
+	int rc = ldap_sasl_interactive_bind_s( ld, null,defaults.mech, IntPtr.Zero, IntPtr.Zero,
+                (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
+...
+}
+```
+
+### Native
+
+OpenLdap native methods can be used directly. Native methods implemented in static class LdapForNet.Native.Native:
+
+
+```cs
+using static LdapForNet.Native.Native;
+
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	var ld = cn.GetNativeLdapPtr();
+	var res = ldap_sasl_interactive_bind_s(ld,...);
+	if (res != (int)LdapResultCode.LDAP_SUCCESS)
+	{
+		Trace.TraceError($"Error {method}: {LdapError2String(res)} ({res}).");
+	}
+}
+```
+
 
 
 Contributions and bugs reports are welcome.
