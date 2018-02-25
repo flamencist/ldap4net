@@ -11,7 +11,17 @@ namespace LdapForNet
         
         public static IList<LdapEntry> SearchByCn(this ILdapConnection connection, string cn)
         {
-            return connection.SearchByCn(LdapUtils.GetDnFromHostname(), $"(cn={cn})");
+            return connection.SearchByCn(LdapUtils.GetDnFromHostname(), cn);
+        }
+
+        public static IList<LdapEntry> SearchBySid(this ILdapConnection connection,string @base, string sid)
+        {
+            return connection.Search(@base, $"(objectSID={LdapSidConverter.ConvertToHex(sid)})");
+        }
+        
+        public static IList<LdapEntry> SearchBySid(this ILdapConnection connection, string sid)
+        {
+            return connection.SearchBySid(LdapUtils.GetDnFromHostname(), sid);
         }
     }
 }
