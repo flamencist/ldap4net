@@ -38,7 +38,7 @@ namespace LdapForNet
             }
             else
             {
-                throw new LdapException($"Not implemented mechanism: {mechanism}. Available: {LdapAuthMechanism.GSSAPI} | {LdapAuthMechanism.GSSAPI}. ");
+                throw new LdapException($"Not implemented mechanism: {mechanism}. Available: {LdapAuthMechanism.GSSAPI} | {LdapAuthMechanism.SIMPLE}. ");
             }
 
             _bound = true;
