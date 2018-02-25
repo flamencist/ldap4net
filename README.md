@@ -47,7 +47,9 @@ using (var cn = new LdapConnection())
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono.
 
 ## Installation
+
 ``` Install-Package LdapForNet -Version 0.0.1-alpha ``` (https://www.nuget.org/packages/LdapForNet)
+
 ``` dotnet add package LdapForNet --version 0.0.1 ```
 
 ## Api
