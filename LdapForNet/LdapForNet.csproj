@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>0.0.1-alpha</Version>
+    <Version>0.0.2-alpha</Version>
     <VersionSufix>prerelease</VersionSufix>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
@@ -12,8 +12,7 @@
     <PackageLicenseUrl>https://github.com/flamencist/ldap4net</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
-    <PackageReleaseNotes>Add support GSSAPI, Simple authentication methods</PackageReleaseNotes>
-    <!--<RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>-->
+    <PackageReleaseNotes>Add support search by SID</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <None Update="libldap.so">
