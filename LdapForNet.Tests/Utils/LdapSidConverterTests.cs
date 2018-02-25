@@ -1,7 +1,7 @@
-﻿using LdapForNet;
+﻿using LdapForNet.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace LdapForNetTests
+namespace LdapForNetTests.Utils
 {
     [TestClass]
     public class LdapSidConverterTests

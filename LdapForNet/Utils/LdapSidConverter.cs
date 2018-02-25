@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace LdapForNet
+namespace LdapForNet.Utils
 {
     internal class LdapSidConverter
     {
