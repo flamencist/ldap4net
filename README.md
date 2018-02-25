@@ -36,6 +36,7 @@ using (var cn = new LdapConnection())
 	* [Bind](#bind)
 	* [Search](#search)
 	* [SearchByCn](#searchbycn)
+	* [SearchBySid](#searchbysid)
 	* [SetOption](#setoption)
 	* [GetNativeLdapPtr](#getnativeldapptr)
 	* [Native](#native)
@@ -146,10 +147,37 @@ using (var cn = new LdapConnection())
 	cn.Connect();
 	cn.Bind();
 	//search  by CN
-	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "read-only-admin");
+	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "read-only-admin", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
 }
 
 ```
+
+
+### SearchBySid  
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  by CN, get @base from machine hostname (my.example.com => dn=example,dn=com )
+	var entries = cn.SearchBySid("S-1-5-21-2127521184-1604012920-1887927527-72713");
+}
+```
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  by CN
+	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "S-1-5-21-2127521184-1604012920-1887927527-72713", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+}
+
+```
+
 
 
 ### SetOption
