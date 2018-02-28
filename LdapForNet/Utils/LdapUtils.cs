@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Net;
 
-namespace LdapForNet
+namespace LdapForNet.Utils
 {
     internal static class LdapUtils
     {

@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using LdapForNet;
 using static LdapForNet.Native.Native;
 
-namespace LdapCheck
+namespace LdapExample
 {
     class Program
     {
@@ -67,7 +67,17 @@ namespace LdapCheck
                     password = password ?? "password";
                     cn.Bind(LdapAuthMechanism.SIMPLE,who,password);
                 }
-                var entries = cn.Search(@base, filter);
+
+                IList<LdapEntry> entries = new List<LdapEntry>();
+
+                if (cmds.TryGetValue("sid", out var sid))
+                {
+                    entries = cn.SearchBySid(@base, sid);
+                }
+                else
+                {
+                    entries = cn.Search(@base, filter);
+                }
                 foreach (var ldapEntry in entries)
                 {
                     PrintEntry(ldapEntry);

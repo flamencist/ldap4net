@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace LdapForNet
+namespace LdapForNet.Utils
 {
     internal static class MarshalUtils
     {

@@ -2,10 +2,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <!--<RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>-->
+    <RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LdapForNet" Version="0.0.1-alpha" />
     <PackageReference Include="Microsoft.NETCore.App" Version="2.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\LdapForNet\LdapForNet.csproj" />
   </ItemGroup>
 </Project>

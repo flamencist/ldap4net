@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using LdapForNet;
-using LdapForNet.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using static LdapForNet.Native.Native;
 
 namespace LdapForNetTests
 {
@@ -14,7 +14,7 @@ namespace LdapForNetTests
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost);
-                connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 var entries = connection.Search("dc=example,dc=com", "(&(objectclass=top)(cn=read-only-admin))");
                 Assert.IsTrue(entries.Count == 1);
                 Assert.AreEqual("cn=read-only-admin,dc=example,dc=com", entries[0].Dn);
@@ -32,7 +32,7 @@ namespace LdapForNetTests
             using (var connection = new LdapConnection())
             {
                 connection.Connect("someunknown.host");
-                connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
             }
         }
         
@@ -43,7 +43,7 @@ namespace LdapForNetTests
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost);
-                connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)");
             }
         }
@@ -54,7 +54,7 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
-                connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 connection.Search("dc=example,dc=com", "(objectclass=top)");
             }
         }
