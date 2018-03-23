@@ -175,7 +175,7 @@ using (var cn = new LdapConnection())
 	cn.Connect();
 	cn.Bind();
 	//search  by CN
-	var entries = cn.SearchByCn("ou=admins,dn=example,dn=com", "S-1-5-21-2127521184-1604012920-1887927527-72713", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+	var entries = cn.SearchBySid("ou=admins,dn=example,dn=com", "S-1-5-21-2127521184-1604012920-1887927527-72713", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
 }
 
 ```
