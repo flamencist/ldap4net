@@ -12,7 +12,7 @@ namespace LdapForNet
         {
         }
 
-        public LdapException(string message, string method, int res) : base($"{message} . Result: {res}. Method: {method}")
+        public LdapException(string message, string method, int res) : base($"{message}. Result: {res}. Method: {method}")
         {
         }
     }
