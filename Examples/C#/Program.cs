@@ -13,16 +13,15 @@ namespace LdapExample
         /// LdapSearch
         /// </summary>
         /// <example>
-        ///  LdapCheck --auth=GssApi --host=v01.os33.net --base="dc=v01,dc=os33,dc=net" --filter="(objectclass=*)"
+        ///  LdapExample --auth=GSSAPI --host=v04.example.com --base="dc=v04,dc=example,dc=com" --filter="(objectclass=*)"
         /// </example>
         ///  <example>
-        ///  LdapCheck --auth=Simple --host=ldap.forumsys.com --base="dc=example,dc=com" --filter="(objectclass=*)" --who="cn=read-only-admin,dc=example,dc=com" --password=password
+        ///  LdapExample --auth=Simple --host=ldap.forumsys.com --base="dc=example,dc=com" --filter="(objectclass=*)" --who="cn=read-only-admin,dc=example,dc=com" --password=password
         /// </example>
         /// <param name="args"></param>
         static void Main(string[] args)
         {
             var cmds = ParseCommandLine(args);
-            //Thread.Sleep(60 * 1000);
             cmds.TryGetValue("host", out var host);
             cmds.TryGetValue("auth", out var authString);
             cmds.TryGetValue("base", out var @base);

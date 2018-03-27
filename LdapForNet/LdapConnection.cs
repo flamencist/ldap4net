@@ -85,7 +85,7 @@ namespace LdapForNet
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
                 Marshal.FreeHGlobal(msg);
-                ThrowIfError(res,nameof(ldap_search_ext_s));
+                ThrowIfError(_ld, res,nameof(ldap_search_ext_s));
             }
 
             var ber = Marshal.AllocHGlobal(IntPtr.Size);
@@ -120,7 +120,7 @@ namespace LdapForNet
             var res = ldap_sasl_interactive_bind_s(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
 
-            ThrowIfError(res,nameof(ldap_sasl_interactive_bind_s));
+            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s));
         }
 
         private static LdapSaslDefaults GetSaslDefaults(IntPtr ld)
@@ -134,6 +134,7 @@ namespace LdapForNet
         private void SimpleBind(string userDn, string password)
         {
             ThrowIfError(
+                _ld,
                 ldap_simple_bind_s(_ld, userDn, password)
                 ,nameof(ldap_simple_bind_s)
             );
@@ -203,6 +204,17 @@ namespace LdapForNet
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
                 throw new LdapException(LdapError2String(res), method, res);
+            }
+        }
+
+        private static void ThrowIfError(IntPtr ld, int res, string method)
+        {
+            if (res != (int)LdapResultCode.LDAP_SUCCESS)
+            {
+                var error = LdapError2String(res);
+                var info = GetAdditionalErrorInfo(ld);
+                var message = !string.IsNullOrWhiteSpace(info)? $"{error}. {info}": error;
+                throw new LdapException(message, method, res);
             }
         }
 

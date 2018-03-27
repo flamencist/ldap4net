@@ -61,6 +61,9 @@ namespace LdapForNet.Native
         public static extern int ldap_get_option(IntPtr ld, int option, ref string value);
 
         [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_get_option(IntPtr ld, int option, ref IntPtr value);
+
+        [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_unbind_s(IntPtr ld);
 
         /// <summary>
@@ -90,7 +93,18 @@ namespace LdapForNet.Native
         {
             return Marshal.PtrToStringAnsi(ldap_err2string(error));
         }
-        
+
+
+        public static string GetAdditionalErrorInfo(IntPtr ld)
+        {
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+            ldap_get_option(ld,(int)LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE,ref ptr);
+            var info = Marshal.PtrToStringAnsi(ptr);
+            ldap_memfree(ptr);
+            return info;
+        }
+
+
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_count_entries(IntPtr ld, IntPtr message);
 
