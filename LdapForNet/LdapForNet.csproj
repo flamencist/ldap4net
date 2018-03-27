@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>0.0.5-alpha</Version>
+    <Version>0.0.6-alpha</Version>
     <VersionSufix>prerelease</VersionSufix>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
@@ -12,7 +12,7 @@
     <PackageLicenseUrl>https://github.com/flamencist/ldap4net</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
-    <PackageReleaseNotes>Fix deploy native lib</PackageReleaseNotes>
+    <PackageReleaseNotes>improve error message</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <None Update="libldap.so">
