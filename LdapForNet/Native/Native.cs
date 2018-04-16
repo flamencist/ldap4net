@@ -26,7 +26,7 @@ namespace LdapForNet.Native
         /// <param name="flags">unsigned flags </param>
         /// <param name="proc">delegate</param>
         /// <param name="defaults">void *defaults</param>
-        /// <returns></returns>
+        /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_sasl_interactive_bind_s(IntPtr ld, string dn, string mechanism,
             IntPtr serverctrls, IntPtr clientctrls, uint flags,
@@ -137,5 +137,85 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         public static extern IntPtr ldap_get_values(IntPtr ld, IntPtr entry, IntPtr pBer);
+        
+        /// <summary>
+        /// ldap_add_ext_s <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char *dn</param>
+        /// <param name="attrs">LDAPMod **attrs</param>
+        /// <param name="serverctrls">LDAPControl  **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl  **clientctrls</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_add_ext_s(IntPtr ld, string dn,ref IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
+        
+        /// <summary>
+        /// ldap_modify_ext_s <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="mods">LDAPMod *mods[]</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_modify_ext_s(IntPtr ld, string dn,ref LDAPMod[] mods , IntPtr serverctrls, IntPtr clientctrls);
+        
+        /// <summary>
+        /// ldap_delete_ext_s <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_delete_ext_s(IntPtr ld, string dn, IntPtr serverctrls, IntPtr clientctrls);
+
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LDAPMod
+    {
+        /// <summary>
+        /// The operation to be performed on the attribute and the type of data specified as the attribute values.
+        /// </summary>
+        public int mod_op;
+        /// <summary>
+        /// Pointer to the attribute type that you want to add, delete, or replace.
+        /// </summary>
+        public string mod_type;
+
+        /// <summary>
+        /// A NULL-terminated array of string values for the attribute.
+        /// </summary>
+        public mod_vals mod_vals_u; 
+
+    }
+
+    /// <summary>
+    /// Values that you want to add, delete, or replace.
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit)]
+    public struct mod_vals
+    {
+        /// <summary>
+        /// Pointer to a NULL terminated array of string values for the attribute.
+        /// </summary>
+        [FieldOffset(0)]
+        public IntPtr modv_strvals;
+        /// <summary>
+        /// Pointer to a NULL-terminated array of berval structures for the attribute.
+        /// </summary>
+        [FieldOffset(0)]
+        public IntPtr modv_bvals;
+    }
+
+    public enum LDAP_MOD_OPERATION
+    {
+        LDAP_MOD_ADD=0x00,
+        LDAP_MOD_DELETE=0x01,
+        LDAP_MOD_REPLACE=0x02
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using LdapForNet.Native;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 
@@ -97,7 +98,46 @@ namespace LdapForNet
 
             return ldapEntries;
         }
-        
+
+        public void Add(LdapEntry entry)
+        {
+            ThrowIfNotBound();
+            if (string.IsNullOrWhiteSpace(entry.Dn))
+            {
+                throw new ArgumentNullException(nameof(entry.Dn));
+            }
+
+            if (entry.Attributes == null)
+            {
+                entry.Attributes = new Dictionary<string, List<string>>();
+            }
+
+            var attrs = entry.Attributes.Select(_ => new LDAPMod
+            {
+                mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                mod_type = _.Key,
+                mod_vals_u = new mod_vals
+                {
+                    modv_strvals = MarshalUtils.StringArrayToPtr(GetModValue(_.Value))  
+                }
+            }).ToList();
+            var ptr = MarshalUtils.StructureArrayToPtr(attrs, true);
+            
+            ThrowIfError(_ld, ldap_add_ext_s(_ld,
+                entry.Dn,
+                ref ptr,                
+                IntPtr.Zero, 
+                IntPtr.Zero 
+            ), nameof(ldap_add_ext_s));
+        }
+
+        private static List<string> GetModValue(List<string> values)
+        {
+            var res = values??new List<string>();
+            res.Add(null);
+            return res;
+        }
+
         public void Dispose()
         {
             if (_ld != IntPtr.Zero)
