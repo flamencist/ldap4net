@@ -116,7 +116,7 @@ namespace LdapForNet
             {
                 mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
                 mod_type = _.Key,
-                mod_vals_u = new mod_vals
+                mod_vals_u = new LDAPMod.mod_vals
                 {
                     modv_strvals = MarshalUtils.StringArrayToPtr(GetModValue(_.Value))  
                 }

@@ -175,9 +175,51 @@ namespace LdapForNet.Native
 
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    /// <summary>
+    /// ldapmod <a href="https://linux.die.net/man/3/ldap_modify_ext"/>
+    /// </summary>
+    /*
+     * typedef struct ldapmod {
+        int mod_op;
+        char *mod_type;
+        
+        union {
+        
+        char **modv_strvals;
+        
+        struct berval **modv_bvals;
+        
+        } mod_vals;
+        
+        struct ldapmod *mod_next;
+        
+        } LDAPMod;
+        
+        #define mod_values mod_vals.modv_strvals
+        
+        #define mod_bvalues mod_vals.modv_bvals
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct LDAPMod
     {
+        /// <summary>
+        /// Values that you want to add, delete, or replace.
+        /// </summary>
+        [StructLayout(LayoutKind.Explicit)]
+        public struct mod_vals
+        {
+            /// <summary>
+            /// Pointer to a NULL terminated array of string values for the attribute.
+            /// </summary>
+            [FieldOffset(0)]
+            public IntPtr modv_strvals;
+            /// <summary>
+            /// Pointer to a NULL-terminated array of berval structures for the attribute.
+            /// </summary>
+            [FieldOffset(0)]
+            public IntPtr modv_bvals;
+        }
+        
         /// <summary>
         /// The operation to be performed on the attribute and the type of data specified as the attribute values.
         /// </summary>
@@ -185,32 +227,18 @@ namespace LdapForNet.Native
         /// <summary>
         /// Pointer to the attribute type that you want to add, delete, or replace.
         /// </summary>
+        [MarshalAs(UnmanagedType.LPStr)]
         public string mod_type;
 
         /// <summary>
         /// A NULL-terminated array of string values for the attribute.
         /// </summary>
+//        [MarshalAs(UnmanagedType.Struct)]
         public mod_vals mod_vals_u; 
 
     }
 
-    /// <summary>
-    /// Values that you want to add, delete, or replace.
-    /// </summary>
-    [StructLayout(LayoutKind.Explicit)]
-    public struct mod_vals
-    {
-        /// <summary>
-        /// Pointer to a NULL terminated array of string values for the attribute.
-        /// </summary>
-        [FieldOffset(0)]
-        public IntPtr modv_strvals;
-        /// <summary>
-        /// Pointer to a NULL-terminated array of berval structures for the attribute.
-        /// </summary>
-        [FieldOffset(0)]
-        public IntPtr modv_bvals;
-    }
+
 
     public enum LDAP_MOD_OPERATION
     {

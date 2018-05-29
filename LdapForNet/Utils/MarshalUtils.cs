@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using static System.Text.Encoding;
 
@@ -28,33 +29,31 @@ namespace LdapForNet.Utils
         
         internal static IntPtr StringArrayToPtr(List<string> array)
         {
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size);
-            for (var i = 0; i < array.Count; i++)
-            {
-                var chars = ASCII.GetBytes(array[i] + '\0');
-                Marshal.Copy(chars, 0, Marshal.ReadIntPtr(ptr, i * IntPtr.Size), chars.Length);
-            }
-
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*array.Count);
+            var ptrArray = array.Select(Marshal.StringToHGlobalAnsi).ToArray();
+            Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
             return ptr;
         }
         
         internal static IntPtr StructureArrayToPtr<T>(List<T> array, bool endNull = false) where T: struct
         {
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size);
-            for (var i = 0; i < array.Count; i++)
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*array.Count);
+            var ptrArray = array.Select(structure =>
             {
-                var p = new IntPtr(ptr.ToInt64() + i*IntPtr.Size);
-                Marshal.StructureToPtr(array[i],p,true);
-            }
-
+                var structPtr = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
+                Marshal.StructureToPtr(structure,structPtr,false);
+                return structPtr;
+            }).ToList();
             if (endNull)
             {
-                var end = new IntPtr(ptr.ToInt64() + array.Count * IntPtr.Size);
-                Marshal.StructureToPtr(IntPtr.Zero,end,true);
+                ptrArray.Add(IntPtr.Zero);
             }
-            
+
+            Marshal.Copy(ptrArray.ToArray(),0,ptr,ptrArray.Count);  
             return ptr;
         }
        
     }
+    
+    
 }
