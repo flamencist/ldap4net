@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using static System.Text.Encoding;
 
 namespace LdapForNet.Utils
 {
@@ -27,17 +26,14 @@ namespace LdapForNet.Utils
             return result;
         }
         
-        internal static IntPtr StringArrayToPtr(List<string> array)
+        internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
         {
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*array.Count);
             var ptrArray = array.Select(Marshal.StringToHGlobalAnsi).ToArray();
             Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
-            return ptr;
         }
         
-        internal static IntPtr StructureArrayToPtr<T>(List<T> array, bool endNull = false) where T: struct
+        internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) where T: struct
         {
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*array.Count);
             var ptrArray = array.Select(structure =>
             {
                 var structPtr = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
@@ -50,10 +46,7 @@ namespace LdapForNet.Utils
             }
 
             Marshal.Copy(ptrArray.ToArray(),0,ptr,ptrArray.Count);  
-            return ptr;
         }
        
     }
-    
-    
 }

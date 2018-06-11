@@ -112,16 +112,22 @@ namespace LdapForNet
                 entry.Attributes = new Dictionary<string, List<string>>();
             }
 
-            var attrs = entry.Attributes.Select(_ => new LDAPMod
+            var attrs = entry.Attributes.Select(_ =>
             {
-                mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
-                mod_type = _.Key,
-                mod_vals_u = new LDAPMod.mod_vals
+                var modValue = GetModValue(_.Value);
+                var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size*modValue.Count);
+                return new LDAPMod
                 {
-                    modv_strvals = MarshalUtils.StringArrayToPtr(GetModValue(_.Value))  
-                }
+                    mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                    mod_type = _.Key,
+                    mod_vals_u = new LDAPMod.mod_vals
+                    {
+                        modv_strvals = modValuePtr
+                    }
+                };
             }).ToList();
-            var ptr = MarshalUtils.StructureArrayToPtr(attrs, true);
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*attrs.Count);
+            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
             
             ThrowIfError(_ld, ldap_add_ext_s(_ld,
                 entry.Dn,
