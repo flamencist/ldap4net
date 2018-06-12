@@ -90,9 +90,14 @@ namespace LdapForNetTests
         [TestMethod]
         public void LdapConnection_Add_Delete()
         {
-            DeleteLdapEntry();
-            AddLdapEntry();
-            DeleteLdapEntry();
+            try
+            {
+                AddLdapEntry();
+            }
+            finally
+            {
+                DeleteLdapEntry();                
+            }
         }
 
         private static void AddLdapEntry()

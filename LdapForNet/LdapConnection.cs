@@ -160,7 +160,7 @@ namespace LdapForNet
                 dn,
                 IntPtr.Zero, 
                 IntPtr.Zero 
-            ), nameof(ldap_add_ext_s));
+            ), nameof(ldap_delete_ext_s));
         }
 
 
