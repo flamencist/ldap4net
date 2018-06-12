@@ -48,9 +48,9 @@ using (var cn = new LdapConnection())
 
 ## Installation
 
-``` Install-Package LdapForNet -Version 0.0.1-alpha ``` 
+``` Install-Package LdapForNet -Version 0.0.6-alpha ``` 
 
-``` dotnet add package LdapForNet --version 0.0.1 ```
+``` dotnet add package LdapForNet --version 0.0.6-alpha ```
 
 ## Api
 
@@ -198,7 +198,7 @@ using (var cn = new LdapConnection())
 
 ### GetNativeLdapPtr
 
-For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can you this pointer in own implementations.
+For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can use this pointer in own implementations.
 For example, implement "DIGEST-MD5" authentication 
 
 ```cs
