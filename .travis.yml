@@ -10,7 +10,7 @@ addons:
       - slapd
 before_script:
   - mkdir /tmp/slapd
-  - slapd -f .test_data/slapd.conf -h ldap://localhost:3389 &
+  - slapd -f .test_config/slapd.conf -h ldap://localhost:3389 &
 install:
   - dotnet restore
 script:
