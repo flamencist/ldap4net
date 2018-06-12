@@ -148,7 +148,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl  **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_add_ext_s(IntPtr ld, string dn,ref IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_add_ext_s(IntPtr ld, string dn, IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
         
         /// <summary>
         /// ldap_modify_ext_s <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>
@@ -233,12 +233,11 @@ namespace LdapForNet.Native
         /// <summary>
         /// A NULL-terminated array of string values for the attribute.
         /// </summary>
-//        [MarshalAs(UnmanagedType.Struct)]
-        public mod_vals mod_vals_u; 
+        public mod_vals mod_vals_u;
+        
+        public IntPtr mod_next;
 
     }
-
-
 
     public enum LDAP_MOD_OPERATION
     {

@@ -115,34 +115,54 @@ namespace LdapForNet
             var attrs = entry.Attributes.Select(_ =>
             {
                 var modValue = GetModValue(_.Value);
-                var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size*modValue.Count);
+                var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size*(modValue.Count));
+                MarshalUtils.StringArrayToPtr(modValue,modValuePtr);
                 return new LDAPMod
                 {
                     mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
                     mod_type = _.Key,
                     mod_vals_u = new LDAPMod.mod_vals
                     {
-                        modv_strvals = modValuePtr
-                    }
+                        modv_strvals = modValuePtr,
+                    },
+                    mod_next = IntPtr.Zero
                 };
             }).ToList();
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*attrs.Count);
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
             
-            ThrowIfError(_ld, ldap_add_ext_s(_ld,
-                entry.Dn,
-                ref ptr,                
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1));
+            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
+
+            try
+            {
+                ThrowIfError(_ld, ldap_add_ext_s(_ld,
+                    entry.Dn,
+                    ptr,                
+                    IntPtr.Zero, 
+                    IntPtr.Zero 
+                ), nameof(ldap_add_ext_s));
+
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
+            }
+        }
+
+        public void Delete(string dn)
+        {
+            ThrowIfNotBound();
+            if (string.IsNullOrWhiteSpace(dn))
+            {
+                throw new ArgumentNullException(nameof(dn));
+            }
+            ThrowIfError(_ld, ldap_delete_ext_s(_ld,
+                dn,
                 IntPtr.Zero, 
                 IntPtr.Zero 
             ), nameof(ldap_add_ext_s));
         }
 
-        private static List<string> GetModValue(List<string> values)
-        {
-            var res = values??new List<string>();
-            res.Add(null);
-            return res;
-        }
 
         public void Dispose()
         {
@@ -157,6 +177,13 @@ namespace LdapForNet
             return _ld;
         }
 
+        private static List<string> GetModValue(List<string> values)
+        {
+            var res = values??new List<string>();
+            res.Add(null);
+            return res;
+        }
+        
         private void GssApiBind()
         {
             var defaults = GetSaslDefaults(_ld);

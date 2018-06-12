@@ -91,8 +91,8 @@ namespace LdapForNetTests.Utils
         [TestMethod]
         public void MarshalUtils_StructureArrayToPtr_LDAPMod()
         {
-            var val = new List<string> { "test","other","third"};
-            var valPtr = Marshal.AllocHGlobal(IntPtr.Size*val.Count+1);
+            var val = new List<string> { "test","other","third", null};
+            var valPtr = Marshal.AllocHGlobal(IntPtr.Size*val.Count);
             MarshalUtils.StringArrayToPtr(val,valPtr);
             var data = new List<LDAPMod>
             {
@@ -115,7 +115,7 @@ namespace LdapForNetTests.Utils
                     }
                 }
             };
-            var actual = Marshal.AllocHGlobal(IntPtr.Size*data.Count+1);
+            var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Count+1));
             MarshalUtils.StructureArrayToPtr(data,actual, true);
             Assert.AreNotEqual(IntPtr.Zero, actual);
 

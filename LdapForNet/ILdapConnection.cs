@@ -13,5 +13,6 @@ namespace LdapForNet
         void SetOption(LdapOption option, IntPtr valuePtr);
         IList<LdapEntry> Search(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
         void Add(LdapEntry entry);
+        void Delete(string dn);
     }
 }
