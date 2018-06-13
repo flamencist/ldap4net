@@ -1,0 +1,6 @@
+# ldapadd -x -h localhost -p 389 -D "cn=admin,dc=example,dc=com" -w secret -f base.ldif
+
+dn: dc=example,dc=com
+objectClass: dcObject
+objectClass: organizationalUnit
+ou: Test
