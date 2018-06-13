@@ -6,8 +6,7 @@ objectClass: organizationalUnit
 ou: Test
 
 # Directory Superuser
-dn: uid=admin,dc=example,dc=com
-uid: admin
+dn: cn=admin,dc=example,dc=com
 cn: admin
 sn: administrator
 objectClass: top
