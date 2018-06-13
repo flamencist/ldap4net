@@ -4,3 +4,14 @@ dn: dc=example,dc=com
 objectClass: dcObject
 objectClass: organizationalUnit
 ou: Test
+
+# Directory Superuser
+dn: uid=admin,dc=example,dc=com
+uid: admin
+cn: system administrator
+sn: administrator
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+displayName: Directory Superuser
