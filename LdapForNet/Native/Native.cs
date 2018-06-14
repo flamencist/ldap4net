@@ -160,7 +160,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_modify_ext_s(IntPtr ld, string dn,ref LDAPMod[] mods , IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_modify_ext_s(IntPtr ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls);
         
         /// <summary>
         /// ldap_delete_ext_s <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>

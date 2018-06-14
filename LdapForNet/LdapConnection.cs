@@ -112,24 +112,9 @@ namespace LdapForNet
                 entry.Attributes = new Dictionary<string, List<string>>();
             }
 
-            var attrs = entry.Attributes.Select(_ =>
-            {
-                var modValue = GetModValue(_.Value);
-                var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size*(modValue.Count));
-                MarshalUtils.StringArrayToPtr(modValue,modValuePtr);
-                return new LDAPMod
-                {
-                    mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
-                    mod_type = _.Key,
-                    mod_vals_u = new LDAPMod.mod_vals
-                    {
-                        modv_strvals = modValuePtr,
-                    },
-                    mod_next = IntPtr.Zero
-                };
-            }).ToList();
+            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
             
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1));
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
             MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
 
             try
@@ -149,20 +134,41 @@ namespace LdapForNet
             }
         }
 
-        public void Delete(string dn)
+        public void Modify(LdapModifyEntry entry)
         {
             ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(dn))
+            
+            if (string.IsNullOrWhiteSpace(entry.Dn))
             {
-                throw new ArgumentNullException(nameof(dn));
+                throw new ArgumentNullException(nameof(entry.Dn));
             }
-            ThrowIfError(_ld, ldap_delete_ext_s(_ld,
-                dn,
-                IntPtr.Zero, 
-                IntPtr.Zero 
-            ), nameof(ldap_delete_ext_s));
-        }
+            
+            if (entry.Attributes == null)
+            {
+                entry.Attributes = new List<LdapModifyAttribute>();
+            }
+            
+            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
+            
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
+            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
 
+            try
+            {
+                ThrowIfError(_ld, ldap_modify_ext_s(_ld,
+                    entry.Dn,
+                    ptr,                
+                    IntPtr.Zero, 
+                    IntPtr.Zero 
+                ), nameof(ldap_modify_ext_s));
+
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
+            }
+        }
 
         public void Dispose()
         {
@@ -177,6 +183,21 @@ namespace LdapForNet
             return _ld;
         }
 
+
+        public void Delete(string dn)
+        {
+            ThrowIfNotBound();
+            if (string.IsNullOrWhiteSpace(dn))
+            {
+                throw new ArgumentNullException(nameof(dn));
+            }
+            ThrowIfError(_ld, ldap_delete_ext_s(_ld,
+                dn,
+                IntPtr.Zero, 
+                IntPtr.Zero 
+            ), nameof(ldap_delete_ext_s));
+        }
+        
         private static List<string> GetModValue(List<string> values)
         {
             var res = values??new List<string>();
@@ -184,6 +205,32 @@ namespace LdapForNet
             return res;
         }
         
+        private static LDAPMod ToLdapMod(KeyValuePair<string, List<string>> attribute)
+        {
+            return ToLdapMod(new LdapModifyAttribute
+            {
+                Type = attribute.Key,
+                LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                Values = attribute.Value
+            });
+        }
+        
+        private static LDAPMod ToLdapMod(LdapModifyAttribute attribute)
+        {
+            var modValue = GetModValue(attribute.Values);
+            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count));
+            MarshalUtils.StringArrayToPtr(modValue, modValuePtr);
+            return new LDAPMod
+            {
+                mod_op = (int) attribute.LdapModOperation,
+                mod_type = attribute.Type,
+                mod_vals_u = new LDAPMod.mod_vals
+                {
+                    modv_strvals = modValuePtr,
+                },
+                mod_next = IntPtr.Zero
+            };
+        }
         private void GssApiBind()
         {
             var defaults = GetSaslDefaults(_ld);

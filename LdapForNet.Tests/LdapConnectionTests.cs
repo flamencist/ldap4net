@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LdapForNet;
+using LdapForNet.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static LdapForNet.Native.Native;
 
@@ -91,6 +92,7 @@ namespace LdapForNetTests
         public void LdapConnection_Add_Delete()
         {
                 AddLdapEntry();
+                ModifyLdapEntry();
                 DeleteLdapEntry();                
         }
 
@@ -115,6 +117,32 @@ namespace LdapForNetTests
                 Assert.AreEqual($"cn=test,{Config.RootDn2}", entries[0].Dn);
                 Assert.AreEqual("test_value", entries[0].Attributes["givenName"][0]);
                 Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        private static void ModifyLdapEntry()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost2, Config.LdapPort2);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn2, Config.LdapPassword2);
+                connection.Modify(new LdapModifyEntry
+                {
+                    Dn = $"cn=test,{Config.RootDn2}",
+                    Attributes = new List<LdapModifyAttribute>
+                    {
+                        new LdapModifyAttribute
+                        {
+                            LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_REPLACE,
+                            Type = "givenName",
+                            Values = new List<string> {"test_value_2"}
+                        }
+                    }
+                });
+                var entries = connection.Search(Config.RootDn2, "(&(objectclass=top)(cn=test))");
+                Assert.IsTrue(entries.Count == 1);
+                Assert.AreEqual($"cn=test,{Config.RootDn2}", entries[0].Dn);
+                Assert.AreEqual("test_value_2", entries[0].Attributes["givenName"][0]);
             }
         }
 
