@@ -15,12 +15,10 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost);
                 connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                var entries = connection.SearchByCn("dc=example,dc=com", "read-only-admin");
+                var entries = connection.SearchByCn(Config.RootDn, "admin");
                 Assert.IsTrue(entries.Count == 1);
-                Assert.AreEqual("cn=read-only-admin,dc=example,dc=com", entries[0].Dn);
-                Assert.AreEqual("Read Only Admin", entries[0].Attributes["sn"][0]);
-                Assert.AreEqual("read-only-admin", entries[0].Attributes["cn"][0]);
-                Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
+                Assert.AreEqual(Config.LdapUserDn, entries[0].Dn);
+                Assert.AreEqual("admin", entries[0].Attributes["cn"][0]);
                 Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
             }
         }
