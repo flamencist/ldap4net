@@ -13,7 +13,7 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost);
+                connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 var entries = connection.SearchByCn(Config.RootDn, "admin");
                 Assert.IsTrue(entries.Count == 1);
