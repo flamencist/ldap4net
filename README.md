@@ -40,6 +40,8 @@ using (var cn = new LdapConnection())
 	* [SetOption](#setoption)
 	* [GetNativeLdapPtr](#getnativeldapptr)
 	* [Native](#native)
+	* [License](#license)
+	* [Authors](#authors)
 
 ## Supported platforms
 
@@ -242,6 +244,14 @@ using (var cn = new LdapConnection())
 	}
 }
 ```
+
+### License
+
+This software is distributed under the terms of the MIT License (MIT).
+
+### Authors
+
+Alexander Chermyanin / [LinkedIn](https://www.linkedin.com/in/alexander-chermyanin)
 
 
 
