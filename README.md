@@ -285,7 +285,7 @@ using (var cn = new LdapConnection())
 {
 	cn.Connect();
 	cn.Bind();
-    connection.Rename("cn=test,dc=example,dc=com", "cn=test2", null, true);
+    cn.Rename("cn=test,dc=example,dc=com", "cn=test2", null, true);
 }
 ```
 
