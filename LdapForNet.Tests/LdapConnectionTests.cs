@@ -92,7 +92,8 @@ namespace LdapForNetTests
         [TestMethod]
         public void LdapConnection_Rename_Entry_Dn()
         {
-            var dn = Guid.NewGuid().ToString();
+            var cn = Guid.NewGuid().ToString();
+            var dn = $"cn={cn},{Config.RootDn}";
             var newRdn = Guid.NewGuid().ToString();
             using (var connection = new LdapConnection())
             {
@@ -100,7 +101,7 @@ namespace LdapForNetTests
                 connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
                 connection.Add(new LdapEntry
                 {
-                    Dn = $"cn={dn},{Config.RootDn}",
+                    Dn = dn,
                     Attributes = new Dictionary<string, List<string>>
                     {
                         {"sn", new List<string> {"Winston"}},
@@ -142,7 +143,7 @@ namespace LdapForNetTests
                         {"description", new List<string> {"test_value"}}
                     }
                 });
-                connection.Rename(cn, newRdn, "", true);
+                connection.Rename(dn, newRdn, "", true);
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
