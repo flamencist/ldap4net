@@ -26,7 +26,7 @@ namespace LdapForNet
             return ToLdapMod(new LdapModifyAttribute
             {
                 Type = attribute.Key,
-                LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                 Values = attribute.Value
             });
         }

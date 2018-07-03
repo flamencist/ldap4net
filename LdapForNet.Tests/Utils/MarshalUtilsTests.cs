@@ -94,22 +94,22 @@ namespace LdapForNetTests.Utils
             var val = new List<string> { "test","other","third", null};
             var valPtr = Marshal.AllocHGlobal(IntPtr.Size*val.Count);
             MarshalUtils.StringArrayToPtr(val,valPtr);
-            var data = new List<LDAPMod>
+            var data = new List<Native.LDAPMod>
             {
-                new LDAPMod
+                new Native.LDAPMod
                 {
-                    mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                    mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
                     mod_type = "test",
-                    mod_vals_u = new LDAPMod.mod_vals
+                    mod_vals_u = new Native.LDAPMod.mod_vals
                     {
                         modv_strvals  = valPtr
                     }
                 },
-                new LDAPMod
+                new Native.LDAPMod
                 {
-                    mod_op = (int) LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                    mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
                     mod_type = "test2",
-                    mod_vals_u = new LDAPMod.mod_vals
+                    mod_vals_u = new Native.LDAPMod.mod_vals
                     {
                         modv_strvals  = IntPtr.Zero
                     }
@@ -123,8 +123,8 @@ namespace LdapForNetTests.Utils
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
             var ptr3 = Marshal.ReadIntPtr(actual, IntPtr.Size * 2);
             
-            var first = Marshal.PtrToStructure<LDAPMod>(ptr1);
-            var second = Marshal.PtrToStructure<LDAPMod>(ptr2);
+            var first = Marshal.PtrToStructure<Native.LDAPMod>(ptr1);
+            var second = Marshal.PtrToStructure<Native.LDAPMod>(ptr2);
 
             var valPtr1 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals);
             var valPtr2 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size);

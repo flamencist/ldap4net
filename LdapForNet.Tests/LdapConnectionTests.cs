@@ -126,25 +126,25 @@ namespace LdapForNetTests
                     {
                         new LdapModifyAttribute
                         {
-                            LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_REPLACE,
+                            LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
                             Type = "givenName",
                             Values = new List<string> {"test_value_2"}
                         },
                         new LdapModifyAttribute
                         {
-                            LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                            LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "displayName",
                             Values = new List<string> {"test_display_name"}
                         },
                         new LdapModifyAttribute
                         {
-                            LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_ADD,
+                            LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "sn",
                             Values = new List<string> {"test"}
                         },
                         new LdapModifyAttribute
                         {
-                            LdapModOperation = LDAP_MOD_OPERATION.LDAP_MOD_DELETE,
+                            LdapModOperation = LdapModOperation.LDAP_MOD_DELETE,
                             Type = "description",
                             Values = new List<string> {"test_value"}
                         }

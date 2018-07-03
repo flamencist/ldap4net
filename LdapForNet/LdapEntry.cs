@@ -19,6 +19,6 @@ namespace LdapForNet
     {
         public string Type { get; set; }
         public List<string> Values { get; set; }
-        public LDAP_MOD_OPERATION LdapModOperation { get; set; } = LDAP_MOD_OPERATION.LDAP_MOD_REPLACE;
+        public Native.Native.LdapModOperation LdapModOperation { get; set; } = Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
     }
 }
