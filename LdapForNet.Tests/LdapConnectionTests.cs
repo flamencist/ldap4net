@@ -115,9 +115,11 @@ namespace LdapForNetTests
                 Assert.IsTrue(entries.Count == 0);
                 
                 var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
-                Assert.IsTrue(entries.Count == 1);
+                Assert.IsTrue(actual.Count == 1);
                 
                 Assert.AreEqual($"{newRdn},{Config.RootDn}", actual[0].Dn);
+                
+                connection.Delete($"{newRdn},{Config.RootDn}");
             }
         }
         
