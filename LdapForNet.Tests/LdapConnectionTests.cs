@@ -110,7 +110,7 @@ namespace LdapForNetTests
                         {"description", new List<string> {"test_value"}}
                     }
                 });
-                connection.Rename(dn, newRdn, null, false);
+                connection.Rename(dn, newRdn, null, true);
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
@@ -121,39 +121,6 @@ namespace LdapForNetTests
             }
         }
         
-        [TestMethod]
-        public void LdapConnection_Move_Entry_Dn()
-        {
-            var cn = Guid.NewGuid().ToString();
-            var dn = $"cn={cn},{Config.RootDn}";
-
-            var newRdn = $"cn={Guid.NewGuid().ToString()}";
-            using (var connection = new LdapConnection())
-            {
-                connection.Connect(Config.LdapHost, Config.LdapPort);
-                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
-                connection.Add(new LdapEntry
-                {
-                    Dn = dn,
-                    Attributes = new Dictionary<string, List<string>>
-                    {
-                        {"sn", new List<string> {"Winston"}},
-                        {"objectclass", new List<string> {"inetOrgPerson"}},
-                        {"givenName", new List<string> {"test_value"}},
-                        {"description", new List<string> {"test_value"}}
-                    }
-                });
-                connection.Rename(dn, newRdn, Config.RootDn, true);
-                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
-                Assert.IsTrue(entries.Count == 0);
-                
-                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
-                Assert.IsTrue(entries.Count == 1);
-                
-                Assert.AreEqual($"{newRdn},{Config.RootDn}", actual[0].Dn);
-            }
-        }
-
         private static void AddLdapEntry()
         {
             using (var connection = new LdapConnection())
