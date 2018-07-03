@@ -209,7 +209,7 @@ using (var cn = new LdapConnection())
 {
 	cn.Connect();
 	cn.Bind();
-	cn.Add(new LdapEntry
+    cn.Add(new LdapEntry
     {
         Dn = "cn=test,dc=example,dc=com",
         Attributes = new Dictionary<string, List<string>>
