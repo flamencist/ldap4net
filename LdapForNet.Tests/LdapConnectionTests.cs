@@ -111,7 +111,7 @@ namespace LdapForNetTests
                     }
                 });
                 connection.Rename(dn, newRdn, null, false);
-                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={dn}))");
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
                 var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
@@ -143,7 +143,7 @@ namespace LdapForNetTests
                         {"description", new List<string> {"test_value"}}
                     }
                 });
-                connection.Rename(dn, newRdn, "", true);
+                connection.Rename(dn, newRdn, Config.RootDn, true);
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
