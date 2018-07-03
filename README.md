@@ -38,6 +38,10 @@ using (var cn = new LdapConnection())
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
 	* [SetOption](#setoption)
+	* [Add](#add)
+	* [Modify](#modify)
+	* [Delete](#delete)
+	* [Rename](#rename)
 	* [GetNativeLdapPtr](#getnativeldapptr)
 	* [Native](#native)
 	* [License](#license)
@@ -50,9 +54,9 @@ using (var cn = new LdapConnection())
 
 ## Installation
 
-``` Install-Package LdapForNet -Version 0.0.6-alpha ``` 
+``` Install-Package LdapForNet -Version 0.1.0-beta ``` 
 
-``` dotnet add package LdapForNet --version 0.0.6-alpha ```
+``` dotnet add package LdapForNet --version 0.1.0-beta ```
 
 ## Api
 
@@ -194,6 +198,94 @@ using (var cn = new LdapConnection())
 	var ldapVersion = (int)LdapVersion.LDAP_VERSION3;
 	cn.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion);
 	cn.Bind();
+}
+```
+
+### Add
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	cn.Add(new LdapEntry
+    {
+        Dn = "cn=test,dc=example,dc=com",
+        Attributes = new Dictionary<string, List<string>>
+        {
+            {"sn", new List<string> {"Winston"}},
+            {"objectclass", new List<string> {"inetOrgPerson"}},
+            {"givenName", new List<string> {"your_name"}},
+            {"description", new List<string> {"your_description"}}
+        }
+    });
+}
+```
+
+### Modify
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+    cn.Modify(new LdapModifyEntry
+    {
+        Dn = "cn=test,dc=example,dc=com",
+        Attributes = new List<LdapModifyAttribute>
+        {
+            new LdapModifyAttribute
+            {
+                LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+                Type = "givenName",
+                Values = new List<string> {"test_value_2"}
+            },
+            new LdapModifyAttribute
+            {
+                LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+                Type = "displayName",
+                Values = new List<string> {"test_display_name"}
+            },
+            new LdapModifyAttribute
+            {
+                LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+                Type = "sn",
+                Values = new List<string> {"test"}
+            },
+            new LdapModifyAttribute
+            {
+                LdapModOperation = LdapModOperation.LDAP_MOD_DELETE,
+                Type = "description",
+                Values = new List<string> {"test_value"}
+            }
+        }
+    });
+}
+```
+
+### Delete
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+    cn.Delete("cn=test,dc=example,dc=com");
+}
+```
+
+### Rename
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+    connection.Rename("cn=test,dc=example,dc=com", "cn=test2", null, true);
 }
 ```
 
