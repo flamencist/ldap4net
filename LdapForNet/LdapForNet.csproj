@@ -3,8 +3,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>0.0.6-alpha</Version>
-    <VersionSufix>prerelease</VersionSufix>
+    <Version>0.1.0-beta</Version>
+    <VersionSuffix>prerelease</VersionSuffix>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Implemented SASL GSSAPI (Kerberos)! Supported Ubuntu only (14.04, 16.04, 18.04).</Description>
@@ -15,7 +15,7 @@
     <PackageTags>openldap, .NET ldap, GSSAPI, Kerberos</PackageTags>
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
-    <PackageReleaseNotes>implemented CRUD (add,modify,delete) methods</PackageReleaseNotes>
+    <PackageReleaseNotes>implemented CRUD (add,modify,delete,rename) methods</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <None Update="libldap.so">
