@@ -192,6 +192,22 @@ namespace LdapForNet
                 IntPtr.Zero 
             ), nameof(ldap_delete_ext_s));
         }
-        
+
+        public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn)
+        {
+            ThrowIfNotBound();
+            if (dn == null)
+            {
+                throw new ArgumentNullException(nameof(dn));
+            }
+            ThrowIfError(_ld, ldap_rename_s(_ld,
+                dn,
+                newRdn,
+                newParent,
+                isDeleteOldRdn?1:0,
+                IntPtr.Zero, 
+                IntPtr.Zero 
+            ), nameof(ldap_rename_s));
+        }
     }
 }

@@ -15,5 +15,6 @@ namespace LdapForNet
         void Add(LdapEntry entry);
         void Modify(LdapModifyEntry entry);
         void Delete(string dn);
+        void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
     }
 }

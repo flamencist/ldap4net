@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using LdapForNet;
 using LdapForNet.Native;
@@ -86,6 +87,70 @@ namespace LdapForNetTests
             AddLdapEntry();
             ModifyLdapEntry();
             DeleteLdapEntry();                
+        }
+
+        [TestMethod]
+        public void LdapConnection_Rename_Entry_Dn()
+        {
+            var dn = Guid.NewGuid().ToString();
+            var newRdn = Guid.NewGuid().ToString();
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                connection.Add(new LdapEntry
+                {
+                    Dn = $"cn={dn},{Config.RootDn}",
+                    Attributes = new Dictionary<string, List<string>>
+                    {
+                        {"sn", new List<string> {"Winston"}},
+                        {"objectclass", new List<string> {"inetOrgPerson"}},
+                        {"givenName", new List<string> {"test_value"}},
+                        {"description", new List<string> {"test_value"}}
+                    }
+                });
+                connection.Rename(dn, newRdn, null, false);
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={dn}))");
+                Assert.IsTrue(entries.Count == 0);
+                
+                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={newRdn}))");
+                Assert.IsTrue(entries.Count == 1);
+                
+                Assert.AreEqual($"cn={newRdn},{Config.RootDn}", actual[0].Dn);
+            }
+        }
+        
+        [TestMethod]
+        public void LdapConnection_Move_Entry_Dn()
+        {
+            var cn = Guid.NewGuid().ToString();
+            var dn = $"cn={cn},{Config.RootDn}";
+
+            var newRdn = Guid.NewGuid().ToString();
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                connection.Add(new LdapEntry
+                {
+                    Dn = dn,
+                    Attributes = new Dictionary<string, List<string>>
+                    {
+                        {"sn", new List<string> {"Winston"}},
+                        {"objectclass", new List<string> {"inetOrgPerson"}},
+                        {"givenName", new List<string> {"test_value"}},
+                        {"description", new List<string> {"test_value"}}
+                    }
+                });
+                connection.Rename(cn, newRdn, "", true);
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
+                Assert.IsTrue(entries.Count == 0);
+                
+                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={newRdn}))");
+                Assert.IsTrue(entries.Count == 1);
+                
+                Assert.AreEqual($"cn={newRdn},{Config.RootDn}", actual[0].Dn);
+            }
         }
 
         private static void AddLdapEntry()

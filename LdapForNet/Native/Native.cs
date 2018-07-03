@@ -172,6 +172,53 @@ namespace LdapForNet.Native
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_delete_ext_s(IntPtr ld, string dn, IntPtr serverctrls, IntPtr clientctrls);
+
+        /// <summary>
+        /// ldap_compare_ext_s <a href="https://linux.die.net/man/3/ldap_compare_ext_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char   *dn</param>
+        /// <param name="attr">char *attr</param>
+        /// <param name="bvalue">const struct berval  *bvalue</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_compare_ext_s(IntPtr ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls);
+
+        /// <summary>
+        /// ldap_rename_s <a href="https://linux.die.net/man/3/ldap_rename_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char   *dn</param>
+        /// <param name="newrdn">const char *newrdn</param>
+        /// <param name="deleteoldrdn"></param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <param name="newparent"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_rename_s(IntPtr ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls);
+
+        /// <summary>
+        /// ldap_is_ldap_url <a href="https://linux.die.net/man/3/ldap_is_ldap_url">Documentation</a>
+        /// </summary>
+        /// <param name="url">const char *url</param>
+        /// <returns></returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_is_ldap_url(string url);
+
+        /// <summary>
+        /// ldap_url_parse <a href="https://linux.die.net/man/3/ldap_url_parse">Documentation</a>
+        /// </summary>
+        /// <param name="url">const char *url</param>
+        /// <param name="ludpp">LDAPURLDesc **ludpp </param>
+        /// <returns></returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_url_parse(string url, ref IntPtr ludpp);
+
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_free_urldesc(string url, ref IntPtr ludpp);
     }
 
 }
