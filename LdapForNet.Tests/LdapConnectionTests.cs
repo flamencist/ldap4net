@@ -94,7 +94,7 @@ namespace LdapForNetTests
         {
             var cn = Guid.NewGuid().ToString();
             var dn = $"cn={cn},{Config.RootDn}";
-            var newRdn = Guid.NewGuid().ToString();
+            var newRdn = $"cn={Guid.NewGuid().ToString()}";
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
@@ -114,10 +114,10 @@ namespace LdapForNetTests
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={dn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
-                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={newRdn}))");
+                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
                 Assert.IsTrue(entries.Count == 1);
                 
-                Assert.AreEqual($"cn={newRdn},{Config.RootDn}", actual[0].Dn);
+                Assert.AreEqual($"{newRdn},{Config.RootDn}", actual[0].Dn);
             }
         }
         
@@ -127,7 +127,7 @@ namespace LdapForNetTests
             var cn = Guid.NewGuid().ToString();
             var dn = $"cn={cn},{Config.RootDn}";
 
-            var newRdn = Guid.NewGuid().ToString();
+            var newRdn = $"cn={Guid.NewGuid().ToString()}";
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
@@ -147,10 +147,10 @@ namespace LdapForNetTests
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
                 Assert.IsTrue(entries.Count == 0);
                 
-                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={newRdn}))");
+                var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
                 Assert.IsTrue(entries.Count == 1);
                 
-                Assert.AreEqual($"cn={newRdn},{Config.RootDn}", actual[0].Dn);
+                Assert.AreEqual($"{newRdn},{Config.RootDn}", actual[0].Dn);
             }
         }
 
