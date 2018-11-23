@@ -29,7 +29,7 @@ namespace LdapForNetTests
         
         [TestMethod]
         [ExpectedException(typeof(LdapException))]
-        public void LdapConnection_Search_Throw_LdapExcepton_If_Server_Unavailable()
+        public void LdapConnection_Search_Throw_LdapException_If_Server_Unavailable()
         {
             using (var connection = new LdapConnection())
             {
@@ -40,7 +40,7 @@ namespace LdapForNetTests
         
         [TestMethod]
         [ExpectedException(typeof(LdapException))]
-        public void LdapConnection_Search_Throw_LdapExcepton_If_Search_Syntax_Wrong()
+        public void LdapConnection_Search_Throw_LdapException_If_Search_Syntax_Wrong()
         {
             using (var connection = new LdapConnection())
             {
@@ -52,7 +52,7 @@ namespace LdapForNetTests
         
         [TestMethod]
         [ExpectedException(typeof(LdapException))]
-        public void LdapConnection_Search_Throw_LdapExcepton_If_Not_Called_Connect_Method()
+        public void LdapConnection_Search_Throw_LdapException_If_Not_Called_Connect_Method()
         {
             using (var connection = new LdapConnection())
             {
@@ -63,7 +63,7 @@ namespace LdapForNetTests
         
         [TestMethod]
         [ExpectedException(typeof(LdapException))]
-        public void LdapConnection_Search_Throw_LdapExcepton_If_Not_Called_Bind_Method()
+        public void LdapConnection_Search_Throw_LdapException_If_Not_Called_Bind_Method()
         {
             using (var connection = new LdapConnection())
             {

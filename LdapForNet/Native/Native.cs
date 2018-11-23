@@ -85,7 +85,38 @@ namespace LdapForNet.Native
         public static extern int ldap_search_ext_s(IntPtr ld, string @base, int scope, string filter, string[] attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref IntPtr pMessage);
 
+        /// <summary>
+        /// ldap_search_ext_s <a href="https://linux.die.net/man/3/ldap_search_ext">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="base">char *base</param>
+        /// <param name="scope">int scope</param>
+        /// <param name="filter">char *filter</param>
+        /// <param name="attrs">char *attrs[]</param>
+        /// <param name="attrsonly">int attrsonly</param>
+        /// <param name="serverctrls">LDAPControl **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl **clientctrls</param>
+        /// <param name="timeout">struct timeval *timeout</param>
+        /// <param name="sizelimit">int sizelimit</param>
+        /// <param name="msgidp">int *msgidp</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_search_ext(IntPtr ld, string @base, int scope, string filter, string[] attrs,
+            int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
 
+        /// <summary>
+        /// ldap_search_ext_s <a href="https://linux.die.net/man/3/ldap_result">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="msgid">int msgid</param>
+        /// <param name="all">int all</param>
+        /// <param name="timeout">struct timeval *timeout</param>
+        /// <param name="pMessage">LDAPMessage **result</param>
+        /// <returns>result type </returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern LdapResultType ldap_result(IntPtr ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
+        
+        
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);
 

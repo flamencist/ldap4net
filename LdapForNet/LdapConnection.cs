@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using LdapForNet.Native;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 

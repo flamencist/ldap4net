@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 
@@ -92,6 +93,56 @@ namespace LdapForNet
             ldap_msgfree(msg);
 
             return ldapEntries;
+        }
+
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            ThrowIfNotBound();
+            var task = new Task<IList<LdapEntry>>(() =>
+            {
+                var msgid = 0;
+                var res = ldap_search_ext(
+                    _ld,
+                    @base,
+                    (int) scope,
+                    filter,
+                    null,
+                    (int) LdapSearchAttributesOnly.False,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    (int) LdapSizeLimit.LDAP_NO_LIMIT,
+                    ref msgid);
+                if (res != (int)LdapResultCode.LDAP_SUCCESS)
+                {
+                    ThrowIfError(_ld, res,nameof(ldap_search_ext));
+                }
+
+                var msg = Marshal.AllocHGlobal(IntPtr.Size);
+                var finished = false;
+                while (!finished)
+                {
+                    var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
+                    switch (resType)
+                    {
+                        case LdapResultType.LDAP_ERROR:
+                            ThrowIfError(_ld, res,nameof(ldap_search_ext));
+                            break;   
+                        case LdapResultType.LDAP_TIMEOUT:
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_ENTRY:
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_RESULT:
+                            finished = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                return new List<LdapEntry>();
+            });
+            return await task;
         }
 
         public void Add(LdapEntry entry)
