@@ -4,7 +4,6 @@
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
     <Version>1.0.1</Version>
-    <VersionSuffix>prerelease</VersionSuffix>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Implemented SASL GSSAPI (Kerberos)!.</Description>
