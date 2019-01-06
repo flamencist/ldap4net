@@ -5,6 +5,8 @@
 
 Port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap) to DotNet Core
 
+You must ensure you have the latest OpenLDAP client libraries installed from http://www.openldap.org
+
   
 It works with any LDAP protocol compatible directory server (including Microsoft Active Directory).
 
