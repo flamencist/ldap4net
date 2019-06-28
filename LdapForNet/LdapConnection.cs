@@ -4,13 +4,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Utils;
+using Microsoft.Win32.SafeHandles;
 using static LdapForNet.Native.Native;
 
 namespace LdapForNet
 {
     public partial class LdapConnection
     {
-        private IntPtr _ld = IntPtr.Zero;
+        private SafeHandle _ld;
         private bool _bound;
         
         
@@ -63,7 +64,7 @@ namespace LdapForNet
             });
         }
 
-        private static LdapSaslDefaults GetSaslDefaults(IntPtr ld)
+        private static LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
         {
             var defaults = new LdapSaslDefaults { mech = LdapAuthMechanism.GSSAPI };
             ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
@@ -81,7 +82,7 @@ namespace LdapForNet
             );
         }
 
-        private static IEnumerable<LdapEntry> GetLdapEntries(IntPtr ld, IntPtr msg, IntPtr ber)
+        private static IEnumerable<LdapEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
             for (var entry = ldap_first_entry(ld, msg); entry != IntPtr.Zero;
                 entry = ldap_next_entry(ld, entry))
@@ -94,7 +95,7 @@ namespace LdapForNet
             }
         }
 
-        private static string GetLdapDn(IntPtr ld, IntPtr entry)
+        private static string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = ldap_get_dn(ld, entry);
             var dn = Marshal.PtrToStringAnsi(ptr);
@@ -102,7 +103,7 @@ namespace LdapForNet
             return dn;
         }
 
-        private static Dictionary<string, List<string>> GetLdapAttributes(IntPtr ld, IntPtr entry, ref IntPtr ber)
+        private static Dictionary<string, List<string>> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
             var dict = new Dictionary<string, List<string>>();
             for (var attr = ldap_first_attribute(ld, entry, ref ber);
@@ -128,7 +129,7 @@ namespace LdapForNet
         
         private void ThrowIfNotInitialized()
         {
-            if (_ld == IntPtr.Zero)
+            if (_ld.IsInvalid)
             {
                 throw new LdapException($"Not initialized connection. Please invoke {nameof(Connect)} method before.");
             }
@@ -160,7 +161,7 @@ namespace LdapForNet
             return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}:{_.Value}"));
         }
 
-        private static void ThrowIfError(IntPtr ld, int res, string method, IDictionary<string,string> details = default)
+        private static void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
@@ -186,6 +187,19 @@ namespace LdapForNet
                 }
                 Trace.TraceError(message);
             }
+        }
+    }
+
+    public class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public LdapHandle(IntPtr handle) : base(true)
+        {
+            SetHandle(handle);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            return ldap_unbind_s(handle) == (int) LdapResultCode.LDAP_SUCCESS;
         }
     }
 }

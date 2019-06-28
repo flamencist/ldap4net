@@ -17,11 +17,13 @@ namespace LdapForNet
                 [nameof(port)] = port.ToString(),
                 [nameof(version)] = version.ToString()
             };
+            var nativeHandle = IntPtr.Zero;
             ThrowIfError(
-                ldap_initialize(ref _ld, $"LDAP://{hostname}:{port}"),
+                ldap_initialize(ref nativeHandle, $"LDAP://{hostname}:{port}"),
                 nameof(ldap_initialize),
                 details
             );
+            _ld = new LdapHandle(nativeHandle);
             var ldapVersion = (int)version;
 
             ThrowIfError(
@@ -181,15 +183,12 @@ namespace LdapForNet
 
         public void Dispose()
         {
-            if (_ld != IntPtr.Zero)
-            {
-                TraceIfError(ldap_unbind_s(_ld),nameof(ldap_unbind_s));
-            }
+            _ld.Dispose();
         }
 
         public IntPtr GetNativeLdapPtr()
         {
-            return _ld;
+            return _ld.DangerousGetHandle();
         }
 
 

@@ -7,13 +7,13 @@ namespace LdapForNet.Native
     public static partial class Native
     {
         private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
-        public delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
+        public delegate int LDAP_SASL_INTERACT_PROC(SafeHandle ld, uint flags, IntPtr defaults, IntPtr interact);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_initialize(ref IntPtr ld, string uri);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_simple_bind_s(IntPtr ld, string who, string cred);
+        public static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
 
         /// <summary>
         /// ldap_sasl_interactive_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind_s">Documentation</a>
@@ -28,7 +28,7 @@ namespace LdapForNet.Native
         /// <param name="defaults">void *defaults</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_sasl_interactive_bind_s(IntPtr ld, string dn, string mechanism,
+        public static extern int ldap_sasl_interactive_bind_s(SafeHandle ld, string dn, string mechanism,
             IntPtr serverctrls, IntPtr clientctrls, uint flags,
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults);
 
@@ -44,24 +44,24 @@ namespace LdapForNet.Native
         /// <param name="servercredp">struct berval       **servercredp</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_sasl_bind_s(IntPtr ld, string dn, string mechanism,
+        public static extern int ldap_sasl_bind_s(SafeHandle ld, string dn, string mechanism,
             IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, IntPtr servercredp);
        
         
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_set_option(IntPtr ld, int option, [In] ref int invalue);
+        public static extern int ldap_set_option(SafeHandle ld, int option, [In] ref int invalue);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_set_option(IntPtr ld, int option, [In] ref string invalue);
+        public static extern int ldap_set_option(SafeHandle ld, int option, [In] ref string invalue);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_set_option(IntPtr ld, int option, IntPtr invalue);
+        public static extern int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_get_option(IntPtr ld, int option, ref string value);
+        public static extern int ldap_get_option(SafeHandle ld, int option, ref string value);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_get_option(IntPtr ld, int option, ref IntPtr value);
+        public static extern int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_unbind_s(IntPtr ld);
@@ -82,7 +82,7 @@ namespace LdapForNet.Native
         /// <param name="pMessage">LDAPMessage **res</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_search_ext_s(IntPtr ld, string @base, int scope, string filter, string[] attrs,
+        public static extern int ldap_search_ext_s(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref IntPtr pMessage);
 
 
@@ -95,7 +95,7 @@ namespace LdapForNet.Native
         }
 
 
-        public static string GetAdditionalErrorInfo(IntPtr ld)
+        public static string GetAdditionalErrorInfo(SafeHandle ld)
         {
             var ptr = Marshal.AllocHGlobal(IntPtr.Size);
             ldap_get_option(ld,(int)LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE,ref ptr);
@@ -106,16 +106,16 @@ namespace LdapForNet.Native
 
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_count_entries(IntPtr ld, IntPtr message);
+        public static extern int ldap_count_entries(SafeHandle ld, IntPtr message);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_first_entry(IntPtr ld, IntPtr message);
+        public static extern IntPtr ldap_first_entry(SafeHandle ld, IntPtr message);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_next_entry(IntPtr ld, IntPtr message);
+        public static extern IntPtr ldap_next_entry(SafeHandle ld, IntPtr message);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_get_dn(IntPtr ld, IntPtr message);
+        public static extern IntPtr ldap_get_dn(SafeHandle ld, IntPtr message);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern void ldap_memfree(IntPtr ptr);
@@ -124,10 +124,10 @@ namespace LdapForNet.Native
         public static extern void ldap_msgfree(IntPtr message);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_first_attribute(IntPtr ld, IntPtr entry, ref IntPtr ppBer);
+        public static extern IntPtr ldap_first_attribute(SafeHandle ld, IntPtr entry, ref IntPtr ppBer);
 
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_next_attribute(IntPtr ld, IntPtr entry, IntPtr pBer);
+        public static extern IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern void ldap_value_free(IntPtr vals);
@@ -136,7 +136,7 @@ namespace LdapForNet.Native
         public static extern int ldap_count_values(IntPtr vals);
         
         [DllImport(LIB_LDAP_PATH)]
-        public static extern IntPtr ldap_get_values(IntPtr ld, IntPtr entry, IntPtr pBer);
+        public static extern IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
         
         /// <summary>
         /// ldap_add_ext_s <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
@@ -148,7 +148,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl  **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_add_ext_s(IntPtr ld, string dn, IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_add_ext_s(SafeHandle ld, string dn, IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
         
         /// <summary>
         /// ldap_modify_ext_s <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>
@@ -160,7 +160,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_modify_ext_s(IntPtr ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_modify_ext_s(SafeHandle ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls);
         
         /// <summary>
         /// ldap_delete_ext_s <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>
@@ -171,7 +171,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_delete_ext_s(IntPtr ld, string dn, IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_delete_ext_s(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls);
 
         /// <summary>
         /// ldap_compare_ext_s <a href="https://linux.die.net/man/3/ldap_compare_ext_s">Documentation</a>
@@ -184,7 +184,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_compare_ext_s(IntPtr ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_compare_ext_s(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls);
 
         /// <summary>
         /// ldap_rename_s <a href="https://linux.die.net/man/3/ldap_rename_s">Documentation</a>
@@ -198,7 +198,7 @@ namespace LdapForNet.Native
         /// <param name="newparent"></param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_rename_s(IntPtr ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls);
+        public static extern int ldap_rename_s(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls);
 
         /// <summary>
         /// ldap_is_ldap_url <a href="https://linux.die.net/man/3/ldap_is_ldap_url">Documentation</a>
