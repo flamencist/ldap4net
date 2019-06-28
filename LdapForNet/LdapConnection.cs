@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Utils;
+using Microsoft.Win32.SafeHandles;
 using static LdapForNet.Native.Native;
 
 namespace LdapForNet
 {
     public partial class LdapConnection
     {
-        private IntPtr _ld = IntPtr.Zero;
+        private SafeHandle _ld;
         private bool _bound;
         
         
@@ -49,17 +51,20 @@ namespace LdapForNet
         
         private void GssApiBind()
         {
-            var defaults = GetSaslDefaults(_ld);
-            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(defaults));
-            Marshal.StructureToPtr(defaults, ptr, false);
+            var saslDefaults = GetSaslDefaults(_ld);
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
+            Marshal.StructureToPtr(saslDefaults, ptr, false);
 
             var res = ldap_sasl_interactive_bind_s(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
 
-            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s));
+            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s), new Dictionary<string, string>
+            {
+                [nameof(saslDefaults)] = saslDefaults.ToString()
+            });
         }
 
-        private static LdapSaslDefaults GetSaslDefaults(IntPtr ld)
+        private static LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
         {
             var defaults = new LdapSaslDefaults { mech = LdapAuthMechanism.GSSAPI };
             ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
@@ -77,7 +82,7 @@ namespace LdapForNet
             );
         }
 
-        private static IEnumerable<LdapEntry> GetLdapEntries(IntPtr ld, IntPtr msg, IntPtr ber)
+        private static IEnumerable<LdapEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
             for (var entry = ldap_first_entry(ld, msg); entry != IntPtr.Zero;
                 entry = ldap_next_entry(ld, entry))
@@ -90,7 +95,7 @@ namespace LdapForNet
             }
         }
 
-        private static string GetLdapDn(IntPtr ld, IntPtr entry)
+        private static string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = ldap_get_dn(ld, entry);
             var dn = Marshal.PtrToStringAnsi(ptr);
@@ -98,7 +103,7 @@ namespace LdapForNet
             return dn;
         }
 
-        private static Dictionary<string, List<string>> GetLdapAttributes(IntPtr ld, IntPtr entry, ref IntPtr ber)
+        private static Dictionary<string, List<string>> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
             var dict = new Dictionary<string, List<string>>();
             for (var attr = ldap_first_attribute(ld, entry, ref ber);
@@ -124,7 +129,7 @@ namespace LdapForNet
         
         private void ThrowIfNotInitialized()
         {
-            if (_ld == IntPtr.Zero)
+            if (_ld == null || _ld.IsInvalid)
             {
                 throw new LdapException($"Not initialized connection. Please invoke {nameof(Connect)} method before.");
             }
@@ -139,31 +144,62 @@ namespace LdapForNet
             }
         }
 
-        private static void ThrowIfError(int res, string method)
+        private static void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
+                if (details != default)
+                {
+                    throw new LdapException(LdapError2String(res), method, res, DetailsToString(details));
+                }
                 throw new LdapException(LdapError2String(res), method, res);
             }
         }
 
-        private static void ThrowIfError(IntPtr ld, int res, string method)
+        private static string DetailsToString(IDictionary<string,string> details)
+        {
+            return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}:{_.Value}"));
+        }
+
+        private static void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
                 var error = LdapError2String(res);
                 var info = GetAdditionalErrorInfo(ld);
                 var message = !string.IsNullOrWhiteSpace(info)? $"{error}. {info}": error;
+                if (details != default)
+                {
+                    throw new LdapException(message, method, res, DetailsToString(details));
+                }
                 throw new LdapException(message, method, res);
             }
         }
 
-        private static void TraceIfError(int res, string method)
+        private static void TraceIfError(int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
-                Trace.TraceError($"Error {method}: {LdapError2String(res)} ({res}).");
+                var message = $"Error {method}: {LdapError2String(res)} ({res}).";
+                if (details != default)
+                {
+                    message += $" Details: {DetailsToString(details)}";
+                }
+                Trace.TraceError(message);
             }
+        }
+    }
+
+    public class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public LdapHandle(IntPtr handle) : base(true)
+        {
+            SetHandle(handle);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            return ldap_unbind_s(handle) == (int) LdapResultCode.LDAP_SUCCESS;
         }
     }
 }
