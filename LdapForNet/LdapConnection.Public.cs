@@ -11,14 +11,23 @@ namespace LdapForNet
     {
         public void Connect(string hostname, int port = (int)LdapPort.LDAP, LdapVersion version = LdapVersion.LDAP_VERSION3)
         {
+            var details = new Dictionary<string, string>
+            {
+                [nameof(hostname)]=hostname,
+                [nameof(port)] = port.ToString(),
+                [nameof(version)] = version.ToString()
+            };
             ThrowIfError(
                 ldap_initialize(ref _ld, $"LDAP://{hostname}:{port}"),
-                nameof(ldap_initialize)
+                nameof(ldap_initialize),
+                details
             );
             var ldapVersion = (int)version;
+
             ThrowIfError(
                 ldap_set_option(_ld, (int)LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
-                nameof(ldap_set_option)
+                nameof(ldap_set_option),
+                details
             );
         }
 
@@ -81,7 +90,12 @@ namespace LdapForNet
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
                 Marshal.FreeHGlobal(msg);
-                ThrowIfError(_ld, res,nameof(ldap_search_ext_s));
+                ThrowIfError(_ld, res,nameof(ldap_search_ext_s), new Dictionary<string, string>
+                {
+                    [nameof(@base)] = @base,
+                    [nameof(filter)] = filter,
+                    [nameof(scope)] = scope.ToString()
+                });
             }
 
             var ber = Marshal.AllocHGlobal(IntPtr.Size);

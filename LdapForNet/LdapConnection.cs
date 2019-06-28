@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
-using LdapForNet.Native;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 
@@ -50,14 +50,17 @@ namespace LdapForNet
         
         private void GssApiBind()
         {
-            var defaults = GetSaslDefaults(_ld);
-            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(defaults));
-            Marshal.StructureToPtr(defaults, ptr, false);
+            var saslDefaults = GetSaslDefaults(_ld);
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
+            Marshal.StructureToPtr(saslDefaults, ptr, false);
 
             var res = ldap_sasl_interactive_bind_s(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
 
-            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s));
+            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s), new Dictionary<string, string>
+            {
+                [nameof(saslDefaults)] = saslDefaults.ToString()
+            });
         }
 
         private static LdapSaslDefaults GetSaslDefaults(IntPtr ld)
@@ -140,30 +143,48 @@ namespace LdapForNet
             }
         }
 
-        private static void ThrowIfError(int res, string method)
+        private static void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
+                if (details != default)
+                {
+                    throw new LdapException(LdapError2String(res), method, res, DetailsToString(details));
+                }
                 throw new LdapException(LdapError2String(res), method, res);
             }
         }
 
-        private static void ThrowIfError(IntPtr ld, int res, string method)
+        private static string DetailsToString(IDictionary<string,string> details)
+        {
+            return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}:{_.Value}"));
+        }
+
+        private static void ThrowIfError(IntPtr ld, int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
                 var error = LdapError2String(res);
                 var info = GetAdditionalErrorInfo(ld);
                 var message = !string.IsNullOrWhiteSpace(info)? $"{error}. {info}": error;
+                if (details != default)
+                {
+                    throw new LdapException(message, method, res, DetailsToString(details));
+                }
                 throw new LdapException(message, method, res);
             }
         }
 
-        private static void TraceIfError(int res, string method)
+        private static void TraceIfError(int res, string method, IDictionary<string,string> details = default)
         {
             if (res != (int)LdapResultCode.LDAP_SUCCESS)
             {
-                Trace.TraceError($"Error {method}: {LdapError2String(res)} ({res}).");
+                var message = $"Error {method}: {LdapError2String(res)} ({res}).";
+                if (details != default)
+                {
+                    message += $" Details: {DetailsToString(details)}";
+                }
+                Trace.TraceError(message);
             }
         }
     }

@@ -15,5 +15,6 @@
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
     <PackageReleaseNotes>stable version</PackageReleaseNotes>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 </Project>
