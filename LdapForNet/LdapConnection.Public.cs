@@ -183,7 +183,7 @@ namespace LdapForNet
 
         public void Dispose()
         {
-            _ld.Dispose();
+            _ld?.Dispose();
         }
 
         public IntPtr GetNativeLdapPtr()

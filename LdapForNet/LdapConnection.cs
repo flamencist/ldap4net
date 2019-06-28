@@ -129,7 +129,7 @@ namespace LdapForNet
         
         private void ThrowIfNotInitialized()
         {
-            if (_ld.IsInvalid)
+            if (_ld == null || _ld.IsInvalid)
             {
                 throw new LdapException($"Not initialized connection. Please invoke {nameof(Connect)} method before.");
             }
