@@ -79,7 +79,7 @@ namespace LdapExample
                 }
                 else
                 {
-                    entries = cn.Search(@base, filter);
+                    entries = cn.SearchAsync(@base, filter).Result;
                 }
                 foreach (var ldapEntry in entries)
                 {

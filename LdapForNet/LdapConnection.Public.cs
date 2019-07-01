@@ -114,7 +114,7 @@ namespace LdapForNet
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             ThrowIfNotBound();
-            var task = new Task<IList<LdapEntry>>(() =>
+            var task = Task.Factory.StartNew<IList<LdapEntry>>(()=>
             {
                 var msgid = 0;
                 var res = ldap_search_ext(
@@ -131,32 +131,52 @@ namespace LdapForNet
                     ref msgid);
                 if (res != (int)LdapResultCode.LDAP_SUCCESS)
                 {
-                    ThrowIfError(_ld, res,nameof(ldap_search_ext));
+                    ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
+                    {
+                        [nameof(@base)] = @base,
+                        [nameof(filter)] = filter,
+                        [nameof(scope)] = scope.ToString()
+                    });
                 }
 
                 var msg = Marshal.AllocHGlobal(IntPtr.Size);
                 var finished = false;
+                var ldapEntries = new List<LdapEntry>();
                 while (!finished)
                 {
                     var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
                     switch (resType)
                     {
                         case LdapResultType.LDAP_ERROR:
-                            ThrowIfError(_ld, res,nameof(ldap_search_ext));
+                            ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
+                            {
+                                [nameof(@base)] = @base,
+                                [nameof(filter)] = filter,
+                                [nameof(scope)] = scope.ToString()
+                            });
                             break;   
                         case LdapResultType.LDAP_TIMEOUT:
-                            break;
+                            throw new LdapException("Timeout exceeded",nameof(ldap_result),1);
                         case LdapResultType.LDAP_RES_SEARCH_ENTRY:
+                            var ber = Marshal.AllocHGlobal(IntPtr.Size);
+
+                            ldapEntries.AddRange(GetLdapEntries(_ld, msg, ber));
+
+                            Marshal.FreeHGlobal(ber);
+                            ldap_msgfree(msg);
                             break;
                         case LdapResultType.LDAP_RES_SEARCH_RESULT:
                             finished = true;
                             break;
                         default:
-                            break;
+                            throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
                     }
+                    
                 }
+                
+                
 
-                return new List<LdapEntry>();
+                return ldapEntries;
             });
             return await task;
         }
