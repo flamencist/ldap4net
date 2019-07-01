@@ -101,7 +101,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_search_ext(IntPtr ld, string @base, int scope, string filter, string[] attrs,
+        public static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace LdapForNet.Native
         /// <param name="pMessage">LDAPMessage **result</param>
         /// <returns>result type </returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern LdapResultType ldap_result(IntPtr ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
+        public static extern LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
         
         
         [DllImport(LIB_LDAP_PATH)]
