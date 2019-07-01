@@ -26,13 +26,16 @@ namespace LdapExample
             cmds.TryGetValue("auth", out var authString);
             cmds.TryGetValue("base", out var @base);
             cmds.TryGetValue("filter", out var filter);
+            cmds.TryGetValue("port", out var portStr);
+            int.TryParse(portStr, out var port);
             var auth = authString == LdapAuthMechanism.GSSAPI ? LdapAuthMechanism.GSSAPI : LdapAuthMechanism.SIMPLE;
             host = host ?? "ldap.forumsys.com";
             @base = @base ?? "dc=example,dc=com";
             filter = filter ?? "(objectclass=*)";
+            port = port > 0 ? port : 389;
             try
             {
-                UsingOpenLdap(auth, host, @base, filter, cmds);
+                UsingOpenLdap(auth, host, @base, port, filter, cmds);
             }
             catch (Exception e)
             {
@@ -49,11 +52,11 @@ namespace LdapExample
                 .ToDictionary(_ => _[1].Value, _ => _[2].Value);
         }
 
-        private static void UsingOpenLdap(string authType, string host, string @base, string filter, IDictionary<string, string> cmds)
+        private static void UsingOpenLdap(string authType, string host, string @base, int port, string filter, IDictionary<string, string> cmds)
         {
             using (var cn = new LdapConnection())
             {
-                cn.Connect(host);
+                cn.Connect(host, port);
                 if (authType == LdapAuthMechanism.GSSAPI)
                 {
                     cn.Bind();

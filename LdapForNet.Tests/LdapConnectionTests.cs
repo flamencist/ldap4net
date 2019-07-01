@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using LdapForNet;
-using LdapForNet.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static LdapForNet.Native.Native;
 
