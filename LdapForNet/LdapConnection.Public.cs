@@ -178,7 +178,7 @@ namespace LdapForNet
 
                 return ldapEntries;
             });
-            return await task;
+            return await task.ConfigureAwait(false);
         }
 
         public void Add(LdapEntry entry)
