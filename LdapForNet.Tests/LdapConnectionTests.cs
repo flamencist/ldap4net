@@ -57,10 +57,9 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost);
+                connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 Assert.Throws<LdapException>(()=>connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
-                ;
             }
         }
         
