@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Implemented SASL GSSAPI (Kerberos)!.</Description>
@@ -14,7 +14,7 @@
     <PackageTags>openldap, .NET ldap, GSSAPI, Kerberos</PackageTags>
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
-    <PackageReleaseNotes>stable version</PackageReleaseNotes>
+    <PackageReleaseNotes>add async search</PackageReleaseNotes>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 </Project>

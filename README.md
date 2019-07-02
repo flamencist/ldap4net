@@ -101,6 +101,20 @@ using (var cn = new LdapConnection())
 
 ```
 
+### BindAsync
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	// bind using kerberos credential cache file
+	cn.BindAsync().Wait();
+	...
+}
+
+```
+
 
 ```cs
 using (var cn = new LdapConnection())
@@ -134,6 +148,18 @@ using (var cn = new LdapConnection())
 	cn.Bind();
 	//search  objects in catalog at first level scope
 	var entries = cn.Search("dc=example,dc=com","(objectClass=*)", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+}
+```
+
+### SearchAsync
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search all objects in catalog (default search scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+	var entries = cn.SearchAsync("dc=example,dc=com","(objectClass=*)").Result;
 }
 ```
 
