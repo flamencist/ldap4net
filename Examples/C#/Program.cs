@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using LdapForNet;
 using static LdapForNet.Native.Native;
 
@@ -33,9 +35,15 @@ namespace LdapExample
             @base = @base ?? "dc=example,dc=com";
             filter = filter ?? "(objectclass=*)";
             port = port > 0 ? port : 389;
+
             try
             {
-                UsingOpenLdap(auth, host, @base, port, filter, cmds);
+                var token = new CancellationTokenSource();
+                Console.CancelKeyPress+=(sender, eventArgs) => token.Cancel();
+                while (!token.IsCancellationRequested)
+                {
+                    UsingOpenLdap(auth, host, @base, port, filter, cmds).Wait();
+                }
             }
             catch (Exception e)
             {
@@ -52,7 +60,7 @@ namespace LdapExample
                 .ToDictionary(_ => _[1].Value, _ => _[2].Value);
         }
 
-        private static void UsingOpenLdap(string authType, string host, string @base, int port, string filter, IDictionary<string, string> cmds)
+        private static async Task UsingOpenLdap(string authType, string host, string @base, int port, string filter, IDictionary<string, string> cmds)
         {
             Console.WriteLine($"{nameof(authType)}:{authType}; {nameof(host)}:{host}; {nameof(@base)}:{@base}; {nameof(port)}:{port} ");
             using (var cn = new LdapConnection())
@@ -60,7 +68,7 @@ namespace LdapExample
                 cn.Connect(host, port);
                 if (authType == LdapAuthMechanism.GSSAPI)
                 {
-                    cn.Bind();
+                    await cn.BindAsync();
                 }
                 else
                 {
@@ -68,18 +76,18 @@ namespace LdapExample
                     cmds.TryGetValue("password", out var password);
                     who = who ?? "cn=read-only-admin,dc=example,dc=com";
                     password = password ?? "password";
-                    cn.Bind(LdapAuthMechanism.SIMPLE,who,password);
+                    await cn.BindAsync(LdapAuthMechanism.SIMPLE,who,password);
                 }
 
-                IList<LdapEntry> entries = new List<LdapEntry>();
+                IList<LdapEntry> entries;
 
                 if (cmds.TryGetValue("sid", out var sid))
                 {
-                    entries = cn.SearchBySid(@base, sid);
+                    entries = await cn.SearchBySidAsync(@base, sid);
                 }
                 else
                 {
-                    entries = cn.SearchAsync(@base, filter).Result;
+                    entries = await cn.SearchAsync(@base, filter);
                 }
                 foreach (var ldapEntry in entries)
                 {

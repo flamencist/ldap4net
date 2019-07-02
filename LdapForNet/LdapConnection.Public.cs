@@ -53,6 +53,31 @@ namespace LdapForNet
             _bound = true;
         }
 
+        public async Task BindAsync(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null)
+        {
+            ThrowIfNotInitialized();
+            IntPtr result;
+            if (LdapAuthMechanism.SIMPLE.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
+            {
+                result = await SimpleBindAsync(userDn,password);
+            }
+            else if (LdapAuthMechanism.GSSAPI.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
+            {
+                result = await GssApiBindAsync();
+            }
+            else
+            {
+                throw new LdapException($"Not implemented mechanism: {mechanism}. Available: {LdapAuthMechanism.GSSAPI} | {LdapAuthMechanism.SIMPLE}. ");
+            }
+
+            if (result != IntPtr.Zero)
+            {
+                ParseBindResult(result);
+            }
+            
+            _bound = true;
+        }
+
         public void SetOption(LdapOption option, int value)
         {
             ThrowIfNotBound();
@@ -164,6 +189,11 @@ namespace LdapForNet
 
                             Marshal.FreeHGlobal(ber);
                             ldap_msgfree(msg);
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_REFERENCE:
+                        case LdapResultType.LDAP_RES_EXTENDED:
+                        case LdapResultType.LDAP_RES_INTERMEDIATE:
+                            //not implemented
                             break;
                         case LdapResultType.LDAP_RES_SEARCH_RESULT:
                             finished = true;

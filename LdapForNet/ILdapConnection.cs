@@ -10,6 +10,7 @@ namespace LdapForNet
     {
         void Connect(string hostname, int port = (int)LdapPort.LDAP, LdapVersion version = LdapVersion.LDAP_VERSION3);
         void Bind(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
+        Task BindAsync(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
         void SetOption(LdapOption option, int value);
         void SetOption(LdapOption option, string value);
         void SetOption(LdapOption option, IntPtr valuePtr);

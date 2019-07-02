@@ -33,7 +33,28 @@ namespace LdapForNet.Native
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults);
 
         /// <summary>
-        /// ldap_sasl_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind_s">Documentation</a>
+        /// ldap_sasl_interactive_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="mechanism">const char           *mechanism</param>
+        /// <param name="serverctrls">LDAPControl         **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl         **clientctrls</param>
+        /// <param name="flags">unsigned flags </param>
+        /// <param name="proc">delegate</param>
+        /// <param name="defaults">void *defaults</param>
+        /// <param name="result">LDAPMessage* result</param>
+        /// <param name="rmech"></param>
+        /// <param name="msgid"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_sasl_interactive_bind(SafeHandle ld, string dn, string mechanism,
+            IntPtr serverctrls, IntPtr clientctrls, uint flags,
+            [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults, IntPtr result, ref IntPtr rmech, ref int msgid);
+        
+
+        /// <summary>
+        /// ldap_sasl_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind">Documentation</a>
         /// </summary>
         /// <param name="ld">LDAP *ld</param>
         /// <param name="dn">const char           *dn</param>
@@ -41,11 +62,11 @@ namespace LdapForNet.Native
         /// <param name="cred">const struct berval  *cred</param>
         /// <param name="serverctrls">LDAPControl         **serverctrls</param>
         /// <param name="clientctrls">LDAPControl         **clientctrls</param>
-        /// <param name="servercredp">struct berval       **servercredp</param>
+        /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_sasl_bind_s(SafeHandle ld, string dn, string mechanism,
-            IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, IntPtr servercredp);
+        public static extern int ldap_sasl_bind(SafeHandle ld, string dn, string mechanism,
+            IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
        
         
         [DllImport(LIB_LDAP_PATH)]
@@ -136,6 +157,10 @@ namespace LdapForNet.Native
         }
 
 
+        
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit);
+        
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_count_entries(SafeHandle ld, IntPtr message);
 
@@ -250,6 +275,18 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_free_urldesc(string url, ref IntPtr ludpp);
+
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern void ldap_controls_free(IntPtr ctrls);
+        
+        [DllImport("lber")]
+        public static extern void ber_memfree(IntPtr ptr);
+        
+        [DllImport("lber")]
+        public static extern void ber_memvfree(IntPtr vector);
+
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref string matcheddnp, ref string errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
     }
 
 }
