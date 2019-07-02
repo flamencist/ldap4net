@@ -1,23 +1,22 @@
 ﻿using LdapForNet.Utils;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace LdapForNetTests.Utils
 {
-    [TestClass]
     public class DomainUtilsTests
     {
-        [TestMethod]
+        [Fact]
         public void DomainUtils_GetDomainFromHostname()
         {
             var actual = DomainUtils.GetDomainFromHostname("mycomp.v123.example.com");
-            Assert.AreEqual("v123.example.com", actual);
+            Assert.Equal("v123.example.com", actual);
         }
         
-        [TestMethod]
+        [Fact]
         public void DomainUtils_GetDomainFromHostname_Return_Hostname_If_Not_Found_Domain()
         {
             var actual = DomainUtils.GetDomainFromHostname("mycomp");
-            Assert.AreEqual("mycomp", actual);
+            Assert.Equal("mycomp", actual);
         }
     }
 }

@@ -88,10 +88,14 @@ namespace LdapForNet
                     }
                     ldap_msgfree(result);
 
-                    if (ldap_result(_ld, msgid, 0, IntPtr.Zero, ref result) == LdapResultType.LDAP_ERROR ||
-                        result == IntPtr.Zero)
+                    if (ldap_result(_ld, msgid, 0, IntPtr.Zero, ref result) == LdapResultType.LDAP_ERROR)
                     {
-                        throw new LdapException($"{nameof(GssApiBindAsync)} failed. {nameof(ldap_result)} returns wrong or emtpy result",  nameof(ldap_sasl_interactive_bind), 1);
+                        ThrowIfError(rc,nameof(ldap_sasl_interactive_bind));
+                    }
+
+                    if (result == IntPtr.Zero)
+                    {
+                        throw new LdapException("Result is not initialized", nameof(ldap_sasl_interactive_bind), 1);
                     }
                     
                 } while (rc == (int) LdapResultCode.LDAP_SASL_BIND_IN_PROGRESS);
@@ -245,7 +249,7 @@ namespace LdapForNet
 
                 if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
                 {
-                    throw new LdapException($"{nameof(SimpleBindAsync)} failed. {nameof(ldap_result)} returns wrong or empty result. Result: {rc.ToString()}",  nameof(ldap_sasl_bind), 1);
+                    ThrowIfError((int)rc,nameof(ldap_sasl_bind));
                 }
 
                 return result;

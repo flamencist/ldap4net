@@ -1,14 +1,14 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using LdapForNet;
 using LdapForNet.Native;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace LdapForNetTests
 {
-    [TestClass]
     public class LdapSearchExtensionsTests
     {
-        [TestMethod]
+        [Fact]
         public void LdapConnection_SearchByCn_Returns_LdapEntries()
         {
             using (var connection = new LdapConnection())
@@ -16,10 +16,25 @@ namespace LdapForNetTests
                 connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 var entries = connection.SearchByCn(Config.RootDn, "admin");
-                Assert.IsTrue(entries.Count == 1);
-                Assert.AreEqual(Config.LdapUserDn, entries[0].Dn);
-                Assert.AreEqual("admin", entries[0].Attributes["cn"][0]);
-                Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
+                Assert.True(entries.Count == 1);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
+        public async Task LdapConnection_SearchByCnAsync_Returns_LdapEntries()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(Native.LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var entries = await connection.SearchByCnAsync(Config.RootDn, "admin");
+                Assert.True(entries.Count == 1);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
     }
