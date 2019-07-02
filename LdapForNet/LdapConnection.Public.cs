@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 
@@ -49,6 +50,31 @@ namespace LdapForNet
                 throw new LdapException($"Not implemented mechanism: {mechanism}. Available: {LdapAuthMechanism.GSSAPI} | {LdapAuthMechanism.SIMPLE}. ");
             }
 
+            _bound = true;
+        }
+
+        public async Task BindAsync(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null)
+        {
+            ThrowIfNotInitialized();
+            IntPtr result;
+            if (LdapAuthMechanism.SIMPLE.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
+            {
+                result = await SimpleBindAsync(userDn,password);
+            }
+            else if (LdapAuthMechanism.GSSAPI.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
+            {
+                result = await GssApiBindAsync();
+            }
+            else
+            {
+                throw new LdapException($"Not implemented mechanism: {mechanism}. Available: {LdapAuthMechanism.GSSAPI} | {LdapAuthMechanism.SIMPLE}. ");
+            }
+
+            if (result != IntPtr.Zero)
+            {
+                ParseBindResult(result);
+            }
+            
             _bound = true;
         }
 
@@ -108,6 +134,81 @@ namespace LdapForNet
             ldap_msgfree(msg);
 
             return ldapEntries;
+        }
+
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            ThrowIfNotBound();
+            var task = Task.Factory.StartNew<IList<LdapEntry>>(()=>
+            {
+                var msgid = 0;
+                var res = ldap_search_ext(
+                    _ld,
+                    @base,
+                    (int) scope,
+                    filter,
+                    null,
+                    (int) LdapSearchAttributesOnly.False,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    (int) LdapSizeLimit.LDAP_NO_LIMIT,
+                    ref msgid);
+                if (res != (int)LdapResultCode.LDAP_SUCCESS)
+                {
+                    ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
+                    {
+                        [nameof(@base)] = @base,
+                        [nameof(filter)] = filter,
+                        [nameof(scope)] = scope.ToString()
+                    });
+                }
+
+                var msg = Marshal.AllocHGlobal(IntPtr.Size);
+                var finished = false;
+                var ldapEntries = new List<LdapEntry>();
+                while (!finished)
+                {
+                    var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
+                    switch (resType)
+                    {
+                        case LdapResultType.LDAP_ERROR:
+                            ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
+                            {
+                                [nameof(@base)] = @base,
+                                [nameof(filter)] = filter,
+                                [nameof(scope)] = scope.ToString()
+                            });
+                            break;   
+                        case LdapResultType.LDAP_TIMEOUT:
+                            throw new LdapException("Timeout exceeded",nameof(ldap_result),1);
+                        case LdapResultType.LDAP_RES_SEARCH_ENTRY:
+                            var ber = Marshal.AllocHGlobal(IntPtr.Size);
+
+                            ldapEntries.AddRange(GetLdapEntries(_ld, msg, ber));
+
+                            Marshal.FreeHGlobal(ber);
+                            ldap_msgfree(msg);
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_REFERENCE:
+                        case LdapResultType.LDAP_RES_EXTENDED:
+                        case LdapResultType.LDAP_RES_INTERMEDIATE:
+                            //not implemented
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_RESULT:
+                            finished = true;
+                            break;
+                        default:
+                            throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
+                    }
+                    
+                }
+                
+                
+
+                return ldapEntries;
+            });
+            return await task.ConfigureAwait(false);
         }
 
         public void Add(LdapEntry entry)

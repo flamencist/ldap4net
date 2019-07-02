@@ -68,5 +68,17 @@ namespace LdapForNet.Native
             public IntPtr mod_next;
 
         }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct berval
+        {
+            public berval(string val)
+            {
+                bv_val = val;
+                bv_len = val.Length;
+            }
+            public int bv_len;
+            public string bv_val;
+        }
     }
 }

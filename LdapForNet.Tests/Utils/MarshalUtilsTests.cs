@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using LdapForNet.Native;
 using LdapForNet.Utils;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace LdapForNetTests.Utils
 {
-    [TestClass]
     public class MarshalUtilsTests
     {
-        [TestMethod]
+        [Fact]
         public void MarshalUtils_PtrToStringArray_Returns_List_Of_String()
         {
             var data = Marshal.StringToHGlobalAnsi("test");
@@ -23,22 +22,22 @@ namespace LdapForNetTests.Utils
                 
             var actual = MarshalUtils.PtrToStringArray(ptr);
             
-            Assert.AreEqual(2, actual.Count);
-            Assert.AreEqual("test", actual[0]);
-            Assert.AreEqual("test2", actual[1]);
+            Assert.Equal(2, actual.Count);
+            Assert.Equal("test", actual[0]);
+            Assert.Equal("test2", actual[1]);
             
             Marshal.FreeHGlobal(ptr);
             Marshal.FreeHGlobal(data);
             Marshal.FreeHGlobal(data2);
         }
 
-        [TestMethod]
+        [Fact]
         public void MarshalUtils_StringArrayToPtr_Returns_Ptr_To_StringArray()
         {
             var data = new List<string> { "test","other","third"};
             var actual = Marshal.AllocHGlobal(IntPtr.Size*data.Count+1);
             MarshalUtils.StringArrayToPtr(data, actual);
-            Assert.AreNotEqual(IntPtr.Zero, actual);
+            Assert.NotEqual(IntPtr.Zero, actual);
 
             var ptr1 = Marshal.ReadIntPtr(actual);
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
@@ -48,14 +47,14 @@ namespace LdapForNetTests.Utils
             var second = Marshal.PtrToStringAnsi(ptr2);
             var third = Marshal.PtrToStringAnsi(ptr3);
             
-            Assert.AreEqual("test",first);
-            Assert.AreEqual("other",second);
-            Assert.AreEqual("third",third);
+            Assert.Equal("test",first);
+            Assert.Equal("other",second);
+            Assert.Equal("third",third);
             
             Marshal.FreeHGlobal(actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void MarshalUtils_StructureArrayToPtr_Returns_Ptr_To_StructureArray()
         {
             var data = new List<Point>
@@ -66,7 +65,7 @@ namespace LdapForNetTests.Utils
             };
             var actual = Marshal.AllocHGlobal(IntPtr.Size*data.Count+1);
             MarshalUtils.StructureArrayToPtr(data, actual, true);
-            Assert.AreNotEqual(IntPtr.Zero, actual);
+            Assert.NotEqual(IntPtr.Zero, actual);
 
             var ptr1 = Marshal.ReadIntPtr(actual);
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
@@ -77,18 +76,18 @@ namespace LdapForNetTests.Utils
             var second = Marshal.PtrToStructure<Point>(ptr2);
             var third = Marshal.PtrToStructure<Point>(ptr3);
             
-            Assert.AreEqual(1,first.X);
-            Assert.AreEqual(1,first.Y);
-            Assert.AreEqual(2,second.X);
-            Assert.AreEqual(2,second.Y);
-            Assert.AreEqual(3,third.X);
-            Assert.AreEqual(3,third.Y);
-            Assert.AreEqual(IntPtr.Zero,ptr4);
+            Assert.Equal(1,first.X);
+            Assert.Equal(1,first.Y);
+            Assert.Equal(2,second.X);
+            Assert.Equal(2,second.Y);
+            Assert.Equal(3,third.X);
+            Assert.Equal(3,third.Y);
+            Assert.Equal(IntPtr.Zero,ptr4);
             
             Marshal.FreeHGlobal(actual);
         }
         
-        [TestMethod]
+        [Fact]
         public void MarshalUtils_StructureArrayToPtr_LDAPMod()
         {
             var val = new List<string> { "test","other","third", null};
@@ -117,7 +116,7 @@ namespace LdapForNetTests.Utils
             };
             var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Count+1));
             MarshalUtils.StructureArrayToPtr(data,actual, true);
-            Assert.AreNotEqual(IntPtr.Zero, actual);
+            Assert.NotEqual(IntPtr.Zero, actual);
 
             var ptr1 = Marshal.ReadIntPtr(actual);
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
@@ -134,15 +133,15 @@ namespace LdapForNetTests.Utils
             var valSecond = Marshal.PtrToStringAnsi(valPtr2);
             var valThird = Marshal.PtrToStringAnsi(valPtr3);
                 
-            Assert.AreEqual(0,first.mod_op);
-            Assert.AreEqual("test",first.mod_type);
-            Assert.AreEqual("test",valFirst);
-            Assert.AreEqual("other",valSecond);
-            Assert.AreEqual("third",valThird);
-            Assert.AreEqual(0,second.mod_op);
-            Assert.AreEqual("test2",second.mod_type);
-            Assert.AreEqual(IntPtr.Zero,second.mod_vals_u.modv_strvals);
-            Assert.AreEqual(IntPtr.Zero,ptr3);
+            Assert.Equal(0,first.mod_op);
+            Assert.Equal("test",first.mod_type);
+            Assert.Equal("test",valFirst);
+            Assert.Equal("other",valSecond);
+            Assert.Equal("third",valThird);
+            Assert.Equal(0,second.mod_op);
+            Assert.Equal("test2",second.mod_type);
+            Assert.Equal(IntPtr.Zero,second.mod_vals_u.modv_strvals);
+            Assert.Equal(IntPtr.Zero,ptr3);
             
             Marshal.FreeHGlobal(actual);
             Marshal.FreeHGlobal(valPtr);

@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using LdapForNet;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using static LdapForNet.Native.Native;
 
 namespace LdapForNetTests
 {
-    [TestClass]
     public class LdapConnectionTests
     {
-        [TestMethod]
+        [Fact]
         public void LdapConnection_Search_Return_LdapEntries_List()
         {
             using (var connection = new LdapConnection())
@@ -18,61 +18,78 @@ namespace LdapForNetTests
                 connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=admin))");
-                Assert.IsTrue(entries.Count == 1);
-                Assert.AreEqual(Config.LdapUserDn, entries[0].Dn);
-                Assert.AreEqual("admin", entries[0].Attributes["cn"][0]);
-                Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
+                Assert.True(entries.Count == 1);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
+        public async Task LdapConnection_SearchAsync_Return_LdapEntries_List()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=admin))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
 
         
-        [TestMethod]
-        [ExpectedException(typeof(LdapException))]
+        [Fact]
         public void LdapConnection_Search_Throw_LdapException_If_Server_Unavailable()
         {
             using (var connection = new LdapConnection())
             {
                 connection.Connect("someunknown.host");
-                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                Assert.Throws<LdapException>(() =>
+                    connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword));
             }
         }
         
-        [TestMethod]
-        [ExpectedException(typeof(LdapException))]
+        [Fact]
         public void LdapConnection_Search_Throw_LdapException_If_Search_Syntax_Wrong()
         {
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost);
+                connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)");
+                Assert.Throws<LdapException>(()=>connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
             }
         }
         
-        [TestMethod]
-        [ExpectedException(typeof(LdapException))]
+        [Fact]
         public void LdapConnection_Search_Throw_LdapException_If_Not_Called_Connect_Method()
         {
             using (var connection = new LdapConnection())
             {
-                connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                connection.Search("dc=example,dc=com", "(objectclass=top)");
+                Assert.Throws<LdapException>(()=>
+                    {
+                        connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                        return connection.Search("dc=example,dc=com", "(objectclass=top)");
+                    })
+                ;
             }
         }
         
-        [TestMethod]
-        [ExpectedException(typeof(LdapException))]
+        [Fact]
         public void LdapConnection_Search_Throw_LdapException_If_Not_Called_Bind_Method()
         {
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost);
-                connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)");
+                Assert.Throws<LdapException>(()=>
+                connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
             }
         }
 
 
-        [TestMethod]
+        [Fact]
         public void LdapConnection_Add_Modify_Delete()
         {
             try
@@ -88,7 +105,7 @@ namespace LdapForNetTests
             DeleteLdapEntry();                
         }
 
-        [TestMethod]
+        [Fact]
         public void LdapConnection_Rename_Entry_Dn()
         {
             var cn = Guid.NewGuid().ToString();
@@ -111,12 +128,12 @@ namespace LdapForNetTests
                 });
                 connection.Rename(dn, newRdn, null, true);
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={cn}))");
-                Assert.IsTrue(entries.Count == 0);
+                Assert.True(entries.Count == 0);
                 
                 var actual = connection.Search(Config.RootDn, $"(&(objectclass=top)({newRdn}))");
-                Assert.IsTrue(actual.Count == 1);
+                Assert.True(actual.Count == 1);
                 
-                Assert.AreEqual($"{newRdn},{Config.RootDn}", actual[0].Dn);
+                Assert.Equal($"{newRdn},{Config.RootDn}", actual[0].Dn);
                 
                 connection.Delete($"{newRdn},{Config.RootDn}");
             }
@@ -140,10 +157,10 @@ namespace LdapForNetTests
                     }
                 });
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=test))");
-                Assert.IsTrue(entries.Count == 1);
-                Assert.AreEqual($"cn=test,{Config.RootDn}", entries[0].Dn);
-                Assert.AreEqual("test_value", entries[0].Attributes["givenName"][0]);
-                Assert.IsTrue(entries[0].Attributes["objectClass"].Any());
+                Assert.True(entries.Count == 1);
+                Assert.Equal($"cn=test,{Config.RootDn}", entries[0].Dn);
+                Assert.Equal("test_value", entries[0].Attributes["givenName"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
         
@@ -185,13 +202,13 @@ namespace LdapForNetTests
                     }
                 });
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=test))");
-                Assert.IsTrue(entries.Count == 1);
-                Assert.AreEqual($"cn=test,{Config.RootDn}", entries[0].Dn);
-                Assert.AreEqual("test_value_2", entries[0].Attributes["givenName"][0]);
-                Assert.AreEqual("test_display_name", entries[0].Attributes["displayName"][0]);
-                Assert.AreEqual("Winston", entries[0].Attributes["sn"][0]);
-                Assert.AreEqual("test", entries[0].Attributes["sn"][1]);
-                Assert.IsFalse(entries[0].Attributes.ContainsKey("description"));
+                Assert.True(entries.Count == 1);
+                Assert.Equal($"cn=test,{Config.RootDn}", entries[0].Dn);
+                Assert.Equal("test_value_2", entries[0].Attributes["givenName"][0]);
+                Assert.Equal("test_display_name", entries[0].Attributes["displayName"][0]);
+                Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
+                Assert.Equal("test", entries[0].Attributes["sn"][1]);
+                Assert.False(entries[0].Attributes.ContainsKey("description"));
             }
         }
 
@@ -203,7 +220,7 @@ namespace LdapForNetTests
                 connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
                 connection.Delete($"cn=test,{Config.RootDn}");
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=test))");
-                Assert.IsTrue(entries.Count == 0);
+                Assert.True(entries.Count == 0);
             }
         }
     }
