@@ -396,6 +396,33 @@ namespace LdapForNet
                 Trace.TraceError(message);
             }
         }
+
+        private static LdapOperation GetLdapOperation(DirectoryRequest request)
+        {
+            LdapOperation operation;
+            switch (request)
+            {
+                case DeleteRequest _:
+                    operation = LdapOperation.LdapDelete;
+                    break;
+                case AddRequest _:
+                    operation = LdapOperation.LdapAdd;
+                    break;
+                case ModifyRequest _:
+                    operation = LdapOperation.LdapModify;
+                    break;
+                case SearchRequest _:
+                    operation = LdapOperation.LdapSearch;
+                    break;
+                case ModifyDNRequest _:
+                    operation = LdapOperation.LdapModifyDn;
+                    break;
+                default:
+                    throw new LdapException($"Unknown ldap operation for {request.GetType()}");
+            }
+            
+            return operation;
+        }
     }
 
     public class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -245,6 +246,60 @@ namespace LdapForNet
             }
         }
 
+        public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default)
+        {
+            ThrowIfNotBound();
+            var operation = GetLdapOperation(directoryRequest);
+            var requestHandler = GetSendRequestHandler(operation);
+            var messageId = 0;
+            var res = requestHandler.SendRequest(_ld, directoryRequest, ref messageId);
+            return await Task.Factory.StartNew(() =>
+            {
+                var status = LdapResultCompleteStatus.Unknown;
+                var msg = Marshal.AllocHGlobal(IntPtr.Size);
+
+                DirectoryResponse response = default;
+
+                while ( status != LdapResultCompleteStatus.Complete || !token.IsCancellationRequested)
+                {
+                    var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
+                    
+                    status = requestHandler.Handle(_ld, resType, msg, out response);
+                    if (status == LdapResultCompleteStatus.Unknown)
+                    {
+                        throw new LdapException($"Unknown search type {resType}",nameof(ldap_result),1);
+                    }
+                }
+                return response;
+            }, token).ConfigureAwait(false);
+        }
+
+        private IRequestHandler GetSendRequestHandler(LdapOperation operation)
+        {
+            switch (operation)
+            {
+                case LdapOperation.LdapAdd:
+                    
+                    break;
+                case LdapOperation.LdapModify:
+                    break;
+                case LdapOperation.LdapSearch:
+                    return new SearchRequestHandler();
+                    break;
+                case LdapOperation.LdapDelete:
+                    break;
+                case LdapOperation.LdapModifyDn:
+                    break;
+                case LdapOperation.LdapCompare:
+                    break;
+                case LdapOperation.LdapExtendedRequest:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+            }
+            throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+        }
+
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default)
         {
             ThrowIfNotBound();
@@ -383,5 +438,16 @@ namespace LdapForNet
                 IntPtr.Zero 
             ), nameof(ldap_rename_s));
         }
+    }
+    
+    internal enum LdapOperation
+    {
+        LdapAdd = 0,
+        LdapModify = 1,
+        LdapSearch = 2,
+        LdapDelete = 3,
+        LdapModifyDn = 4,
+        LdapCompare = 5,
+        LdapExtendedRequest = 6
     }
 }
