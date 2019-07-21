@@ -294,7 +294,7 @@ namespace LdapForNet
                         case LdapResultType.LDAP_RES_INTERMEDIATE:
                             //not implemented
                             break;
-                        case LdapResultType.LDAP_RES_SEARCH_RESULT:
+                        case LdapResultType.LDAP_RES_ADD:
                             finished = true;
                             break;
                         default:
