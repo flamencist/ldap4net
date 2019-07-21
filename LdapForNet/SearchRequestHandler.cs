@@ -16,7 +16,7 @@ namespace LdapForNet
 
     internal class SearchRequestHandler : IRequestHandler
     {
-        private SearchResponse _response = new SearchResponse();
+        private readonly SearchResponse _response = new SearchResponse();
         public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is SearchRequest searchRequest)
@@ -106,11 +106,4 @@ namespace LdapForNet
 
 
     }
-
-    internal enum LdapResultCompleteStatus
-    {
-        Unknown=0,
-        Complete=1,
-        Partial=2
-    } 
 }
