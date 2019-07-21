@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
@@ -203,8 +204,6 @@ namespace LdapForNet
                     }
                     
                 }
-                
-                
 
                 return ldapEntries;
             });
@@ -244,6 +243,67 @@ namespace LdapForNet
                 Marshal.FreeHGlobal(ptr);
                 attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
             }
+        }
+
+        public async Task AddAsync(LdapEntry entry, CancellationToken token = default)
+        {
+            ThrowIfNotBound();
+            if (string.IsNullOrWhiteSpace(entry.Dn))
+            {
+                throw new ArgumentNullException(nameof(entry.Dn));
+            }
+
+            if (entry.Attributes == null)
+            {
+                entry.Attributes = new Dictionary<string, List<string>>();
+            }
+
+            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
+
+            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
+            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
+
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            var task = Task.Factory.StartNew(()=>
+            {
+                var msgid = 0;
+                ThrowIfError(_ld, ldap_add_ext(_ld,
+                    entry.Dn,
+                    ptr,                
+                    IntPtr.Zero, 
+                    IntPtr.Zero ,
+                    ref msgid
+                ), nameof(ldap_add_ext));
+                
+                var msg = Marshal.AllocHGlobal(IntPtr.Size);
+                var finished = false;
+                while (!finished || !token.IsCancellationRequested)
+                {
+                    var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
+                    switch (resType)
+                    {
+                        case LdapResultType.LDAP_ERROR:
+                            ThrowIfError(1, nameof(ldap_add_ext));
+                            break;   
+                        case LdapResultType.LDAP_TIMEOUT:
+                            throw new LdapException("Timeout exceeded",nameof(ldap_result),1);
+                        case LdapResultType.LDAP_RES_EXTENDED:
+                        case LdapResultType.LDAP_RES_INTERMEDIATE:
+                            //not implemented
+                            break;
+                        case LdapResultType.LDAP_RES_SEARCH_RESULT:
+                            finished = true;
+                            break;
+                        default:
+                            throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
+                    }
+                    
+                }
+            }, token);
+            await task.ConfigureAwait(false);
         }
 
         public void Modify(LdapModifyEntry entry)

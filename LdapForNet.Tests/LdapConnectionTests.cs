@@ -104,6 +104,59 @@ namespace LdapForNetTests
             ModifyLdapEntry();
             DeleteLdapEntry();                
         }
+        
+        
+        [Fact]
+        public async Task LdapConnection_Add_Modify_Delete_Async()
+        {
+            try
+            {
+                await DeleteLdapEntryAsync();
+            }
+            catch
+            {
+                //no catch
+            }
+            await AddLdapEntryAsync();
+            await ModifyLdapEntryAsync();
+            await DeleteLdapEntryAsync();                    
+        }
+
+        private async Task ModifyLdapEntryAsync()
+        {
+            //throw new NotImplementedException();
+        }
+
+        private async Task AddLdapEntryAsync()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                await connection.AddAsync(new LdapEntry
+                {
+                    Dn = $"cn=asyncTest,{Config.RootDn}",
+                    Attributes = new Dictionary<string, List<string>>
+                    {
+                        {"sn", new List<string> {"Winston"}},
+                        {"objectclass", new List<string> {"inetOrgPerson"}},
+                        {"givenName", new List<string> {"test_value"}},
+                        {"description", new List<string> {"test_value"}}
+                    }
+                });
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
+                Assert.Equal("test_value", entries[0].Attributes["givenName"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+
+        private async Task DeleteLdapEntryAsync()
+        {
+            //throw new NotImplementedException();
+        }
+
 
         [Fact]
         public void LdapConnection_Rename_Entry_Dn()

@@ -15,6 +15,23 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
 
+
+        /// <summary>
+        /// ldap_sasl_bind <a href="https://linux.die.net/man/3/ldap_sasl_bind">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="mechanism">const char           *mechanism</param>
+        /// <param name="cred">const struct berval  *cred</param>
+        /// <param name="serverctrls">LDAPControl         **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl         **clientctrls</param>
+        /// <param name="msgidp">int *msgidp</param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_sasl_bind(SafeHandle ld, string dn, string mechanism,
+            IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        
+        
         /// <summary>
         /// ldap_sasl_interactive_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind_s">Documentation</a>
         /// </summary>
@@ -53,22 +70,6 @@ namespace LdapForNet.Native
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults, IntPtr result, ref IntPtr rmech, ref int msgid);
         
 
-        /// <summary>
-        /// ldap_sasl_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind">Documentation</a>
-        /// </summary>
-        /// <param name="ld">LDAP *ld</param>
-        /// <param name="dn">const char           *dn</param>
-        /// <param name="mechanism">const char           *mechanism</param>
-        /// <param name="cred">const struct berval  *cred</param>
-        /// <param name="serverctrls">LDAPControl         **serverctrls</param>
-        /// <param name="clientctrls">LDAPControl         **clientctrls</param>
-        /// <param name="msgidp">int *msgidp</param>
-        /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_sasl_bind(SafeHandle ld, string dn, string mechanism,
-            IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
-       
-        
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_set_option(SafeHandle ld, int option, [In] ref int invalue);
 
@@ -87,6 +88,9 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_unbind_s(IntPtr ld);
 
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_unbind(IntPtr ld);
+        
         /// <summary>
         /// ldap_search_ext_s <a href="https://linux.die.net/man/3/ldap_search_ext_s">Documentation</a>
         /// </summary>
@@ -126,7 +130,7 @@ namespace LdapForNet.Native
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
 
         /// <summary>
-        /// ldap_search_ext_s <a href="https://linux.die.net/man/3/ldap_result">Documentation</a>
+        /// ldap_result <a href="https://linux.die.net/man/3/ldap_result">Documentation</a>
         /// </summary>
         /// <param name="ld">LDAP *ld</param>
         /// <param name="msgid">int msgid</param>
@@ -155,7 +159,6 @@ namespace LdapForNet.Native
             ldap_memfree(ptr);
             return info;
         }
-
 
         
         [DllImport(LIB_LDAP_PATH)]
@@ -205,7 +208,20 @@ namespace LdapForNet.Native
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_add_ext_s(SafeHandle ld, string dn, IntPtr attrs , IntPtr serverctrls, IntPtr clientctrls);
-        
+
+        /// <summary>
+        /// ldap_add_ext <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char *dn</param>
+        /// <param name="attrs">LDAPMod **attrs</param>
+        /// <param name="serverctrls">LDAPControl  **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl  **clientctrls</param>
+        /// <param name="msgidp"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_add_ext(SafeHandle ld,string dn,IntPtr attrs,IntPtr sctrls,IntPtr cctrls,ref int msgidp );
+       
         /// <summary>
         /// ldap_modify_ext_s <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>
         /// </summary>
@@ -217,6 +233,20 @@ namespace LdapForNet.Native
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_modify_ext_s(SafeHandle ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls);
+
+        /// <summary>
+        /// ldap_modify_ext <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="mods">LDAPMod *mods[]</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <param name="msgidp"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_modify_ext(SafeHandle ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+
         
         /// <summary>
         /// ldap_delete_ext_s <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>
@@ -230,6 +260,19 @@ namespace LdapForNet.Native
         public static extern int ldap_delete_ext_s(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls);
 
         /// <summary>
+        /// ldap_delete_ext <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char           *dn</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <param name="msgidp"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+
+        
+        /// <summary>
         /// ldap_compare_ext_s <a href="https://linux.die.net/man/3/ldap_compare_ext_s">Documentation</a>
         /// </summary>
         /// <param name="ld">LDAP *ld</param>
@@ -242,6 +285,22 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_compare_ext_s(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls);
 
+
+        /// <summary>
+        /// ldap_compare_ext <a href="https://linux.die.net/man/3/ldap_compare_ext_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char   *dn</param>
+        /// <param name="attr">char *attr</param>
+        /// <param name="bvalue">const struct berval  *bvalue</param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <param name="msgidp"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+
+        
         /// <summary>
         /// ldap_rename_s <a href="https://linux.die.net/man/3/ldap_rename_s">Documentation</a>
         /// </summary>
@@ -256,6 +315,23 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_rename_s(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls);
 
+
+        /// <summary>
+        /// ldap_rename <a href="https://linux.die.net/man/3/ldap_rename_s">Documentation</a>
+        /// </summary>
+        /// <param name="ld">LDAP *ld</param>
+        /// <param name="dn">const char   *dn</param>
+        /// <param name="newrdn">const char *newrdn</param>
+        /// <param name="deleteoldrdn"></param>
+        /// <param name="serverctrls">LDAPControl     **serverctrls</param>
+        /// <param name="clientctrls">LDAPControl     **clientctrls</param>
+        /// <param name="newparent"></param>
+        /// <param name="msgidp"></param>
+        /// <returns>result code</returns>
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+
+        
         /// <summary>
         /// ldap_is_ldap_url <a href="https://linux.die.net/man/3/ldap_is_ldap_url">Documentation</a>
         /// </summary>
