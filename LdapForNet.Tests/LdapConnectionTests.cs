@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
 using Xunit;
@@ -129,6 +130,7 @@ namespace LdapForNetTests
 
         private async Task AddLdapEntryAsync()
         {
+            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
@@ -143,7 +145,7 @@ namespace LdapForNetTests
                         {"givenName", new List<string> {"test_value"}},
                         {"description", new List<string> {"test_value"}}
                     }
-                });
+                },cts.Token);
                 var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);

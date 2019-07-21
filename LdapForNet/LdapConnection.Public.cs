@@ -252,7 +252,7 @@ namespace LdapForNet
             var operation = GetLdapOperation(directoryRequest);
             var requestHandler = GetSendRequestHandler(operation);
             var messageId = 0;
-            var res = requestHandler.SendRequest(_ld, directoryRequest, ref messageId);
+            ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),requestHandler.GetType().Name);
             return await Task.Factory.StartNew(() =>
             {
                 var status = LdapResultCompleteStatus.Unknown;
@@ -263,8 +263,10 @@ namespace LdapForNet
                 while ( status != LdapResultCompleteStatus.Complete || !token.IsCancellationRequested)
                 {
                     var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
+                    ThrowIfResultError(directoryRequest, resType);
                     
                     status = requestHandler.Handle(_ld, resType, msg, out response);
+                    
                     if (status == LdapResultCompleteStatus.Unknown)
                     {
                         throw new LdapException($"Unknown search type {resType}",nameof(ldap_result),1);
@@ -272,6 +274,18 @@ namespace LdapForNet
                 }
                 return response;
             }, token).ConfigureAwait(false);
+        }
+
+        private static void ThrowIfResultError(DirectoryRequest directoryRequest, LdapResultType resType)
+        {
+            switch (resType)
+            {
+                case LdapResultType.LDAP_ERROR:
+                    ThrowIfError(1, directoryRequest.GetType().Name);
+                    break;
+                case LdapResultType.LDAP_TIMEOUT:
+                    throw new LdapException("Timeout exceeded", nameof(ldap_result), 1);
+            }
         }
 
         private IRequestHandler GetSendRequestHandler(LdapOperation operation)
