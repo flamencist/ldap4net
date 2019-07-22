@@ -220,7 +220,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_add_ext(SafeHandle ld,string dn,IntPtr attrs,IntPtr sctrls,IntPtr cctrls,ref int msgidp );
+        public static extern int ldap_add_ext(SafeHandle ld,string dn,IntPtr attrs,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
        
         /// <summary>
         /// ldap_modify_ext_s <a href="https://linux.die.net/man/3/ldap_modify_s">Documentation</a>

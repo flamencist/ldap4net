@@ -260,7 +260,7 @@ namespace LdapForNet
 
                 DirectoryResponse response = default;
 
-                while ( status != LdapResultCompleteStatus.Complete || !token.IsCancellationRequested)
+                while ( status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
                 {
                     var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
                     ThrowIfResultError(directoryRequest, resType);
@@ -352,6 +352,7 @@ namespace LdapForNet
                 while (!finished && !token.IsCancellationRequested)
                 {
                     var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
+                    
                     switch (resType)
                     {
                         case LdapResultType.LDAP_ERROR:
@@ -364,14 +365,22 @@ namespace LdapForNet
                             //not implemented
                             break;
                         case LdapResultType.LDAP_RES_ADD:
+                            
                             finished = true;
+                            var matchedMessage = string.Empty;
+                            var errorMessage = string.Empty;
+                            var resTypeInt = (int) resType;
+                            var referrals = IntPtr.Zero;
+                            var serverctrls = IntPtr.Zero;
+                            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref resTypeInt, ref matchedMessage, ref errorMessage,
+                                ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
                             break;
                         default:
                             throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
                     }
                     
                 }
-                Console.WriteLine("task");
+                Marshal.FreeHGlobal(msg);
             }, token);
             await task;
         }
