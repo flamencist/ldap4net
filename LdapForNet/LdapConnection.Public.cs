@@ -199,6 +199,7 @@ namespace LdapForNet
                             break;
                         case LdapResultType.LDAP_RES_SEARCH_RESULT:
                             finished = true;
+                            ThrowIfParseResultError(msg);
                             break;
                         default:
                             throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
@@ -367,18 +368,7 @@ namespace LdapForNet
                         case LdapResultType.LDAP_RES_ADD:
                             
                             finished = true;
-                            var matchedMessage = string.Empty;
-                            var errorMessage = string.Empty;
-                            var resTypeInt = (int) resType;
-                            var referrals = IntPtr.Zero;
-                            var serverctrls = IntPtr.Zero;
-                            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref resTypeInt, ref matchedMessage, ref errorMessage,
-                                ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
-                            ThrowIfError(_ld, resTypeInt, nameof(ldap_add_ext), new Dictionary<string, string>
-                            {
-                                [nameof(errorMessage)]=errorMessage,
-                                [nameof(matchedMessage)]=matchedMessage
-                            });
+                            ThrowIfParseResultError(msg);
 
                             break;
                         default:
@@ -388,6 +378,22 @@ namespace LdapForNet
                 }
             }, token);
             await task;
+        }
+
+        private void ThrowIfParseResultError(IntPtr msg)
+        {
+            var matchedMessage = string.Empty;
+            var errorMessage = string.Empty;
+            var resTypeInt = 0;
+            var referrals = IntPtr.Zero;
+            var serverctrls = IntPtr.Zero;
+            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref resTypeInt, ref matchedMessage, ref errorMessage,
+                ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
+            ThrowIfError(_ld, resTypeInt, nameof(ldap_parse_result), new Dictionary<string, string>
+            {
+                [nameof(errorMessage)] = errorMessage,
+                [nameof(matchedMessage)] = matchedMessage
+            });
         }
 
         public void Modify(LdapModifyEntry entry)
