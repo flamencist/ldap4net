@@ -60,25 +60,15 @@ namespace LdapForNet
     public class SearchRequest : DirectoryRequest
     {
 
-        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope, params string[] attributeList)
+        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope)
         {
             DistinguishedName = distinguishedName;
-
-            if (attributeList != null)
-            {
-                for (int i = 0; i < attributeList.Length; i++)
-                {
-                    Attributes.Add(attributeList[i]);
-                }
-            }
-
             Scope = searchScope;
             Filter = ldapFilter;
         }
 
         public string DistinguishedName { get; set; }
 
-        public StringCollection Attributes { get; } = new StringCollection();
 
         public string Filter
         {

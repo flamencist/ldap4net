@@ -138,6 +138,13 @@ namespace LdapForNet
             return ldapEntries;
         }
 
+        public async Task<IList<LdapEntry>> SearchAsync2(string @base, string filter,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            var response = (SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope));
+            return response.Entries;
+        }
+
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             ThrowIfNotBound();
@@ -250,10 +257,16 @@ namespace LdapForNet
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default)
         {
             ThrowIfNotBound();
+            if (token.IsCancellationRequested)
+            {
+                return default;
+            }
+            
             var operation = GetLdapOperation(directoryRequest);
             var requestHandler = GetSendRequestHandler(operation);
             var messageId = 0;
             ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),requestHandler.GetType().Name);
+            
             return await Task.Factory.StartNew(() =>
             {
                 var status = LdapResultCompleteStatus.Unknown;
@@ -320,75 +333,7 @@ namespace LdapForNet
             throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
         }
 
-        public async Task AddAsync2(LdapEntry entry, CancellationToken token = default)
-        {
-            await SendRequestAsync(new AddRequest(entry), token);
-        }
-        
-        public async Task AddAsync(LdapEntry entry, CancellationToken token = default)
-        {
-            ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(entry.Dn))
-            {
-                throw new ArgumentNullException(nameof(entry.Dn));
-            }
-
-            if (entry.Attributes == null)
-            {
-                entry.Attributes = new Dictionary<string, List<string>>();
-            }
-
-            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
-
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
-
-            if (token.IsCancellationRequested)
-            {
-                return;
-            }
-            var task = Task.Factory.StartNew(()=>
-            {
-                var msgid = 0;
-                ThrowIfError(_ld, ldap_add_ext(_ld,
-                    entry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero ,
-                    ref msgid
-                ), nameof(ldap_add_ext));
-                
-                var msg = Marshal.AllocHGlobal(IntPtr.Size);
-                var finished = false;
-                while (!finished && !token.IsCancellationRequested)
-                {
-                    var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
-                    
-                    switch (resType)
-                    {
-                        case LdapResultType.LDAP_ERROR:
-                            ThrowIfError(1, nameof(ldap_add_ext));
-                            break;   
-                        case LdapResultType.LDAP_TIMEOUT:
-                            throw new LdapException("Timeout exceeded",nameof(ldap_result),1);
-                        case LdapResultType.LDAP_RES_EXTENDED:
-                        case LdapResultType.LDAP_RES_INTERMEDIATE:
-                            //not implemented
-                            break;
-                        case LdapResultType.LDAP_RES_ADD:
-                            
-                            finished = true;
-                            ThrowIfParseResultError(msg);
-
-                            break;
-                        default:
-                            throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
-                    }
-                    
-                }
-            }, token);
-            await task;
-        }
+        public async Task AddAsync(LdapEntry entry, CancellationToken token = default) => await SendRequestAsync(new AddRequest(entry), token);
 
         private void ThrowIfParseResultError(IntPtr msg)
         {
