@@ -33,7 +33,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost,Config.LdapPort);
                 await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                var entries = await connection.SearchAsync2(Config.RootDn, "(&(objectclass=top)(cn=admin))");
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=admin))");
                 Assert.True(entries.Count == 1);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
