@@ -349,7 +349,7 @@ namespace LdapForNet
                 
                 var msg = Marshal.AllocHGlobal(IntPtr.Size);
                 var finished = false;
-                while (!finished || !token.IsCancellationRequested)
+                while (!finished && !token.IsCancellationRequested)
                 {
                     var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
                     switch (resType)
@@ -371,8 +371,9 @@ namespace LdapForNet
                     }
                     
                 }
+                Console.WriteLine("task");
             }, token);
-            await task.ConfigureAwait(false);
+            await task;
         }
 
         public void Modify(LdapModifyEntry entry)
