@@ -374,13 +374,18 @@ namespace LdapForNet
                             var serverctrls = IntPtr.Zero;
                             ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref resTypeInt, ref matchedMessage, ref errorMessage,
                                 ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
+                            ThrowIfError(_ld, resTypeInt, nameof(ldap_add_ext), new Dictionary<string, string>
+                            {
+                                [nameof(errorMessage)]=errorMessage,
+                                [nameof(matchedMessage)]=matchedMessage
+                            });
+
                             break;
                         default:
                             throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
                     }
                     
                 }
-                Marshal.FreeHGlobal(msg);
             }, token);
             await task;
         }
