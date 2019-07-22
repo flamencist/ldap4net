@@ -40,7 +40,6 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
-
         
         [Fact]
         public void LdapConnection_Search_Throw_LdapException_If_Server_Unavailable()

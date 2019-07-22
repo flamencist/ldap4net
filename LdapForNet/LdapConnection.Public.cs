@@ -183,43 +183,62 @@ namespace LdapForNet
 
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default)
         {
-            ThrowIfNotBound();
             if (token.IsCancellationRequested)
             {
                 return default;
             }
+
+            ThrowIfNotBound();
             
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+
+            return await Task.Factory.StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token).ConfigureAwait(false);
+        }
+
+        public DirectoryResponse SendRequest(DirectoryRequest directoryRequest)
+        {
+            ThrowIfNotBound();
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+            return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+        }
+
+        private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
+            IRequestHandler requestHandler, int messageId,
+            CancellationToken token)
+        {
+            var status = LdapResultCompleteStatus.Unknown;
+            var msg = Marshal.AllocHGlobal(IntPtr.Size);
+
+            DirectoryResponse response = default;
+
+            while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
+            {
+                var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
+                ThrowIfResultError(directoryRequest, resType);
+
+                status = requestHandler.Handle(_ld, resType, msg, out response);
+
+                if (status == LdapResultCompleteStatus.Unknown)
+                {
+                    throw new LdapException($"Unknown search type {resType}", nameof(ldap_result), 1);
+                }
+
+                if (status == LdapResultCompleteStatus.Complete)
+                {
+                    ThrowIfParseResultError(msg);
+                }
+            }
+
+            return response;
+        }
+
+        private IRequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
+        {
             var operation = GetLdapOperation(directoryRequest);
             var requestHandler = GetSendRequestHandler(operation);
-            var messageId = 0;
-            ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),requestHandler.GetType().Name);
-            
-            return await Task.Factory.StartNew(() =>
-            {
-                var status = LdapResultCompleteStatus.Unknown;
-                var msg = Marshal.AllocHGlobal(IntPtr.Size);
-
-                DirectoryResponse response = default;
-
-                while ( status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
-                {
-                    var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
-                    ThrowIfResultError(directoryRequest, resType);
-                    
-                    status = requestHandler.Handle(_ld, resType, msg, out response);
-                    
-                    if (status == LdapResultCompleteStatus.Unknown)
-                    {
-                        throw new LdapException($"Unknown search type {resType}",nameof(ldap_result),1);
-                    }
-
-                    if (status == LdapResultCompleteStatus.Complete)
-                    {
-                        ThrowIfParseResultError(msg);
-                    }
-                }
-                return response;
-            }, token).ConfigureAwait(false);
+            messageId = 0;
+            ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId), requestHandler.GetType().Name);
+            return requestHandler;
         }
 
         private static void ThrowIfResultError(DirectoryRequest directoryRequest, LdapResultType resType)
