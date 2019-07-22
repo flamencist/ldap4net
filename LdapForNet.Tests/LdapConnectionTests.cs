@@ -135,7 +135,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
                 await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
-                await connection.AddAsync(new LdapEntry
+                await connection.AddAsync2(new LdapEntry
                 {
                     Dn = $"cn=asyncTest,{Config.RootDn}",
                     Attributes = new Dictionary<string, List<string>>

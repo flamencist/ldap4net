@@ -272,6 +272,11 @@ namespace LdapForNet
                     {
                         throw new LdapException($"Unknown search type {resType}",nameof(ldap_result),1);
                     }
+
+                    if (status == LdapResultCompleteStatus.Complete)
+                    {
+                        ThrowIfParseResultError(msg);
+                    }
                 }
                 return response;
             }, token).ConfigureAwait(false);
@@ -294,7 +299,7 @@ namespace LdapForNet
             switch (operation)
             {
                 case LdapOperation.LdapAdd:
-                    
+                    return new AddRequestHandler();
                     break;
                 case LdapOperation.LdapModify:
                     break;
@@ -315,6 +320,11 @@ namespace LdapForNet
             throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
         }
 
+        public async Task AddAsync2(LdapEntry entry, CancellationToken token = default)
+        {
+            await SendRequestAsync(new AddRequest(entry), token);
+        }
+        
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default)
         {
             ThrowIfNotBound();

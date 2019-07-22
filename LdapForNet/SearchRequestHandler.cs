@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
@@ -102,6 +103,91 @@ namespace LdapForNet
             var dn = Marshal.PtrToStringAnsi(ptr);
             ldap_memfree(ptr);
             return dn;
+        }
+
+
+    }
+
+    internal class AddRequestHandler : IRequestHandler
+    {
+        public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        {
+            if (request is AddRequest addRequest)
+            {
+                var entry = addRequest.LdapEntry;
+                if (string.IsNullOrWhiteSpace(entry.Dn))
+                {
+                    throw new ArgumentNullException(nameof(entry.Dn));
+                }
+
+                if (entry.Attributes == null)
+                {
+                    entry.Attributes = new Dictionary<string, List<string>>();
+                }
+
+                var attrs = entry.Attributes.Select(ToLdapMod).ToList();
+
+                var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
+                MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
+
+                return ldap_add_ext(handle,
+                    addRequest.LdapEntry.Dn,
+                    ptr,                
+                    IntPtr.Zero, 
+                    IntPtr.Zero ,
+                    ref messageId
+                );    
+            }
+
+            return 0;
+
+        }
+
+        public LdapResultCompleteStatus Handle(SafeHandle handle, LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        {
+            response = default;
+            switch (resType)
+            {
+                case LdapResultType.LDAP_RES_ADD:
+                    response = new AddResponse();
+                    return LdapResultCompleteStatus.Complete;
+                default:
+                    return LdapResultCompleteStatus.Unknown;
+            }
+        }
+        
+        private static LDAPMod ToLdapMod(KeyValuePair<string, List<string>> attribute)
+        {
+            return ToLdapMod(new LdapModifyAttribute
+            {
+                Type = attribute.Key,
+                LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+                Values = attribute.Value
+            });
+        }
+        
+        private static LDAPMod ToLdapMod(LdapModifyAttribute attribute)
+        {
+            var modValue = GetModValue(attribute.Values);
+            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count));
+            MarshalUtils.StringArrayToPtr(modValue, modValuePtr);
+            return new LDAPMod
+            {
+                mod_op = (int) attribute.LdapModOperation,
+                mod_type = attribute.Type,
+                mod_vals_u = new LDAPMod.mod_vals
+                {
+                    modv_strvals = modValuePtr,
+                },
+                mod_next = IntPtr.Zero
+            };
+        }
+        
+        private static List<string> GetModValue(List<string> values)
+        {
+            var res = values??new List<string>();
+            res.Add(null);
+            return res;
         }
 
 
