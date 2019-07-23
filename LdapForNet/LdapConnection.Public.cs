@@ -106,47 +106,13 @@ namespace LdapForNet
         }
         
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
-            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE, CancellationToken token = default)
         {
-            var response = (SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope));
+            var response = (SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
             return response.Entries;
         }
 
-        
-        public void Add(LdapEntry entry)
-        {
-            ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(entry.Dn))
-            {
-                throw new ArgumentNullException(nameof(entry.Dn));
-            }
-
-            if (entry.Attributes == null)
-            {
-                entry.Attributes = new Dictionary<string, List<string>>();
-            }
-
-            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
-            
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
-
-            try
-            {
-                ThrowIfError(_ld, ldap_add_ext_s(_ld,
-                    entry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero 
-                ), nameof(ldap_add_ext_s));
-
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(ptr);
-                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
-            }
-        }
+        public void Add(LdapEntry entry) => SendRequest(new AddRequest(entry));
 
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default)
         {
@@ -226,24 +192,21 @@ namespace LdapForNet
             {
                 case LdapOperation.LdapAdd:
                     return new AddRequestHandler();
-                    break;
                 case LdapOperation.LdapModify:
-                    break;
+                    return new ModifyRequestHandler();
                 case LdapOperation.LdapSearch:
                     return new SearchRequestHandler();
-                    break;
                 case LdapOperation.LdapDelete:
-                    break;
-                case LdapOperation.LdapModifyDn:
-                    break;
-                case LdapOperation.LdapCompare:
-                    break;
-                case LdapOperation.LdapExtendedRequest:
-                    break;
+                    return new DeleteRequestHandler();
+//                case LdapOperation.LdapModifyDn:
+//                    break;
+//                case LdapOperation.LdapCompare:
+//                    break;
+//                case LdapOperation.LdapExtendedRequest:
+//                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+                    throw new LdapException("Not supported operation: " + operation.ToString());
             }
-            throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
         }
 
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) => await SendRequestAsync(new AddRequest(entry), token);
@@ -264,41 +227,10 @@ namespace LdapForNet
             });
         }
 
-        public void Modify(LdapModifyEntry entry)
-        {
-            ThrowIfNotBound();
-            
-            if (string.IsNullOrWhiteSpace(entry.Dn))
-            {
-                throw new ArgumentNullException(nameof(entry.Dn));
-            }
-            
-            if (entry.Attributes == null)
-            {
-                entry.Attributes = new List<LdapModifyAttribute>();
-            }
-            
-            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
-            
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => await SendRequestAsync(new ModifyRequest(entry), token);
 
-            try
-            {
-                ThrowIfError(_ld, ldap_modify_ext_s(_ld,
-                    entry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero 
-                ), nameof(ldap_modify_ext_s));
+        public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
 
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(ptr);
-                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
-            }
-        }
 
         public void Dispose()
         {
@@ -311,20 +243,9 @@ namespace LdapForNet
         }
 
 
-        public void Delete(string dn)
-        {
-            ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(dn))
-            {
-                throw new ArgumentNullException(nameof(dn));
-            }
-            ThrowIfError(_ld, ldap_delete_ext_s(_ld,
-                dn,
-                IntPtr.Zero, 
-                IntPtr.Zero 
-            ), nameof(ldap_delete_ext_s));
-        }
-
+        public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) => await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
+        public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
+        
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn)
         {
             ThrowIfNotBound();

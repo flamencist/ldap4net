@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LdapForNet.Utils;
 using Microsoft.Win32.SafeHandles;
 using static LdapForNet.Native.Native;
 
@@ -14,41 +12,6 @@ namespace LdapForNet
     {
         private SafeHandle _ld;
         private bool _bound;
-        
-        
-        private static List<string> GetModValue(List<string> values)
-        {
-            var res = values??new List<string>();
-            res.Add(null);
-            return res;
-        }
-        
-        private static LDAPMod ToLdapMod(KeyValuePair<string, List<string>> attribute)
-        {
-            return ToLdapMod(new LdapModifyAttribute
-            {
-                Type = attribute.Key,
-                LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
-                Values = attribute.Value
-            });
-        }
-        
-        private static LDAPMod ToLdapMod(LdapModifyAttribute attribute)
-        {
-            var modValue = GetModValue(attribute.Values);
-            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count));
-            MarshalUtils.StringArrayToPtr(modValue, modValuePtr);
-            return new LDAPMod
-            {
-                mod_op = (int) attribute.LdapModOperation,
-                mod_type = attribute.Type,
-                mod_vals_u = new LDAPMod.mod_vals
-                {
-                    modv_strvals = modValuePtr,
-                },
-                mod_next = IntPtr.Zero
-            };
-        }
         
         private void GssApiBind()
         {
@@ -256,34 +219,6 @@ namespace LdapForNet
             }).ConfigureAwait(false);
         }
         
-        private void ParseBindResult(IntPtr result)
-        {
-            var err = 0;
-            var matched = (string) null;
-            var info = (string) null;
-            var refs = IntPtr.Zero;
-            var serverCtrls = IntPtr.Zero;
-            var res = ldap_parse_result(_ld, result, ref err, ref matched, ref info, ref refs, ref serverCtrls, 1);
-            ThrowIfError(_ld, res, nameof(ldap_parse_result), new Dictionary<string, string>
-            {
-                [nameof(err)] = err.ToString(),
-                [nameof(info)] = info,
-            });
-        }
-
-        private static IEnumerable<LdapEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
-        {
-            for (var entry = ldap_first_entry(ld, msg); entry != IntPtr.Zero;
-                entry = ldap_next_entry(ld, entry))
-            {
-                yield return new LdapEntry
-                {
-                    Dn = GetLdapDn(ld, entry),
-                    Attributes = GetLdapAttributes(ld, entry, ref ber)
-                };
-            }
-        }
-
         private static IEnumerable<LdapEntry> GetLdapReferences(SafeHandle ld, IntPtr msg)
         {
             string[] refs = null;
@@ -303,38 +238,6 @@ namespace LdapForNet
             return default;
         }
 
-        private static string GetLdapDn(SafeHandle ld, IntPtr entry)
-        {
-            var ptr = ldap_get_dn(ld, entry);
-            var dn = Marshal.PtrToStringAnsi(ptr);
-            ldap_memfree(ptr);
-            return dn;
-        }
-
-        private static Dictionary<string, List<string>> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
-        {
-            var dict = new Dictionary<string, List<string>>();
-            for (var attr = ldap_first_attribute(ld, entry, ref ber);
-                attr != IntPtr.Zero;
-                attr = ldap_next_attribute(ld, entry, ber))
-            {
-                var vals = ldap_get_values(ld, entry, attr);
-                if (vals != IntPtr.Zero)
-                {
-                    var attrName = Marshal.PtrToStringAnsi(attr);
-                    if (attrName != null)
-                    {
-                        dict.Add(attrName, MarshalUtils.PtrToStringArray(vals));
-                    }
-                    ldap_value_free(vals);
-                }
-
-                ldap_memfree(attr);
-            }
-
-            return dict;
-        }
-        
         private void ThrowIfNotInitialized()
         {
             if (_ld == null || _ld.IsInvalid)
@@ -381,19 +284,6 @@ namespace LdapForNet
                     throw new LdapException(message, method, res, DetailsToString(details));
                 }
                 throw new LdapException(message, method, res);
-            }
-        }
-
-        private static void TraceIfError(int res, string method, IDictionary<string,string> details = default)
-        {
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
-            {
-                var message = $"Error {method}: {LdapError2String(res)} ({res}).";
-                if (details != default)
-                {
-                    message += $" Details: {DetailsToString(details)}";
-                }
-                Trace.TraceError(message);
             }
         }
 

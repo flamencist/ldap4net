@@ -15,4 +15,14 @@ namespace LdapForNet
     {
         
     }
+    
+    public class ModifyResponse : DirectoryResponse
+    {
+        
+    }
+    
+    public class DeleteResponse : DirectoryResponse
+    {
+        
+    }
 }

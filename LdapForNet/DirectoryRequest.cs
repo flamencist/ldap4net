@@ -10,8 +10,6 @@ namespace LdapForNet
     
     public class DeleteRequest : DirectoryRequest
     {
-        public DeleteRequest() { }
-
         public DeleteRequest(string distinguishedName)
         {
             DistinguishedName = distinguishedName;
@@ -34,6 +32,7 @@ namespace LdapForNet
     {
         public ModifyRequest(LdapModifyEntry ldapModifyEntry)
         {
+            LdapEntry = ldapModifyEntry;
         }
         public LdapModifyEntry LdapEntry { get; set; }
     }

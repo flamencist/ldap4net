@@ -124,7 +124,50 @@ namespace LdapForNetTests
 
         private async Task ModifyLdapEntryAsync()
         {
-            //throw new NotImplementedException();
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                await connection.ModifyAsync(new LdapModifyEntry
+                {
+                    Dn = $"cn=asyncTest,{Config.RootDn}",
+                    Attributes = new List<LdapModifyAttribute>
+                    {
+                        new LdapModifyAttribute
+                        {
+                            LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+                            Type = "givenName",
+                            Values = new List<string> {"test_value_2"}
+                        },
+                        new LdapModifyAttribute
+                        {
+                            LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+                            Type = "displayName",
+                            Values = new List<string> {"test_display_name"}
+                        },
+                        new LdapModifyAttribute
+                        {
+                            LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+                            Type = "sn",
+                            Values = new List<string> {"test"}
+                        },
+                        new LdapModifyAttribute
+                        {
+                            LdapModOperation = LdapModOperation.LDAP_MOD_DELETE,
+                            Type = "description",
+                            Values = new List<string> {"test_value"}
+                        }
+                    }
+                });
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
+                Assert.Equal("test_value_2", entries[0].Attributes["givenName"][0]);
+                Assert.Equal("test_display_name", entries[0].Attributes["displayName"][0]);
+                Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
+                Assert.Equal("test", entries[0].Attributes["sn"][1]);
+                Assert.False(entries[0].Attributes.ContainsKey("description"));
+            }
         }
 
         private async Task AddLdapEntryAsync()
@@ -155,7 +198,14 @@ namespace LdapForNetTests
 
         private async Task DeleteLdapEntryAsync()
         {
-            //throw new NotImplementedException();
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                await connection.DeleteAsync($"cn=asyncTest,{Config.RootDn}");
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
+                Assert.True(entries.Count == 0);
+            }
         }
 
 
