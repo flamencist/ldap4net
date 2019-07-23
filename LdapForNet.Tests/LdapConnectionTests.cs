@@ -18,7 +18,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                var entries = connection.Search2(Config.RootDn, "(&(objectclass=top)(cn=admin))");
+                var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=admin))");
                 Assert.True(entries.Count == 1);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
@@ -71,7 +71,7 @@ namespace LdapForNetTests
                 Assert.Throws<LdapException>(()=>
                     {
                         connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                        return connection.Search2("dc=example,dc=com", "(objectclass=top)");
+                        return connection.Search("dc=example,dc=com", "(objectclass=top)");
                     })
                 ;
             }
@@ -84,7 +84,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost);
                 Assert.Throws<LdapException>(()=>
-                connection.Search2("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
+                connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
             }
         }
 
