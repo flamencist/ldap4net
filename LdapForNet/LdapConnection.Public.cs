@@ -19,11 +19,12 @@ namespace LdapForNet
                 [nameof(version)] = version.ToString()
             };
             var nativeHandle = IntPtr.Zero;
-            ThrowIfError(
-                ldap_initialize(ref nativeHandle, $"LDAP://{hostname}:{port}"),
-                nameof(ldap_initialize),
-                details
-            );
+            nativeHandle = ldap_init(hostname, port);
+//            ThrowIfError(
+//                ldap_initialize(ref nativeHandle, $"LDAP://{hostname}:{port}"),
+//                nameof(ldap_initialize),
+//                details
+//            );
             _ld = new LdapHandle(nativeHandle);
             var ldapVersion = (int)version;
 

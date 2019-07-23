@@ -6,11 +6,15 @@ namespace LdapForNet.Native
 {
     public static partial class Native
     {
-        private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
+//        private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
+        private const string LIB_LDAP_PATH = "Wldap32";
         public delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_initialize(ref IntPtr ld, string uri);
+        
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern IntPtr ldap_init(string host, int port);
 
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
@@ -137,6 +141,11 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         public static extern LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
         
+        
+        
+        [DllImport(LIB_LDAP_PATH)]
+        private static extern uint LdapGetLastError();
+
         
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);

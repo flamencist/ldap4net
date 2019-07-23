@@ -239,7 +239,7 @@ namespace LdapForNet
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
-                ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
+                ThrowIfError(ldap_sasl_bind(_ld, userDn, "SIMPLE", ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp), nameof(ldap_sasl_bind));
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(SimpleBindAsync)} failed. {nameof(ldap_result)} returns wrong or empty result",  nameof(ldap_sasl_bind), 1);
