@@ -76,7 +76,7 @@ namespace LdapExample
                     cmds.TryGetValue("password", out var password);
                     who = who ?? "cn=read-only-admin,dc=example,dc=com";
                     password = password ?? "password";
-                    await cn.BindAsync(LdapAuthMechanism.SIMPLE,who,password);
+                    cn.Bind(LdapAuthMechanism.SIMPLE,who,password);
                 }
 
                 IList<LdapEntry> entries;

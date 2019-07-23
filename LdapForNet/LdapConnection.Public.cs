@@ -159,7 +159,7 @@ namespace LdapForNet
 
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-                    ThrowIfParseResultError(msg);
+//                    ThrowIfParseResultError(msg);
                 }
             }
 
