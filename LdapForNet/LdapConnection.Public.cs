@@ -98,53 +98,13 @@ namespace LdapForNet
             ThrowIfError(ldap_set_option(_ld, (int)option, valuePtr),nameof(ldap_set_option));
         }
 
-        public IList<LdapEntry> Search2(string @base, string filter,
+        public IList<LdapEntry> Search(string @base, string filter,
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             var response = (SearchResponse)SendRequest(new SearchRequest(@base, filter, scope));
             return response.Entries;
         }
         
-        public IList<LdapEntry> Search(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
-        {
-            ThrowIfNotBound();
-            var msg = Marshal.AllocHGlobal(IntPtr.Size);
-
-            var res = ldap_search_ext_s(
-                _ld, 
-                @base, 
-                (int)scope,
-                filter,
-                null,
-                (int)LdapSearchAttributesOnly.False,
-                IntPtr.Zero, 
-                IntPtr.Zero, 
-                IntPtr.Zero, 
-                (int)LdapSizeLimit.LDAP_NO_LIMIT,
-                ref msg);
-
-            
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
-            {
-                Marshal.FreeHGlobal(msg);
-                ThrowIfError(_ld, res,nameof(ldap_search_ext_s), new Dictionary<string, string>
-                {
-                    [nameof(@base)] = @base,
-                    [nameof(filter)] = filter,
-                    [nameof(scope)] = scope.ToString()
-                });
-            }
-
-            var ber = Marshal.AllocHGlobal(IntPtr.Size);
-
-            var ldapEntries = GetLdapEntries(_ld, msg, ber).ToList();
-
-            Marshal.FreeHGlobal(ber);
-            ldap_msgfree(msg);
-
-            return ldapEntries;
-        }
-
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
