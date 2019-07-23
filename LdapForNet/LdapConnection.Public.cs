@@ -97,6 +97,13 @@ namespace LdapForNet
             ThrowIfNotBound();
             ThrowIfError(ldap_set_option(_ld, (int)option, valuePtr),nameof(ldap_set_option));
         }
+
+        public IList<LdapEntry> Search2(string @base, string filter,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            var response = (SearchResponse)SendRequest(new SearchRequest(@base, filter, scope));
+            return response.Entries;
+        }
         
         public IList<LdapEntry> Search(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
