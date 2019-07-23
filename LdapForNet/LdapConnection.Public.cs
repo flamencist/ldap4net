@@ -74,7 +74,7 @@ namespace LdapForNet
 
             if (result != IntPtr.Zero)
             {
-                ParseBindResult(result);
+                ThrowIfParseResultError(result);
             }
             
             _bound = true;
@@ -252,12 +252,12 @@ namespace LdapForNet
         {
             var matchedMessage = string.Empty;
             var errorMessage = string.Empty;
-            var resTypeInt = 0;
+            var res = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
-            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref resTypeInt, ref matchedMessage, ref errorMessage,
+            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref res, ref matchedMessage, ref errorMessage,
                 ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
-            ThrowIfError(_ld, resTypeInt, nameof(ldap_parse_result), new Dictionary<string, string>
+            ThrowIfError(_ld, res, nameof(ldap_parse_result), new Dictionary<string, string>
             {
                 [nameof(errorMessage)] = errorMessage,
                 [nameof(matchedMessage)] = matchedMessage
