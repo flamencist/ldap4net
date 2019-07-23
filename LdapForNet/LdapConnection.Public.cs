@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
@@ -73,7 +75,7 @@ namespace LdapForNet
 
             if (result != IntPtr.Zero)
             {
-                ParseBindResult(result);
+                ThrowIfParseResultError(result);
             }
             
             _bound = true;
@@ -96,192 +98,140 @@ namespace LdapForNet
             ThrowIfNotBound();
             ThrowIfError(ldap_set_option(_ld, (int)option, valuePtr),nameof(ldap_set_option));
         }
+
+        public IList<LdapEntry> Search(string @base, string filter,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            var response = (SearchResponse)SendRequest(new SearchRequest(@base, filter, scope));
+            return response.Entries;
+        }
         
-        public IList<LdapEntry> Search(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE, CancellationToken token = default)
+        {
+            var response = (SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
+            return response.Entries;
+        }
+
+        public void Add(LdapEntry entry) => SendRequest(new AddRequest(entry));
+
+        public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default)
+        {
+            if (token.IsCancellationRequested)
+            {
+                return default;
+            }
+
+            ThrowIfNotBound();
+            
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+
+            return await Task.Factory.StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token).ConfigureAwait(false);
+        }
+
+        public DirectoryResponse SendRequest(DirectoryRequest directoryRequest)
         {
             ThrowIfNotBound();
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+            return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+        }
+
+        private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
+            IRequestHandler requestHandler, int messageId,
+            CancellationToken token)
+        {
+            var status = LdapResultCompleteStatus.Unknown;
             var msg = Marshal.AllocHGlobal(IntPtr.Size);
 
-            var res = ldap_search_ext_s(
-                _ld, 
-                @base, 
-                (int)scope,
-                filter,
-                null,
-                (int)LdapSearchAttributesOnly.False,
-                IntPtr.Zero, 
-                IntPtr.Zero, 
-                IntPtr.Zero, 
-                (int)LdapSizeLimit.LDAP_NO_LIMIT,
-                ref msg);
+            DirectoryResponse response = default;
 
-            
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
+            while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
-                Marshal.FreeHGlobal(msg);
-                ThrowIfError(_ld, res,nameof(ldap_search_ext_s), new Dictionary<string, string>
+                var resType = ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
+                ThrowIfResultError(directoryRequest, resType);
+
+                status = requestHandler.Handle(_ld, resType, msg, out response);
+
+                if (status == LdapResultCompleteStatus.Unknown)
                 {
-                    [nameof(@base)] = @base,
-                    [nameof(filter)] = filter,
-                    [nameof(scope)] = scope.ToString()
-                });
+                    throw new LdapException($"Unknown search type {resType}", nameof(ldap_result), 1);
+                }
+
+                if (status == LdapResultCompleteStatus.Complete)
+                {
+                    ThrowIfParseResultError(msg);
+                }
             }
 
-            var ber = Marshal.AllocHGlobal(IntPtr.Size);
-
-            var ldapEntries = GetLdapEntries(_ld, msg, ber).ToList();
-
-            Marshal.FreeHGlobal(ber);
-            ldap_msgfree(msg);
-
-            return ldapEntries;
+            return response;
         }
 
-        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        private IRequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
         {
-            ThrowIfNotBound();
-            var task = Task.Factory.StartNew<IList<LdapEntry>>(()=>
+            var operation = GetLdapOperation(directoryRequest);
+            var requestHandler = GetSendRequestHandler(operation);
+            messageId = 0;
+            ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId), requestHandler.GetType().Name);
+            return requestHandler;
+        }
+
+        private static void ThrowIfResultError(DirectoryRequest directoryRequest, LdapResultType resType)
+        {
+            switch (resType)
             {
-                var msgid = 0;
-                var res = ldap_search_ext(
-                    _ld,
-                    @base,
-                    (int) scope,
-                    filter,
-                    null,
-                    (int) LdapSearchAttributesOnly.False,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
-                    (int) LdapSizeLimit.LDAP_NO_LIMIT,
-                    ref msgid);
-                if (res != (int)LdapResultCode.LDAP_SUCCESS)
-                {
-                    ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
-                    {
-                        [nameof(@base)] = @base,
-                        [nameof(filter)] = filter,
-                        [nameof(scope)] = scope.ToString()
-                    });
-                }
+                case LdapResultType.LDAP_ERROR:
+                    ThrowIfError(1, directoryRequest.GetType().Name);
+                    break;
+                case LdapResultType.LDAP_TIMEOUT:
+                    throw new LdapException("Timeout exceeded", nameof(ldap_result), 1);
+            }
+        }
 
-                var msg = Marshal.AllocHGlobal(IntPtr.Size);
-                var finished = false;
-                var ldapEntries = new List<LdapEntry>();
-                while (!finished)
-                {
-                    var resType = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref msg);
-                    switch (resType)
-                    {
-                        case LdapResultType.LDAP_ERROR:
-                            ThrowIfError(_ld, res,nameof(ldap_search_ext),new Dictionary<string, string>
-                            {
-                                [nameof(@base)] = @base,
-                                [nameof(filter)] = filter,
-                                [nameof(scope)] = scope.ToString()
-                            });
-                            break;   
-                        case LdapResultType.LDAP_TIMEOUT:
-                            throw new LdapException("Timeout exceeded",nameof(ldap_result),1);
-                        case LdapResultType.LDAP_RES_SEARCH_ENTRY:
-                            var ber = Marshal.AllocHGlobal(IntPtr.Size);
+        private IRequestHandler GetSendRequestHandler(LdapOperation operation)
+        {
+            switch (operation)
+            {
+                case LdapOperation.LdapAdd:
+                    return new AddRequestHandler();
+                case LdapOperation.LdapModify:
+                    return new ModifyRequestHandler();
+                case LdapOperation.LdapSearch:
+                    return new SearchRequestHandler();
+                case LdapOperation.LdapDelete:
+                    return new DeleteRequestHandler();
+//                case LdapOperation.LdapModifyDn:
+//                    break;
+//                case LdapOperation.LdapCompare:
+//                    break;
+//                case LdapOperation.LdapExtendedRequest:
+//                    break;
+                default:
+                    throw new LdapException("Not supported operation: " + operation.ToString());
+            }
+        }
 
-                            ldapEntries.AddRange(GetLdapEntries(_ld, msg, ber));
+        public async Task AddAsync(LdapEntry entry, CancellationToken token = default) => await SendRequestAsync(new AddRequest(entry), token);
 
-                            Marshal.FreeHGlobal(ber);
-                            ldap_msgfree(msg);
-                            break;
-                        case LdapResultType.LDAP_RES_SEARCH_REFERENCE:
-                        case LdapResultType.LDAP_RES_EXTENDED:
-                        case LdapResultType.LDAP_RES_INTERMEDIATE:
-                            //not implemented
-                            break;
-                        case LdapResultType.LDAP_RES_SEARCH_RESULT:
-                            finished = true;
-                            break;
-                        default:
-                            throw new LdapException($"Unknown search result type {resType}",nameof(ldap_result),1);
-                    }
-                    
-                }
-                
-                
-
-                return ldapEntries;
+        private void ThrowIfParseResultError(IntPtr msg)
+        {
+            var matchedMessage = string.Empty;
+            var errorMessage = string.Empty;
+            var res = 0;
+            var referrals = IntPtr.Zero;
+            var serverctrls = IntPtr.Zero;
+            ThrowIfError(_ld, ldap_parse_result(_ld, msg, ref res, ref matchedMessage, ref errorMessage,
+                ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
+            ThrowIfError(_ld, res, nameof(ldap_parse_result), new Dictionary<string, string>
+            {
+                [nameof(errorMessage)] = errorMessage,
+                [nameof(matchedMessage)] = matchedMessage
             });
-            return await task.ConfigureAwait(false);
         }
 
-        public void Add(LdapEntry entry)
-        {
-            ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(entry.Dn))
-            {
-                throw new ArgumentNullException(nameof(entry.Dn));
-            }
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => await SendRequestAsync(new ModifyRequest(entry), token);
 
-            if (entry.Attributes == null)
-            {
-                entry.Attributes = new Dictionary<string, List<string>>();
-            }
+        public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
 
-            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
-            
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
-
-            try
-            {
-                ThrowIfError(_ld, ldap_add_ext_s(_ld,
-                    entry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero 
-                ), nameof(ldap_add_ext_s));
-
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(ptr);
-                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
-            }
-        }
-
-        public void Modify(LdapModifyEntry entry)
-        {
-            ThrowIfNotBound();
-            
-            if (string.IsNullOrWhiteSpace(entry.Dn))
-            {
-                throw new ArgumentNullException(nameof(entry.Dn));
-            }
-            
-            if (entry.Attributes == null)
-            {
-                entry.Attributes = new List<LdapModifyAttribute>();
-            }
-            
-            var attrs = entry.Attributes.Select(ToLdapMod).ToList();
-            
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
-            MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
-
-            try
-            {
-                ThrowIfError(_ld, ldap_modify_ext_s(_ld,
-                    entry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero 
-                ), nameof(ldap_modify_ext_s));
-
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(ptr);
-                attrs.ForEach(_ => { Marshal.FreeHGlobal(_.mod_vals_u.modv_strvals); });
-            }
-        }
 
         public void Dispose()
         {
@@ -294,20 +244,9 @@ namespace LdapForNet
         }
 
 
-        public void Delete(string dn)
-        {
-            ThrowIfNotBound();
-            if (string.IsNullOrWhiteSpace(dn))
-            {
-                throw new ArgumentNullException(nameof(dn));
-            }
-            ThrowIfError(_ld, ldap_delete_ext_s(_ld,
-                dn,
-                IntPtr.Zero, 
-                IntPtr.Zero 
-            ), nameof(ldap_delete_ext_s));
-        }
-
+        public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) => await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
+        public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
+        
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn)
         {
             ThrowIfNotBound();
@@ -324,5 +263,16 @@ namespace LdapForNet
                 IntPtr.Zero 
             ), nameof(ldap_rename_s));
         }
+    }
+    
+    internal enum LdapOperation
+    {
+        LdapAdd = 0,
+        LdapModify = 1,
+        LdapSearch = 2,
+        LdapDelete = 3,
+        LdapModifyDn = 4,
+        LdapCompare = 5,
+        LdapExtendedRequest = 6
     }
 }
