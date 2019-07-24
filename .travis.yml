@@ -6,8 +6,7 @@ sudo: false
 addons:
   homebrew:
     packages:
-      - ldap-utils
-      - slapd
+      - openldap
 before_script:
   - mkdir /tmp/slapd
   - slapd -f .test_config/slapd.conf -h ldap://localhost:3389 &
