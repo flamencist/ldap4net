@@ -28,5 +28,4 @@ deploy:
     all_branches: true
     
 os:
-  - linux
   - osx
