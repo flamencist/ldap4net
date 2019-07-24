@@ -6,3 +6,5 @@ PublishProfiles
 *.csproj.user
 *.nupkg
 *.user
+node_modules
+package-lock.json
