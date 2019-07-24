@@ -29,3 +29,6 @@ deploy:
     
 os:
   - osx
+  
+env:
+  - DYLD_PRINT_LIBRARIES=1
