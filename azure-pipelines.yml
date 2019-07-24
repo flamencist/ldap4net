@@ -4,15 +4,19 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master
+- windows
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-latest'  
 
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+
+script:
+  npm install .test_config/package.json
+  .test_config/start-server.bat
 
 steps:
 - task: NuGetToolInstaller@1
