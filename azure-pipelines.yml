@@ -14,12 +14,13 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-script:
-  npm install .test_config/package.json
-  .test_config/start-server.bat
 
 steps:
 - task: NuGetToolInstaller@1
+- task: Npm@1
+  inputs:
+    command: 'install'
+    workingDir: '.test_config'
 
 - task: NuGetCommand@2
   inputs:
@@ -31,7 +32,10 @@ steps:
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-
+- task: BatchScript@1
+  inputs:
+    filename: '.test_config/start-server.bat'
+    failOnStandardError: true
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
