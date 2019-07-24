@@ -66,7 +66,8 @@ namespace LdapForNet
             }
             else if (LdapAuthMechanism.GSSAPI.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {
-                result = await GssApiBindAsync();
+                result = await WinBindAsync();
+//                result = await GssApiBindAsync();
             }
             else
             {

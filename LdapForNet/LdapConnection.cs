@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Native;
 using Microsoft.Win32.SafeHandles;
 using static LdapForNet.Native.Native;
 
@@ -28,6 +29,51 @@ namespace LdapForNet
             });
         }
 
+        private async Task<IntPtr> WinBindAsync()
+        {
+            LdapConnect();
+            var defaultCreds = System.Net.CredentialCache.DefaultNetworkCredentials;
+            var msgid = 0;
+            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
+            {
+                version = SEC_WINNT_AUTH_IDENTITY_VERSION,
+                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
+                flags = SEC_WINNT_AUTH_IDENTITY_UNICODE
+            };
+//
+//            cred.packageList = MICROSOFT_KERBEROS_NAME_W;
+//            cred.packageListLength = cred.packageList.Length;
+            var task = Task.Factory.StartNew(() =>
+            {
+//                ThrowIfError(ldap_bind(_ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE, ref msgid),nameof(ldap_bind));
+                ThrowIfError(ldap_bind_s(_ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(ldap_bind_s));
+                if (msgid == -1)
+                {
+                    throw new LdapException($"{nameof(WinBindAsync)} failed. {nameof(ldap_bind)} returns wrong or empty result",  nameof(ldap_bind), 1);
+                }
+
+                var result = IntPtr.Zero;
+//                var rc = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref result);
+//
+//                if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
+//                {
+//                    ThrowIfError((int)rc,nameof(ldap_sasl_bind));
+//                }
+
+                return result;
+            });
+            return await task.ConfigureAwait(false);
+        }
+
+        private void LdapConnect()
+        {
+            var timeout = new LDAP_TIMEVAL()
+            {
+                tv_sec = (int)(TimeSpan.FromMinutes(2).Ticks / TimeSpan.TicksPerSecond)
+            };
+            ThrowIfError(ldap_connect(_ld, timeout),nameof(ldap_connect));
+        }
+        
         private async Task<IntPtr> GssApiBindAsync()
         {
             var task = Task.Factory.StartNew(() =>
@@ -178,9 +224,9 @@ namespace LdapForNet
         private static LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
         {
             var defaults = new LdapSaslDefaults { mech = LdapAuthMechanism.GSSAPI };
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
+            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
+            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
+            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
             return defaults;
         }
         

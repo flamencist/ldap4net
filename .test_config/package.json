@@ -1,0 +1,14 @@
+{
+  "name": "ldap_server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander Chermyanin",
+  "license": "ISC",
+  "dependencies": {
+    "ldapjs": "^1.0.2"
+  }
+}

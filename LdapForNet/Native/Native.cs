@@ -4,8 +4,44 @@ using System.Runtime.InteropServices;
 // ReSharper disable InconsistentNaming
 namespace LdapForNet.Native
 {
+    public enum BindMethod : uint
+    {
+        LDAP_AUTH_OTHERKIND = 0x86,
+        LDAP_AUTH_SICILY = LDAP_AUTH_OTHERKIND | 0x0200,
+        LDAP_AUTH_MSN = LDAP_AUTH_OTHERKIND | 0x0800,
+        LDAP_AUTH_NTLM = LDAP_AUTH_OTHERKIND | 0x1000,
+        LDAP_AUTH_DPA = LDAP_AUTH_OTHERKIND | 0x2000,
+        LDAP_AUTH_NEGOTIATE = LDAP_AUTH_OTHERKIND | 0x0400,
+        LDAP_AUTH_SSPI = LDAP_AUTH_NEGOTIATE,
+        LDAP_AUTH_DIGEST = LDAP_AUTH_OTHERKIND | 0x4000,
+        LDAP_AUTH_EXTERNAL = LDAP_AUTH_OTHERKIND | 0x0020
+    }
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public sealed class SEC_WINNT_AUTH_IDENTITY_EX
+    {
+        public int version;
+        public int length;
+        public string user;
+        public int userLength;
+        public string domain;
+        public int domainLength;
+        public string password;
+        public int passwordLength;
+        public int flags;
+        public string packageList;
+        public int packageListLength;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public sealed class LDAP_TIMEVAL
+    {
+        public int tv_sec;
+        public int tv_usec;
+    }
     public static partial class Native
     {
+        public const int SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2;
+        public const int SEC_WINNT_AUTH_IDENTITY_VERSION = 0x200;
+        public const string MICROSOFT_KERBEROS_NAME_W = "Kerberos";
 //        private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
         private const string LIB_LDAP_PATH = "Wldap32";
         public delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
@@ -15,7 +51,15 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         public static extern IntPtr ldap_init(string host, int port);
+        
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_connect(SafeHandle ld,LDAP_TIMEVAL timeout);
 
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bindW")]
+        public static extern int ldap_bind(SafeHandle ld, string who,  SEC_WINNT_AUTH_IDENTITY_EX credentials, BindMethod method, ref int msgidp); 
+        
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bind_sW")]
+        public static extern int ldap_bind_s(SafeHandle ld, string who,  SEC_WINNT_AUTH_IDENTITY_EX credentials, BindMethod method);
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
 
