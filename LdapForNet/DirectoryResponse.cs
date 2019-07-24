@@ -21,6 +21,11 @@ namespace LdapForNet
         
     }
     
+    public class ModifyDNResponse : DirectoryResponse
+    {
+        
+    }
+    
     public class DeleteResponse : DirectoryResponse
     {
         
