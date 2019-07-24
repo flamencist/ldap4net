@@ -4,7 +4,7 @@ dotnet: 2.1.504
 dist: trusty
 sudo: false
 addons:
-  apt:
+  homebrew:
     packages:
       - ldap-utils
       - slapd
