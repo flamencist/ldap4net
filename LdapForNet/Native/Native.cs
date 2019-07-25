@@ -7,7 +7,7 @@ namespace LdapForNet.Native
     public static partial class Native
     {
 //        private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
-        private const string LIB_LDAP_PATH = "libldap_r";
+        private const string LIB_LDAP_PATH = "libldap";
         public delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
 
         [DllImport(LIB_LDAP_PATH)]
