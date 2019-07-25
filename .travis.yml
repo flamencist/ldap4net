@@ -6,7 +6,7 @@ sudo: false
 addons:
   homebrew:
     packages:
-      - openldap
+      - openldap --with-berkeley-db@4
     update: true
 before_script:
   - ls -lR /usr/local/opt/openldap/
