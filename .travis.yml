@@ -31,5 +31,5 @@ deploy:
 os:
   - osx
   
-env:
-  - DYLD_PRINT_LIBRARIES=0
+#env:
+#  - DYLD_PRINT_LIBRARIES=0
