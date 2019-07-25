@@ -9,7 +9,7 @@ addons:
       - openldap
     update: true
 before_script:
-  - ls -l /usr/local/opt/openldap
+  - ls -lR /usr/local/opt/openldap/
   - mkdir /tmp/slapd
   - /usr/libexec/slapd -f .test_config/slapd.conf -h ldap://localhost:3389 -d 255 &
   - sleep 3
