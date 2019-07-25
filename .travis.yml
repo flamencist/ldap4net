@@ -6,10 +6,9 @@ sudo: false
 addons:
   homebrew:
     packages:
-      - openldap --with-berkeley-db@4
+      - openldap
     update: true
 before_script:
-  - ls -lR /usr/local/opt/openldap/
   - mkdir /tmp/slapd
   - /usr/libexec/slapd -f .test_config/slapd.conf -h ldap://localhost:3389 -d 0 &
   - sleep 6
