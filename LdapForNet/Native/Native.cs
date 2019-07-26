@@ -381,9 +381,9 @@ namespace LdapForNet.Native
         /// <param name="newparent"></param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_rename_ext")]
         public static extern int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
-
+        
         
         /// <summary>
         /// ldap_is_ldap_url <a href="https://linux.die.net/man/3/ldap_is_ldap_url">Documentation</a>
