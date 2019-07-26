@@ -414,8 +414,8 @@ namespace LdapForNet.Native
         [DllImport("lber")]
         public static extern void ber_memvfree(IntPtr vector);
 
-        [DllImport(LIB_LDAP_PATH)]
-        public static extern int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref string matcheddnp, ref string errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
+        [DllImport(LIB_LDAP_PATH,CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_parse_result", CharSet = CharSet.Unicode)]
+        public static extern int ldap_parse_result([In] SafeHandle ld, [In] IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, byte freeit);
     }
 
-}
+}   

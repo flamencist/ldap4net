@@ -160,7 +160,7 @@ namespace LdapForNet
 
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-//                    ThrowIfParseResultError(msg);
+                    ThrowIfParseResultError(msg);
                 }
             }
 
@@ -215,8 +215,8 @@ namespace LdapForNet
 
         private void ThrowIfParseResultError(IntPtr msg)
         {
-            var matchedMessage = string.Empty;
-            var errorMessage = string.Empty;
+            var matchedMessage = IntPtr.Zero;
+            var errorMessage = IntPtr.Zero;
             var res = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
@@ -224,8 +224,8 @@ namespace LdapForNet
                 ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
             ThrowIfError(_ld, res, nameof(ldap_parse_result), new Dictionary<string, string>
             {
-                [nameof(errorMessage)] = errorMessage,
-                [nameof(matchedMessage)] = matchedMessage
+                [nameof(errorMessage)] = Marshal.PtrToStringAuto(errorMessage),
+                [nameof(matchedMessage)] = Marshal.PtrToStringAuto(matchedMessage)
             });
         }
 

@@ -1,27 +1,37 @@
 var ldap = require('ldapjs');
 
-
+var old = ldap.DN.prototype.format;
+ldap.DN.prototype.format = function(options){
+  options = options || {};
+  options.skipSpace = true;
+  options.keepCase = true;
+  return old.call(this,options);
+};
 ///--- Shared handlers
 
 function authorize(req, res, next) {
   /* Any user may search after bind, only cn=root has full power */
   var isSearch = (req instanceof ldap.SearchRequest);
-  if (!req.connection.ldap.bindDN.equals('cn=admin, dc=example, dc=com'))
+  if (!req.connection.ldap.bindDN.equals('cn=admin,dc=example,dc=com'))
     return next(new ldap.InsufficientAccessRightsError());
 
   return next();
 }
 
+String.prototype.replaceSpaces = function(){
+  return this.replace(/\s+/g,'');
+};
+
 
 ///--- Globals
 
-var SUFFIX = 'dc=example,dc=com';
+var SUFFIX = 'dc=example, dc=com';
 var db = {
-	"dc=example, dc=com":{
+	"dc=example,dc=com":{
 		objectClass: ["dcObject", "organizationalUnit"],
 		ou: "Test"
 	},
-	"cn=admin, dc=example, dc=com":{
+	"cn=admin,dc=example,dc=com":{
 		cn: "admin",
 		sn: "administrator",
 		objectClass: ["top","person","organizationalPerson","inetOrgPerson"],
@@ -31,8 +41,8 @@ var db = {
 var server = ldap.createServer();
 
 
-server.bind('cn=admin,dc=example,dc=com', function(req, res, next) {
-  if (req.dn.toString() !== 'cn=admin, dc=example, dc=com' || req.credentials !== 'test')
+server.bind('cn=admin, dc=example, dc=com', function(req, res, next) {
+  if (req.dn.toString() !== 'cn=admin,dc=example,dc=com' || req.credentials !== 'test')
     return next(new ldap.InvalidCredentialsError());
 
   res.end();
@@ -40,19 +50,29 @@ server.bind('cn=admin,dc=example,dc=com', function(req, res, next) {
 });
 
 server.add(SUFFIX, authorize, function(req, res, next) {
-  var dn = req.dn.toString();
+  try{
+    var dn = req.dn.toString().replaceSpaces();
+    if(!dn.endsWith(SUFFIX.replaceSpaces())){
+      dn+=","+SUFFIX.replaceSpaces();
+    }
+    if (db[dn])
+      return next(new ldap.EntryAlreadyExistsError(dn));
 
-  if (db[dn])
-    return next(new ldap.EntryAlreadyExistsError(dn));
-
-  db[dn] = req.toObject().attributes;
-  res.end();
-  return next();
+    var attributes =  req.toObject().attributes;
+    if(dn.startsWith("cn=")){
+      attributes["cn"]=dn.match(/cn=([^,]*),/)[1];
+    }
+    db[dn] = req.toObject().attributes;
+    res.end();
+    return next();
+  }catch(e){
+    return next(new ldap.LdapError(e.toString()));
+  }
 });
 
 server.bind(SUFFIX, function(req, res, next) {
 	console.log(req.dn.toString());
-  var dn = req.dn.toString();
+  var dn = req.dn.toString().replaceSpaces();
   if (!db[dn]){
 	  return next(new ldap.NoSuchObjectError(dn));
   }   
@@ -68,7 +88,7 @@ server.bind(SUFFIX, function(req, res, next) {
 });
 
 server.compare(SUFFIX, authorize, function(req, res, next) {
-  var dn = req.dn.toString();
+  var dn = req.dn.toString().replaceSpaces();
   if (!db[dn])
     return next(new ldap.NoSuchObjectError(dn));
 
@@ -89,7 +109,7 @@ server.compare(SUFFIX, authorize, function(req, res, next) {
 });
 
 server.del(SUFFIX, authorize, function(req, res, next) {
-  var dn = req.dn.toString();
+  var dn = req.dn.toString().replaceSpaces();
   if (!db[dn])
     return next(new ldap.NoSuchObjectError(dn));
 
@@ -100,7 +120,7 @@ server.del(SUFFIX, authorize, function(req, res, next) {
 });
 
 server.modify(SUFFIX, authorize, function(req, res, next) {
-  var dn = req.dn.toString();
+  var dn = req.dn.toString().replaceSpaces();
   if (!req.changes.length)
     return next(new ldap.ProtocolError('changes required'));
   if (!db[dn])
@@ -149,8 +169,28 @@ server.modify(SUFFIX, authorize, function(req, res, next) {
   return next();
 });
 
+server.modifyDN(SUFFIX, function(req, res, next){
+  var dn = req.dn.toString().replaceSpaces();
+  if (!req.newRdn.toString())
+    return next(new ldap.ProtocolError('newRdn required'));
+
+  if (!db[dn])
+    return next(new ldap.NoSuchObjectError(dn));
+
+  var old = Object.assign({}, db[dn]);
+  var newDn = req.newRdn.toString()+","+SUFFIX.replaceSpaces();
+  db[newDn] = old;
+  var rdnAttribute = req.newRdn.toString().split("=");
+  db[newDn][rdnAttribute[0]]=rdnAttribute[1];
+  if(req.deleteOldRdn){
+      delete db[dn];
+  }
+  res.end();
+  return next();
+});
+
 server.search(SUFFIX, authorize, function(req, res, next) {
-  var dn = req.dn.toString();
+  var dn = req.dn.toString().replaceSpaces();
   if (!db[dn])
     return next(new ldap.NoSuchObjectError(dn));
 
