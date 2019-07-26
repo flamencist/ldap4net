@@ -209,9 +209,10 @@ namespace LdapForNet.Native
         public static string GetAdditionalErrorInfo(SafeHandle ld)
         {
             var ptr = Marshal.AllocHGlobal(IntPtr.Size);
-            ldap_get_option(ld,(int)LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE,ref ptr);
+            //Sets or retrieves the pointer to a TCHAR string giving the error message of the most recent LDAP error that occurred for this session.
+            //The error string returned by this option should not be freed by the user
+            ldap_get_option(ld,(int)LdapOption.LDAP_OPT_ERROR_STRING,ref ptr);
             var info = Marshal.PtrToStringAnsi(ptr);
-            ldap_memfree(ptr);
             return info;
         }
 
@@ -417,7 +418,7 @@ namespace LdapForNet.Native
         public static extern void ber_memvfree(IntPtr vector);
 
         [DllImport(LIB_LDAP_PATH,CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_parse_result", CharSet = CharSet.Unicode)]
-        public static extern int ldap_parse_result([In] SafeHandle ld, [In] IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, byte freeit);
+        public static extern int ldap_parse_result([In] SafeHandle ld, [In] IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
     }
 
 }   

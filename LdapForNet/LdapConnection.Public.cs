@@ -131,7 +131,6 @@ namespace LdapForNet
             ThrowIfNotBound();
             
             var requestHandler = SendRequest(directoryRequest, out var messageId);
-
             return await Task.Factory.StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token).ConfigureAwait(false);
         }
 
@@ -139,6 +138,7 @@ namespace LdapForNet
         {
             ThrowIfNotBound();
             var requestHandler = SendRequest(directoryRequest, out var messageId);
+            
             return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
         }
 
@@ -212,7 +212,7 @@ namespace LdapForNet
 //                case LdapOperation.LdapExtendedRequest:
 //                    break;
                 default:
-                    throw new LdapException("Not supported operation: " + operation.ToString());
+                    throw new LdapException("Not supported operation: " + operation);
             }
         }
 
@@ -229,8 +229,8 @@ namespace LdapForNet
                 ref referrals, ref serverctrls, 1), nameof(ldap_parse_result));
             ThrowIfError(_ld, res, nameof(ldap_parse_result), new Dictionary<string, string>
             {
-                [nameof(errorMessage)] = Marshal.PtrToStringAuto(errorMessage),
-                [nameof(matchedMessage)] = Marshal.PtrToStringAuto(matchedMessage)
+                [nameof(errorMessage)] = Marshal.PtrToStringAnsi(errorMessage),
+                [nameof(matchedMessage)] = Marshal.PtrToStringAnsi(matchedMessage)
             });
         }
 

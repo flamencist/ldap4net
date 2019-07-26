@@ -1,1 +1,0 @@
-start  /B "" node ".test_config\index.js"

@@ -5,12 +5,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
 using Xunit;
+using Xunit.Abstractions;
 using static LdapForNet.Native.Native;
 
 namespace LdapForNetTests
 {
     public class LdapConnectionTests
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public LdapConnectionTests(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
         [Fact]
         public void LdapConnection_Search_Return_LdapEntries_List()
         {
@@ -96,9 +103,9 @@ namespace LdapForNetTests
             {
                 DeleteLdapEntry();
             }
-            catch
+            catch(Exception e)
             {
-                //no catch
+                _testOutputHelper.WriteLine(e.ToString());
             }
             AddLdapEntry();
             ModifyLdapEntry();
@@ -106,16 +113,16 @@ namespace LdapForNetTests
         }
         
         
-        [Fact(Skip = "test aborted")]
+        [Fact]
         public async Task LdapConnection_Add_Modify_Delete_Async()
         {
             try
             {
-                await DeleteLdapEntryAsync();
+               await DeleteLdapEntryAsync();
             }
-            catch
+            catch(Exception e)
             {
-                //no catch
+                _testOutputHelper.WriteLine(e.ToString());
             }
             await AddLdapEntryAsync();
             await ModifyLdapEntryAsync();
