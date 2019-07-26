@@ -224,9 +224,9 @@ namespace LdapForNet
         private static LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
         {
             var defaults = new LdapSaslDefaults { mech = LdapAuthMechanism.GSSAPI };
-            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
-            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
-            //ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
             return defaults;
         }
         
@@ -239,6 +239,32 @@ namespace LdapForNet
             );
         }
 
+        private async Task<IntPtr> WinSimpleBindAsync(string userDn, string password)
+        {
+            return await Task.Factory.StartNew(() =>
+            {
+                var berval = new berval(password);
+                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
+                Marshal.StructureToPtr(berval,ptr,false);
+                var result = IntPtr.Zero;
+                var msgidp = ldap_simple_bind(_ld, userDn, password);
+  
+                if (msgidp == -1)
+                {
+                    throw new LdapException($"{nameof(WinSimpleBindAsync)} failed. {nameof(ldap_simple_bind)} returns wrong or empty result",  nameof(ldap_simple_bind), 1);
+                }
+
+                var rc = ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
+
+                if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
+                {
+                    ThrowIfError((int)rc,nameof(ldap_simple_bind));
+                }
+
+                return result;
+            }).ConfigureAwait(false);
+        }
+
         private async Task<IntPtr> SimpleBindAsync(string userDn, string password)
         {
             return await Task.Factory.StartNew(() =>
@@ -248,7 +274,7 @@ namespace LdapForNet
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
-                ThrowIfError(ldap_sasl_bind(_ld, userDn, "SIMPLE", ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp), nameof(ldap_sasl_bind));
+                ThrowIfError(ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp), nameof(ldap_sasl_bind));
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(SimpleBindAsync)} failed. {nameof(ldap_result)} returns wrong or empty result",  nameof(ldap_sasl_bind), 1);

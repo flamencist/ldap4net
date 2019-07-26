@@ -136,13 +136,13 @@ namespace LdapForNetTests
                         new LdapModifyAttribute
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
-                            Type = "givenName",
+                            Type = "givenname",
                             Values = new List<string> {"test_value_2"}
                         },
                         new LdapModifyAttribute
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
-                            Type = "displayName",
+                            Type = "displayname",
                             Values = new List<string> {"test_display_name"}
                         },
                         new LdapModifyAttribute
@@ -162,8 +162,8 @@ namespace LdapForNetTests
                 var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
-                Assert.Equal("test_value_2", entries[0].Attributes["givenName"][0]);
-                Assert.Equal("test_display_name", entries[0].Attributes["displayName"][0]);
+                Assert.Equal("test_value_2", entries[0].Attributes["givenname"][0]);
+                Assert.Equal("test_display_name", entries[0].Attributes["displayname"][0]);
                 Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
                 Assert.Equal("test", entries[0].Attributes["sn"][1]);
                 Assert.False(entries[0].Attributes.ContainsKey("description"));
@@ -183,16 +183,16 @@ namespace LdapForNetTests
                     Attributes = new Dictionary<string, List<string>>
                     {
                         {"sn", new List<string> {"Winston"}},
-                        {"objectclass", new List<string> {"inetOrgPerson"}},
-                        {"givenName", new List<string> {"test_value"}},
+                        {"objectclass", new List<string> {"inetOrgPerson","top"}},
+                        {"givenname", new List<string> {"test_value"}},
                         {"description", new List<string> {"test_value"}}
                     }
                 },cts.Token);
-                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))");
+                var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))",token: cts.Token);
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
-                Assert.Equal("test_value", entries[0].Attributes["givenName"][0]);
-                Assert.True(entries[0].Attributes["objectClass"].Any());
+                Assert.Equal("test_value", entries[0].Attributes["givenname"][0]);
+                Assert.True(entries[0].Attributes["objectclass"].Any());
             }
         }
 

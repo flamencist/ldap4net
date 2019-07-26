@@ -62,7 +62,8 @@ namespace LdapForNet
             IntPtr result;
             if (LdapAuthMechanism.SIMPLE.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {
-                result = await SimpleBindAsync(userDn,password);
+//                result = await SimpleBindAsync(userDn,password);
+                result = await WinSimpleBindAsync(userDn,password);
             }
             else if (LdapAuthMechanism.GSSAPI.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {

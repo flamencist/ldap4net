@@ -62,6 +62,8 @@ namespace LdapForNet.Native
         public static extern int ldap_bind_s(SafeHandle ld, string who,  SEC_WINNT_AUTH_IDENTITY_EX credentials, BindMethod method);
         [DllImport(LIB_LDAP_PATH)]
         public static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
+        [DllImport(LIB_LDAP_PATH)]
+        public static extern int ldap_simple_bind(SafeHandle ld, string who, string cred);
 
 
         /// <summary>

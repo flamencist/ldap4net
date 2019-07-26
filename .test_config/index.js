@@ -62,7 +62,7 @@ server.add(SUFFIX, authorize, function(req, res, next) {
     if(dn.startsWith("cn=")){
       attributes["cn"]=dn.match(/cn=([^,]*),/)[1];
     }
-    db[dn] = req.toObject().attributes;
+    db[dn] = attributes;
     res.end();
     return next();
   }catch(e){
