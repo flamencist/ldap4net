@@ -34,7 +34,7 @@ steps:
     configuration: '$(buildConfiguration)'
 - task: CmdLine@2
   inputs:
-    script: 'node ".test_config\index.js"'
+    script: 'START /B "" node ".test_config\index.js"'
 # - task: BatchScript@1
 #   inputs:
 #     filename: '.test_config/start-server.bat'
