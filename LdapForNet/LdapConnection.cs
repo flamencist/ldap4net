@@ -31,8 +31,7 @@ namespace LdapForNet
 
         private async Task<IntPtr> WinBindAsync()
         {
-            LdapConnect();
-            var defaultCreds = System.Net.CredentialCache.DefaultNetworkCredentials;
+            
             var msgid = 0;
             var cred = new SEC_WINNT_AUTH_IDENTITY_EX
             {

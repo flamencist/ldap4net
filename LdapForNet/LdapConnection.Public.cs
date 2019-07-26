@@ -35,11 +35,15 @@ namespace LdapForNet
                 nameof(ldap_set_option),
                 details
             );
+
         }
 
         public void Bind(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null)
         {
+
             ThrowIfNotInitialized();
+            LdapConnect();
+
             if (LdapAuthMechanism.SIMPLE.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {
                 SimpleBind(userDn,password);
