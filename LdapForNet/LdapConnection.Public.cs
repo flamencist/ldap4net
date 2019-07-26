@@ -200,8 +200,8 @@ namespace LdapForNet
                     return new SearchRequestHandler();
                 case LdapOperation.LdapDelete:
                     return new DeleteRequestHandler();
-//                case LdapOperation.LdapModifyDn:
-//                    break;
+                case LdapOperation.LdapModifyDn:
+                    return new ModifyDnRequestHandler();
 //                case LdapOperation.LdapCompare:
 //                    break;
 //                case LdapOperation.LdapExtendedRequest:
@@ -248,22 +248,10 @@ namespace LdapForNet
         public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) => await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
         public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
         
-        public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn)
-        {
-            ThrowIfNotBound();
-            if (dn == null)
-            {
-                throw new ArgumentNullException(nameof(dn));
-            }
-            ThrowIfError(_ld, ldap_rename_s(_ld,
-                dn,
-                newRdn,
-                newParent,
-                isDeleteOldRdn?1:0,
-                IntPtr.Zero, 
-                IntPtr.Zero 
-            ), nameof(ldap_rename_s));
-        }
+        public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn, CancellationToken cancellationToken = default) => 
+            await SendRequestAsync(new ModifyDNRequest(dn,newParent,newRdn){DeleteOldRdn = isDeleteOldRdn}, cancellationToken);
+        public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>  SendRequest(new ModifyDNRequest(dn,newParent,newRdn){DeleteOldRdn = isDeleteOldRdn});
+
     }
     
     internal enum LdapOperation
