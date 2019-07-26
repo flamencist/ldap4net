@@ -15,7 +15,7 @@ namespace LdapForNetTests.Utils
             var data = Marshal.StringToHGlobalAnsi("test");
             var data2 = Marshal.StringToHGlobalAnsi("test2");
             
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+            var ptr = Marshal.AllocCoTaskMem(3*IntPtr.Size);
             Marshal.StructureToPtr(data, ptr, true);
             Marshal.StructureToPtr(data2, new IntPtr(ptr.ToInt64() + IntPtr.Size), true);
             Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + 2*IntPtr.Size), true);
@@ -26,7 +26,7 @@ namespace LdapForNetTests.Utils
             Assert.Equal("test", actual[0]);
             Assert.Equal("test2", actual[1]);
             
-            Marshal.FreeHGlobal(ptr);
+            Marshal.FreeCoTaskMem(ptr);
             Marshal.FreeHGlobal(data);
             Marshal.FreeHGlobal(data2);
         }
