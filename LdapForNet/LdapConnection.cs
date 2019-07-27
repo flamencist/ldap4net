@@ -17,7 +17,7 @@ namespace LdapForNet
         {
             var saslDefaults = GetSaslDefaults(_ld);
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-            Marshal.StructureToPtr(saslDefaults, ptr, false);
+                Marshal.StructureToPtr(saslDefaults, ptr, false);
 
             var res = ldap_sasl_interactive_bind_s(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
