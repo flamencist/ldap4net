@@ -52,6 +52,7 @@ using (var cn = new LdapConnection())
 ## Supported platforms
 
 * Most of popular Linux distributives
+* OSX
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono.
 
 ## Installation
@@ -342,26 +343,6 @@ using (var cn = new LdapConnection())
 	int rc = ldap_sasl_interactive_bind_s( ld, null,defaults.mech, IntPtr.Zero, IntPtr.Zero,
                 (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
 ...
-}
-```
-
-### Native
-
-OpenLdap native methods can be used directly. Native methods implemented in static class ```LdapForNet.Native.Native```:
-
-
-```cs
-using static LdapForNet.Native.Native;
-
-using (var cn = new LdapConnection())
-{
-	cn.Connect();
-	var ld = cn.GetNativeLdapPtr();
-	var res = ldap_sasl_interactive_bind_s(ld,...);
-	if (res != (int)LdapResultCode.LDAP_SUCCESS)
-	{
-		Trace.TraceError($"Error {method}: {LdapError2String(res)} ({res}).");
-	}
 }
 ```
 
