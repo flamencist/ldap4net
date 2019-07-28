@@ -4,6 +4,10 @@ dotnet: 2.1.504
 dist: trusty
 sudo: false
 addons:
+  apt:
+    packages:
+      - ldap-utils
+      - slapd
   homebrew:
     packages:
       - openldap
@@ -29,6 +33,4 @@ deploy:
     
 os:
   - osx
-  
-#env:
-#  - DYLD_PRINT_LIBRARIES=0
+  - linux
