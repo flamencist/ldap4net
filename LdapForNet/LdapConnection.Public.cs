@@ -43,11 +43,11 @@ namespace LdapForNet
             ThrowIfNotInitialized();
             if (LdapAuthMechanism.SIMPLE.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {
-                _native.BindSimple(_ld, userDn, password);
+                _native.ThrowIfError(_ld,_native.BindSimple(_ld, userDn, password),nameof(_native.BindSimple));
             }
             else if (LdapAuthMechanism.GSSAPI.Equals(mechanism,StringComparison.OrdinalIgnoreCase))
             {
-                _native.BindKerberos(_ld);
+                _native.ThrowIfError(_ld,_native.BindKerberos(_ld), nameof(_native.BindKerberos));
             }
             else
             {
