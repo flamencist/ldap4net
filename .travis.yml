@@ -14,7 +14,7 @@ addons:
     update: true
 before_script:
   - mkdir /tmp/slapd
-  - /usr/libexec/slapd -f .test_config/slapd.conf -h ldap://localhost:3389 -d 0 &
+  - slapd -f .test_config/slapd.conf -h ldap://localhost:3389 -d 0 &
   - sleep 6
   - ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f .test_config/base.ldif
 install:
