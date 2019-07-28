@@ -9,6 +9,7 @@ namespace LdapForNet.Native
 {
     internal abstract class LdapNative
     {
+        internal static LdapNative Instance { get; } = new LinuxLdapNative();
         internal abstract int Init(ref IntPtr ld, string hostname, int port);
         internal abstract int BindKerberos(SafeHandle ld);
         internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld);
@@ -281,145 +282,75 @@ namespace LdapForNet.Native
             }).ConfigureAwait(false);
         }
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
+            => Native.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)=>
+            Native.ldap_set_option(ld, option, ref invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
-        {
-            throw new NotImplementedException();
-        }
+            => Native.ldap_set_option(ld, option,  invalue);
 
-        internal override int ldap_get_option(SafeHandle ld, int option, ref string value)
-        {
-            throw new NotImplementedException();
-        }
+
+        internal override int ldap_get_option(SafeHandle ld, int option, ref string value) 
+            => Native.ldap_get_option(ld, option, ref value);
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal override int ldap_unbind_s(IntPtr ld)
-        {
-            throw new NotImplementedException();
-        }
+            => Native.ldap_get_option(ld, option, ref value);
+        
+        internal override int ldap_unbind_s(IntPtr ld) => Native.ldap_unbind_s(ld);
 
         internal override int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs, int attrsonly,
-            IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+            IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp) =>
+            Native.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
+                serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 
-        internal override LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage)
-        {
-            throw new NotImplementedException();
-        }
+        internal override LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
+            Native.ldap_result(ld,msgid,all,timeout,ref pMessage);
 
         internal override int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref string matcheddnp, ref string errmsgp,
-            ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit)
-        {
-            throw new NotImplementedException();
-        }
+            ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit) =>
+            Native.ldap_parse_result(ld, result, ref errcodep, ref matcheddnp, ref errmsgp, ref referralsp,
+                ref serverctrlsp, freeit);
 
-        internal override string LdapError2String(int error)
-        {
-            throw new NotImplementedException();
-        }
+        internal override string LdapError2String(int error) => Native.LdapError2String(error);
 
-        internal override string GetAdditionalErrorInfo(SafeHandle ld)
-        {
-            throw new NotImplementedException();
-        }
+        internal override string GetAdditionalErrorInfo(SafeHandle ld) => Native.GetAdditionalErrorInfo(ld);
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => Native.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
 
-        internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message) => Native.ldap_first_entry(ld, message);
 
-        internal override IntPtr ldap_next_entry(SafeHandle ld, IntPtr message)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_next_entry(SafeHandle ld, IntPtr message) => Native.ldap_next_entry(ld, message);
 
-        internal override IntPtr ldap_get_dn(SafeHandle ld, IntPtr message)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_get_dn(SafeHandle ld, IntPtr message) => Native.ldap_get_dn(ld, message);
 
-        internal override void ldap_memfree(IntPtr ptr)
-        {
-            throw new NotImplementedException();
-        }
+        internal override void ldap_memfree(IntPtr ptr) => Native.ldap_memfree(ptr);
 
-        internal override void ldap_msgfree(IntPtr message)
-        {
-            throw new NotImplementedException();
-        }
+        internal override void ldap_msgfree(IntPtr message) => Native.ldap_msgfree(message);
 
-        internal override IntPtr ldap_first_attribute(SafeHandle ld, IntPtr entry, ref IntPtr ppBer)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_first_attribute(SafeHandle ld, IntPtr entry, ref IntPtr ppBer) => Native.ldap_first_attribute(ld, entry, ref ppBer);
 
-        internal override IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer) => Native.ldap_next_attribute(ld, entry, pBer);
 
-        internal override void ldap_value_free(IntPtr vals)
-        {
-            throw new NotImplementedException();
-        }
+        internal override void ldap_value_free(IntPtr vals) => Native.ldap_value_free(vals);
 
-        internal override IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer)
-        {
-            throw new NotImplementedException();
-        }
+        internal override IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer) => Native.ldap_get_values(ld, entry, pBer);
 
-        internal override int ldap_add_ext(SafeHandle ld, string dn, IntPtr attrs, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_add_ext(SafeHandle ld, string dn, IntPtr attrs, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => Native.ldap_add_ext(ld, dn, attrs, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_modify_ext(SafeHandle ld, string dn, IntPtr mods, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_modify_ext(SafeHandle ld, string dn, IntPtr mods, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => Native.ldap_modify_ext(ld, dn, mods, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+        internal override int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => Native.ldap_delete_ext(ld, dn, serverctrls, clientctrls, ref msgidp);
 
         internal override int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
-            ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+            ref int msgidp) =>
+            Native.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
 
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
-            IntPtr clientctrls, ref int msgidp)
-        {
-            throw new NotImplementedException();
-        }
+            IntPtr clientctrls, ref int msgidp) =>
+            Native.ldap_rename(ld, dn, newrdn, newparent, deleteoldrdn, serverctrls, clientctrls, ref msgidp);
 
-        internal override void ldap_controls_free(IntPtr ctrls)
-        {
-            throw new NotImplementedException();
-        }
-        
-        
+        internal override void ldap_controls_free(IntPtr ctrls) => Native.ldap_controls_free(ctrls);
     }
 }
