@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LdapForNet.Native;
 using Microsoft.Win32.SafeHandles;
 using static LdapForNet.Native.Native;
 
@@ -294,8 +292,8 @@ namespace LdapForNet
         {
             string[] refs = null;
             var ctrls = IntPtr.Zero;
-            var rc = ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
-            ThrowIfError(ld, rc, nameof(ldap_parse_reference));
+            var rc = _native.ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
+            _native.ThrowIfError(ld, rc, nameof(_native.ldap_parse_reference));
             if (refs != null)
             {
                 
@@ -303,7 +301,7 @@ namespace LdapForNet
 
             if (ctrls != IntPtr.Zero)
             {
-                ldap_controls_free(ctrls);
+                _native.ldap_controls_free(ctrls);
             }
 
             return default;
@@ -323,38 +321,6 @@ namespace LdapForNet
             if (_bound == false)
             {
                 throw new LdapException($"Not bound. Please invoke {nameof(Bind)} method before.");
-            }
-        }
-
-        private static void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
-        {
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
-            {
-                if (details != default)
-                {
-                    throw new LdapException(LdapError2String(res), method, res, DetailsToString(details));
-                }
-                throw new LdapException(LdapError2String(res), method, res);
-            }
-        }
-
-        private static string DetailsToString(IDictionary<string,string> details)
-        {
-            return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}:{_.Value}"));
-        }
-
-        private static void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string,string> details = default)
-        {
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
-            {
-                var error = LdapError2String(res);
-                var info = GetAdditionalErrorInfo(ld);
-                var message = !string.IsNullOrWhiteSpace(info)? $"{error}. {info}": error;
-                if (details != default)
-                {
-                    throw new LdapException(message, method, res, DetailsToString(details));
-                }
-                throw new LdapException(message, method, res);
             }
         }
 
@@ -383,19 +349,6 @@ namespace LdapForNet
             }
             
             return operation;
-        }
-    }
-
-    public class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid
-    {
-        public LdapHandle(IntPtr handle) : base(true)
-        {
-            SetHandle(handle);
-        }
-
-        protected override bool ReleaseHandle()
-        {
-            return ldap_unbind_s(handle) == (int) LdapResultCode.LDAP_SUCCESS;
         }
     }
 }

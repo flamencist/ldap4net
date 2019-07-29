@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using LdapForNet.Native;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
 
@@ -22,7 +23,7 @@ namespace LdapForNet
         {
             if (request is SearchRequest searchRequest)
             {
-                return ldap_search_ext(
+                return LdapNative.Instance.ldap_search_ext(
                     handle,
                     searchRequest.DistinguishedName,
                     (int) searchRequest.Scope,
@@ -48,7 +49,7 @@ namespace LdapForNet
                     var ber = Marshal.AllocHGlobal(IntPtr.Size);
                     _response.Entries.AddRange(GetLdapEntries(handle, msg, ber));
                     Marshal.FreeHGlobal(ber);
-                    ldap_msgfree(msg);
+                    LdapNative.Instance.ldap_msgfree(msg);
                     return LdapResultCompleteStatus.Partial;
                 case LdapResultType.LDAP_RES_SEARCH_REFERENCE:
                     return LdapResultCompleteStatus.Partial;
@@ -62,8 +63,8 @@ namespace LdapForNet
         
         private static IEnumerable<LdapEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
-            for (var entry = ldap_first_entry(ld, msg); entry != IntPtr.Zero;
-                entry = ldap_next_entry(ld, entry))
+            for (var entry = LdapNative.Instance.ldap_first_entry(ld, msg); entry != IntPtr.Zero;
+                entry = LdapNative.Instance.ldap_next_entry(ld, entry))
             {
                 yield return new LdapEntry
                 {
@@ -76,11 +77,11 @@ namespace LdapForNet
         private static Dictionary<string, List<string>> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
             var dict = new Dictionary<string, List<string>>();
-            for (var attr = ldap_first_attribute(ld, entry, ref ber);
+            for (var attr = LdapNative.Instance.ldap_first_attribute(ld, entry, ref ber);
                 attr != IntPtr.Zero;
-                attr = ldap_next_attribute(ld, entry, ber))
+                attr = LdapNative.Instance.ldap_next_attribute(ld, entry, ber))
             {
-                var vals = ldap_get_values(ld, entry, attr);
+                var vals = LdapNative.Instance.ldap_get_values(ld, entry, attr);
                 if (vals != IntPtr.Zero)
                 {
                     var attrName = Marshal.PtrToStringAnsi(attr);
@@ -88,10 +89,10 @@ namespace LdapForNet
                     {
                         dict.Add(attrName, MarshalUtils.PtrToStringArray(vals));
                     }
-                    ldap_value_free(vals);
+                    LdapNative.Instance.ldap_value_free(vals);
                 }
 
-                ldap_memfree(attr);
+                LdapNative.Instance.ldap_memfree(attr);
             }
 
             return dict;
@@ -99,9 +100,9 @@ namespace LdapForNet
         
         private static string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
-            var ptr = ldap_get_dn(ld, entry);
+            var ptr = LdapNative.Instance.ldap_get_dn(ld, entry);
             var dn = Marshal.PtrToStringAnsi(ptr);
-            ldap_memfree(ptr);
+            LdapNative.Instance.ldap_memfree(ptr);
             return dn;
         }
 
@@ -130,7 +131,7 @@ namespace LdapForNet
                 var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
 
-                return ldap_add_ext(handle,
+                return LdapNative.Instance.ldap_add_ext(handle,
                     addRequest.LdapEntry.Dn,
                     ptr,                
                     IntPtr.Zero, 
@@ -215,7 +216,7 @@ namespace LdapForNet
                 var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
                 
-                return ldap_modify_ext(handle,
+                return LdapNative.Instance.ldap_modify_ext(handle,
                     entry.Dn,
                     ptr,                
                     IntPtr.Zero, 
@@ -276,7 +277,7 @@ namespace LdapForNet
                 {
                     throw new ArgumentNullException(nameof(dn));
                 }
-                return ldap_delete_ext(handle,
+                return LdapNative.Instance.ldap_delete_ext(handle,
                     dn,
                     IntPtr.Zero, 
                     IntPtr.Zero ,    
@@ -312,7 +313,7 @@ namespace LdapForNet
                 {
                     throw new ArgumentNullException(nameof(dn));
                 }
-                return ldap_rename(handle,
+                return LdapNative.Instance.ldap_rename(handle,
                     dn,
                     modifyDnRequest.NewName,
                     modifyDnRequest.NewParentDistinguishedName ,    
