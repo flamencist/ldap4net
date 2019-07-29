@@ -36,6 +36,13 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option),
                 details
             );
+
+//            var noLimit = (int)Native.Native.LdapSizeLimit.LDAP_NO_LIMIT;
+//            _native.ThrowIfError(
+//                _native.ldap_set_option(_ld, (int) Native.Native.LdapOption.LDAP_OPT_SIZELIMIT, ref noLimit),
+//                nameof(_native.ldap_set_option),
+//                details
+//            );
         }
 
         public void Bind(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
