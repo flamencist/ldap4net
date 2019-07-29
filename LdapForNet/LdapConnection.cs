@@ -1,294 +1,281 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Win32.SafeHandles;
-using static LdapForNet.Native.Native;
+using LdapForNet.Native;
 
 namespace LdapForNet
 {
-    public partial class LdapConnection
+    public class LdapConnection:ILdapConnection
     {
+        private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
         private bool _bound;
-        
-        private void GssApiBind()
+
+        public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
+            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
-            var saslDefaults = GetSaslDefaults(_ld);
-            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-            Marshal.StructureToPtr(saslDefaults, ptr, false);
-
-            var res = ldap_sasl_interactive_bind_s(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
-
-            ThrowIfError(_ld, res,nameof(ldap_sasl_interactive_bind_s), new Dictionary<string, string>
+            var details = new Dictionary<string, string>
             {
-                [nameof(saslDefaults)] = saslDefaults.ToString()
-            });
-        }
-
-        private async Task<IntPtr> WinBindAsync()
-        {
-            
-            var msgid = 0;
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = SEC_WINNT_AUTH_IDENTITY_UNICODE
+                [nameof(hostname)] = hostname,
+                [nameof(port)] = port.ToString(),
+                [nameof(version)] = version.ToString()
             };
-//
-//            cred.packageList = MICROSOFT_KERBEROS_NAME_W;
-//            cred.packageListLength = cred.packageList.Length;
-            var task = Task.Factory.StartNew(() =>
-            {
-//                ThrowIfError(ldap_bind(_ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE, ref msgid),nameof(ldap_bind));
-                ThrowIfError(ldap_bind_s(_ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(ldap_bind_s));
-                if (msgid == -1)
-                {
-                    throw new LdapException($"{nameof(WinBindAsync)} failed. {nameof(ldap_bind)} returns wrong or empty result",  nameof(ldap_bind), 1);
-                }
+            var nativeHandle = IntPtr.Zero;
+            _native.ThrowIfError(
+                _native.Init(ref nativeHandle, hostname, port),
+                nameof(_native.Init),
+                details
+            );
+            _ld = new LdapHandle(nativeHandle);
+            var ldapVersion = (int) version;
 
-                var result = IntPtr.Zero;
-//                var rc = ldap_result(_ld, msgid, 0, IntPtr.Zero, ref result);
-//
-//                if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
-//                {
-//                    ThrowIfError((int)rc,nameof(ldap_sasl_bind));
-//                }
-
-                return result;
-            });
-            return await task.ConfigureAwait(false);
-        }
-
-        private void LdapConnect()
-        {
-            var timeout = new LDAP_TIMEVAL()
-            {
-                tv_sec = (int)(TimeSpan.FromMinutes(2).Ticks / TimeSpan.TicksPerSecond)
-            };
-            ThrowIfError(ldap_connect(_ld, timeout),nameof(ldap_connect));
-        }
-        
-        private async Task<IntPtr> GssApiBindAsync()
-        {
-            var task = Task.Factory.StartNew(() =>
-            {
-                var rc = 0;
-                var msgid = 0;
-                var result = IntPtr.Zero;
-                var rmech = IntPtr.Zero;
-                var saslDefaults = GetSaslDefaults(_ld);
-                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-                Marshal.StructureToPtr(saslDefaults, ptr, false);
-                do
-                {
-                    rc = ldap_sasl_interactive_bind(_ld, null, LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                        (uint) LdapInteractionFlags.LDAP_SASL_QUIET,
-                        SaslInteractProc , ptr, result, ref rmech,
-                        ref msgid);
-                    if (rc != (int) LdapResultCode.LDAP_SASL_BIND_IN_PROGRESS)
-                    {
-                        break;
-                    }
-                    ldap_msgfree(result);
-
-                    if (ldap_result(_ld, msgid, 0, IntPtr.Zero, ref result) == LdapResultType.LDAP_ERROR)
-                    {
-                        ThrowIfError(rc,nameof(ldap_sasl_interactive_bind));
-                    }
-
-                    if (result == IntPtr.Zero)
-                    {
-                        throw new LdapException("Result is not initialized", nameof(ldap_sasl_interactive_bind), 1);
-                    }
-                    
-                } while (rc == (int) LdapResultCode.LDAP_SASL_BIND_IN_PROGRESS);
-                
-                ThrowIfError(_ld,rc, nameof(ldap_sasl_interactive_bind), new Dictionary<string, string>
-                {
-                    [nameof(saslDefaults)] = saslDefaults.ToString()
-                });
-                return result;
-            });
-            return await task.ConfigureAwait(false);
-        }
-
-        private static int SaslInteractProc(IntPtr ld, uint flags, IntPtr d, IntPtr @in)
-        {
-            var ptr = @in;
-            var interact = Marshal.PtrToStructure<SaslInteract>(ptr);
-            if (ld == IntPtr.Zero)
-            {
-                return (int)LdapResultCode.LDAP_PARAM_ERROR;
-            }
-
-            var defaults = Marshal.PtrToStructure<LdapSaslDefaults>(d);
-
-            while (interact.id != (int)SaslCb.SASL_CB_LIST_END)
-            {
-                var rc = SaslInteraction(flags, interact, defaults);
-                if (rc != (int) LdapResultCode.LDAP_SUCCESS)
-                {
-                    return rc;
-                }
-
-                ptr = IntPtr.Add(ptr, Marshal.SizeOf<LdapSaslDefaults>());
-                interact = Marshal.PtrToStructure<SaslInteract>(ptr);
-            }
-
-            return (int) LdapResultCode.LDAP_SUCCESS;
-        }
-
-        private static int SaslInteraction(uint flags, SaslInteract interact, LdapSaslDefaults defaults)
-        {
-            var noecho = false;
-            var challenge = false;
-            switch (interact.id)
-            {
-                case (int)SaslCb.SASL_CB_GETREALM:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.realm;
-                    }
-                    break;
-                case (int)SaslCb.SASL_CB_AUTHNAME:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.authcid;
-                    }
-                    break;
-                case (int)SaslCb.SASL_CB_PASS:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.passwd;
-                    }
-                    break;
-                case (int)SaslCb.SASL_CB_USER:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.authzid;
-                    }
-                    break;
-                case (int)SaslCb.SASL_CB_NOECHOPROMPT:
-                    noecho = true;
-                    challenge = true;
-                    break;
-                case (int)SaslCb.SASL_CB_ECHOPROMPT:
-                    challenge = true;
-                    break;
-            }
-
-            if (flags != (uint)LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
-            {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
-                interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
-                return (int) LdapResultCode.LDAP_SUCCESS;
-            }
-
-            if (flags == (int) LdapInteractionFlags.LDAP_SASL_QUIET)
-            {
-                return (int) LdapResultCode.LDAP_OTHER;
-            }
-
-            if (noecho)
-            {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.promt);
-                interact.len = (ushort)interact.promt.Length;
-            }
-            else
-            {
-                return (int)LdapResultCode.LDAP_NOT_SUPPORTED;
-            }
-
-            if (interact.len > 0)
-            {
-                /*
-                 * 
-                 */
-            }
-            else
-            {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
-                interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
-            }
-
-            return (int) LdapResultCode.LDAP_SUCCESS;
-        }
-
-
-        private static LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
-        {
-            var defaults = new LdapSaslDefaults { mech = LdapAuthMechanism.GSSAPI };
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
-            return defaults;
-        }
-        
-        private void SimpleBind(string userDn, string password)
-        {
-            ThrowIfError(
-                _ld,
-                ldap_simple_bind_s(_ld, userDn, password)
-                ,nameof(ldap_simple_bind_s)
+            _native.ThrowIfError(
+                _native.ldap_set_option(_ld, (int) Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
+                nameof(_native.ldap_set_option),
+                details
             );
         }
 
-        private async Task<IntPtr> WinSimpleBindAsync(string userDn, string password)
+        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
+            string password = null)
         {
-            return await Task.Factory.StartNew(() =>
+            ThrowIfNotInitialized();
+            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
             {
-                var berval = new berval(password);
-                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
-                Marshal.StructureToPtr(berval,ptr,false);
-                var result = IntPtr.Zero;
-                var msgidp = ldap_simple_bind(_ld, userDn, password);
-  
-                if (msgidp == -1)
-                {
-                    throw new LdapException($"{nameof(WinSimpleBindAsync)} failed. {nameof(ldap_simple_bind)} returns wrong or empty result",  nameof(ldap_simple_bind), 1);
-                }
+                _native.ThrowIfError(_ld, _native.BindSimple(_ld, userDn, password), nameof(_native.BindSimple));
+            }
+            else if (Native.Native.LdapAuthMechanism.GSSAPI.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            {
+                _native.ThrowIfError(_ld, _native.BindKerberos(_ld), nameof(_native.BindKerberos));
+            }
+            else
+            {
+                throw new LdapException(
+                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.GSSAPI} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+            }
 
-                var rc = ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
-
-                if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
-                {
-                    ThrowIfError((int)rc,nameof(ldap_simple_bind));
-                }
-
-                return result;
-            }).ConfigureAwait(false);
+            _bound = true;
         }
 
-        private async Task<IntPtr> SimpleBindAsync(string userDn, string password)
+        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
+            string password = null)
         {
-            return await Task.Factory.StartNew(() =>
+            ThrowIfNotInitialized();
+            IntPtr result;
+            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
             {
-                var berval = new berval(password);
-                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
-                Marshal.StructureToPtr(berval,ptr,false);
-                var msgidp = 0;
-                var result = IntPtr.Zero;
-                ThrowIfError(ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp), nameof(ldap_sasl_bind));
-                if (msgidp == -1)
-                {
-                    throw new LdapException($"{nameof(SimpleBindAsync)} failed. {nameof(ldap_result)} returns wrong or empty result",  nameof(ldap_sasl_bind), 1);
-                }
+                result = await _native.BindSimpleAsync(_ld, userDn, password);
+            }
+            else if (Native.Native.LdapAuthMechanism.GSSAPI.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            {
+                result = await _native.BindKerberosAsync(_ld);
+            }
+            else
+            {
+                throw new LdapException(
+                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.GSSAPI} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+            }
 
-                var rc = ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
+            if (result != IntPtr.Zero)
+            {
+                ThrowIfParseResultError(result);
+            }
 
-                if (rc == LdapResultType.LDAP_ERROR || rc == LdapResultType.LDAP_TIMEOUT)
-                {
-                    ThrowIfError((int)rc,nameof(ldap_sasl_bind));
-                }
-
-                return result;
-            }).ConfigureAwait(false);
+            _bound = true;
         }
-        
-        private static IEnumerable<LdapEntry> GetLdapReferences(SafeHandle ld, IntPtr msg)
+
+        public void SetOption(Native.Native.LdapOption option, int value)
+        {
+            ThrowIfNotBound();
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+                nameof(_native.ldap_set_option));
+        }
+
+        public void SetOption(Native.Native.LdapOption option, string value)
+        {
+            ThrowIfNotBound();
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+                nameof(_native.ldap_set_option));
+        }
+
+        public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
+        {
+            ThrowIfNotBound();
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
+        }
+
+        public IList<LdapEntry> Search(string @base, string filter,
+            Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
+        {
+            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
+            return response.Entries;
+        }
+
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
+            Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
+            CancellationToken token = default)
+        {
+            var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
+            return response.Entries;
+        }
+
+        public void Add(LdapEntry entry) => SendRequest(new AddRequest(entry));
+
+        public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
+            CancellationToken token = default)
+        {
+            if (token.IsCancellationRequested)
+            {
+                return default;
+            }
+
+            ThrowIfNotBound();
+
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+
+            return await Task.Factory
+                .StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token)
+                .ConfigureAwait(false);
+        }
+
+        public DirectoryResponse SendRequest(DirectoryRequest directoryRequest)
+        {
+            ThrowIfNotBound();
+            var requestHandler = SendRequest(directoryRequest, out var messageId);
+            return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+        }
+
+
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
+            await SendRequestAsync(new ModifyRequest(entry), token);
+
+        public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
+
+
+        public void Dispose()
+        {
+            _ld?.Dispose();
+        }
+
+        public IntPtr GetNativeLdapPtr()
+        {
+            return _ld.DangerousGetHandle();
+        }
+
+
+        public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
+            await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
+
+        public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
+
+        public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
+            CancellationToken cancellationToken = default) =>
+            await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
+                cancellationToken);
+
+        public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
+            SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn});
+
+        public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
+            await SendRequestAsync(new AddRequest(entry), token);
+
+
+        private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
+            IRequestHandler requestHandler, int messageId,
+            CancellationToken token)
+        {
+            var status = LdapResultCompleteStatus.Unknown;
+            var msg = Marshal.AllocHGlobal(IntPtr.Size);
+
+            DirectoryResponse response = default;
+
+            while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
+            {
+                var resType = _native.ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
+                ThrowIfResultError(directoryRequest, resType);
+
+                status = requestHandler.Handle(_ld, resType, msg, out response);
+
+                if (status == LdapResultCompleteStatus.Unknown)
+                {
+                    throw new LdapException($"Unknown search type {resType}", nameof(_native.ldap_result), 1);
+                }
+
+                if (status == LdapResultCompleteStatus.Complete)
+                {
+                    ThrowIfParseResultError(msg);
+                }
+            }
+
+            return response;
+        }
+
+        private IRequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
+        {
+            var operation = GetLdapOperation(directoryRequest);
+            var requestHandler = GetSendRequestHandler(operation);
+            messageId = 0;
+            _native.ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),
+                requestHandler.GetType().Name);
+            return requestHandler;
+        }
+
+        private void ThrowIfResultError(DirectoryRequest directoryRequest, Native.Native.LdapResultType resType)
+        {
+            switch (resType)
+            {
+                case Native.Native.LdapResultType.LDAP_ERROR:
+                    _native.ThrowIfError(1, directoryRequest.GetType().Name);
+                    break;
+                case Native.Native.LdapResultType.LDAP_TIMEOUT:
+                    throw new LdapException("Timeout exceeded", nameof(_native.ldap_result), 1);
+            }
+        }
+
+        private static IRequestHandler GetSendRequestHandler(LdapOperation operation)
+        {
+            switch (operation)
+            {
+                case LdapOperation.LdapAdd:
+                    return new AddRequestHandler();
+                case LdapOperation.LdapModify:
+                    return new ModifyRequestHandler();
+                case LdapOperation.LdapSearch:
+                    return new SearchRequestHandler();
+                case LdapOperation.LdapDelete:
+                    return new DeleteRequestHandler();
+                case LdapOperation.LdapModifyDn:
+                    return new ModifyDnRequestHandler();
+//                case LdapOperation.LdapCompare:
+//                    break;
+//                case LdapOperation.LdapExtendedRequest:
+//                    break;
+                default:
+                    throw new LdapException("Not supported operation: " + operation);
+            }
+        }
+
+
+        private void ThrowIfParseResultError(IntPtr msg)
+        {
+            var matchedMessage = IntPtr.Zero;
+            var errorMessage = IntPtr.Zero;
+            var res = 0;
+            var referrals = IntPtr.Zero;
+            var serverctrls = IntPtr.Zero;
+            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessage, ref errorMessage,
+                ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
+            _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
+            {
+                [nameof(errorMessage)] = Marshal.PtrToStringAnsi(errorMessage),
+                [nameof(matchedMessage)] = Marshal.PtrToStringAnsi(matchedMessage)
+            });
+        }
+
+
+        private IEnumerable<LdapEntry> GetLdapReferences(SafeHandle ld, IntPtr msg)
         {
             string[] refs = null;
             var ctrls = IntPtr.Zero;
@@ -296,7 +283,6 @@ namespace LdapForNet
             _native.ThrowIfError(ld, rc, nameof(_native.ldap_parse_reference));
             if (refs != null)
             {
-                
             }
 
             if (ctrls != IntPtr.Zero)
@@ -347,7 +333,7 @@ namespace LdapForNet
                 default:
                     throw new LdapException($"Unknown ldap operation for {request.GetType()}");
             }
-            
+
             return operation;
         }
     }
