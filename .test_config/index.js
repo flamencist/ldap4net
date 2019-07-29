@@ -246,6 +246,6 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 
 ///--- Fire it up
 
-server.listen(1389, function() {
+server.listen(4389, function() {
   console.log('LDAP server up at: %s', server.url);
 });

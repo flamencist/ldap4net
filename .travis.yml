@@ -15,9 +15,9 @@ addons:
 before_script:
   - mkdir /tmp/slapd
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PATH=/usr/libexec:$PATH ; fi
-  - slapd -f .test_config/slapd."$TRAVIS_OS_NAME".conf -h ldap://localhost:3389 -d 0 &
+  - slapd -f .test_config/slapd."$TRAVIS_OS_NAME".conf -h ldap://localhost:4389 -d 0 &
   - sleep 6
-  - ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f .test_config/base.ldif
+  - ldapadd -h localhost:4389 -D cn=admin,dc=example,dc=com -w test -f .test_config/base.ldif
 install:
   - dotnet restore
 script:
