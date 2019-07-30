@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,13 +37,6 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option),
                 details
             );
-
-//            var noLimit = (int)Native.Native.LdapSizeLimit.LDAP_NO_LIMIT;
-//            _native.ThrowIfError(
-//                _native.ldap_set_option(_ld, (int) Native.Native.LdapOption.LDAP_OPT_SIZELIMIT, ref noLimit),
-//                nameof(_native.ldap_set_option),
-//                details
-//            );
         }
 
         public void Bind(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
@@ -117,6 +111,10 @@ namespace LdapForNet
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
+            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            {
+                ThrowIfResponseError(response);
+            }
             return response.Entries;
         }
 
@@ -125,10 +123,14 @@ namespace LdapForNet
             CancellationToken token = default)
         {
             var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
+            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            {
+                ThrowIfResponseError(response);
+            }
             return response.Entries;
         }
-
-        public void Add(LdapEntry entry) => SendRequest(new AddRequest(entry));
+        
+        public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));
 
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
             CancellationToken token = default)
@@ -155,10 +157,10 @@ namespace LdapForNet
         }
 
 
-        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
-            await SendRequestAsync(new ModifyRequest(entry), token);
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
+            ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
 
-        public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
+        public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
 
 
         public void Dispose()
@@ -173,20 +175,20 @@ namespace LdapForNet
 
 
         public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
-            await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
+            ThrowIfResponseError(await SendRequestAsync(new DeleteRequest(dn), cancellationToken));
 
-        public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
+        public void Delete(string dn) => ThrowIfResponseError(SendRequest(new DeleteRequest(dn)));
 
         public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
             CancellationToken cancellationToken = default) =>
-            await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
-                cancellationToken);
+            ThrowIfResponseError(await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
+                cancellationToken));
 
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
-            SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn});
+            ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
-            await SendRequestAsync(new AddRequest(entry), token);
+            ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
 
 
         private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
@@ -197,7 +199,6 @@ namespace LdapForNet
             var msg = Marshal.AllocHGlobal(IntPtr.Size);
 
             DirectoryResponse response = default;
-
             while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
                 var resType = _native.ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
@@ -209,10 +210,12 @@ namespace LdapForNet
                 {
                     throw new LdapException($"Unknown search type {resType}", nameof(_native.ldap_result), 1);
                 }
-
+                
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-                    ThrowIfParseResultError(msg);
+                    var res = ParseResultError(msg, out var errorMessage, out _);
+                    response.ResultCode = (Native.Native.ResultCode) res;
+                    response.ErrorMessage = errorMessage;
                 }
             }
 
@@ -264,21 +267,29 @@ namespace LdapForNet
             }
         }
 
-
         private void ThrowIfParseResultError(IntPtr msg)
         {
-            var matchedMessage = IntPtr.Zero;
-            var errorMessage = IntPtr.Zero;
+            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage);
+            _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
+            {
+                [nameof(errorMessage)] = errorMessage,
+                [nameof(matchedMessage)] = matchedMessage
+            });
+        }
+        
+        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedMessage)
+        {
+            var matchedMessagePtr = IntPtr.Zero;
+            var errorMessagePtr = IntPtr.Zero;
             var res = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
-            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessage, ref errorMessage,
+            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
-            _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
-            {
-                [nameof(errorMessage)] = Marshal.PtrToStringAnsi(errorMessage),
-                [nameof(matchedMessage)] = Marshal.PtrToStringAnsi(matchedMessage)
-            });
+            errorMessage = Marshal.PtrToStringAnsi(errorMessagePtr);
+            matchedMessage = Marshal.PtrToStringAnsi(matchedMessagePtr);
+            
+            return res;
         }
 
 
@@ -316,6 +327,16 @@ namespace LdapForNet
                 throw new LdapException($"Not bound. Please invoke {nameof(Bind)} method before.");
             }
         }
+        
+        private void ThrowIfResponseError(DirectoryResponse response)
+        {
+            _native.ThrowIfError(_ld, (int) response.ResultCode, nameof(_native.ldap_parse_result),
+                new Dictionary<string, string>
+                {
+                    [nameof(response.ErrorMessage)] = response.ErrorMessage,
+                });
+        }
+
 
         private static LdapOperation GetLdapOperation(DirectoryRequest request)
         {

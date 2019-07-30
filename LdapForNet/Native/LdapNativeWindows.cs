@@ -13,7 +13,7 @@ namespace LdapForNet.Native
             {
                 return -1;
             }
-            return (int)Native.LdapResultCode.LDAP_SUCCESS;
+            return (int)Native.ResultCode.Success;
         }
 
         private void LdapConnect(SafeHandle ld)

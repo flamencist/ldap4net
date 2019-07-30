@@ -17,7 +17,7 @@ namespace LdapForNet.Native
             Marshal.StructureToPtr(saslDefaults, ptr, false);
 
             return NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.LdapResultCode.LDAP_SUCCESS, ptr);
+                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, ptr);
         }
         
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
@@ -47,7 +47,7 @@ namespace LdapForNet.Native
                         (uint) Native.LdapInteractionFlags.LDAP_SASL_QUIET,
                         SaslInteractProc , ptr, result, ref rmech,
                         ref msgid);
-                    if (rc != (int) Native.LdapResultCode.LDAP_SASL_BIND_IN_PROGRESS)
+                    if (rc != (int) Native.ResultCode.SaslBindInProgress)
                     {
                         break;
                     }
@@ -63,7 +63,7 @@ namespace LdapForNet.Native
                         throw new LdapException("Result is not initialized", nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), 1);
                     }
                     
-                } while (rc == (int) Native.LdapResultCode.LDAP_SASL_BIND_IN_PROGRESS);
+                } while (rc == (int) Native.ResultCode.SaslBindInProgress);
                 
                 ThrowIfError(ld,rc, nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
@@ -81,7 +81,7 @@ namespace LdapForNet.Native
             var interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
             if (ld == IntPtr.Zero)
             {
-                return (int)Native.LdapResultCode.LDAP_PARAM_ERROR;
+                return (int)Native.ResultCode.LDAP_PARAM_ERROR;
             }
 
             var defaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(d);
@@ -89,7 +89,7 @@ namespace LdapForNet.Native
             while (interact.id != (int)Native.SaslCb.SASL_CB_LIST_END)
             {
                 var rc = SaslInteraction(flags, interact, defaults);
-                if (rc != (int) Native.LdapResultCode.LDAP_SUCCESS)
+                if (rc != (int) Native.ResultCode.Success)
                 {
                     return rc;
                 }
@@ -98,7 +98,7 @@ namespace LdapForNet.Native
                 interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
             }
 
-            return (int) Native.LdapResultCode.LDAP_SUCCESS;
+            return (int) Native.ResultCode.Success;
         }
 
         private static int SaslInteraction(uint flags, Native.SaslInteract interact, Native.LdapSaslDefaults defaults)
@@ -144,12 +144,12 @@ namespace LdapForNet.Native
             {
                 interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
                 interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
-                return (int) Native.LdapResultCode.LDAP_SUCCESS;
+                return (int) Native.ResultCode.Success;
             }
 
             if (flags == (int) Native.LdapInteractionFlags.LDAP_SASL_QUIET)
             {
-                return (int) Native.LdapResultCode.LDAP_OTHER;
+                return (int) Native.ResultCode.Other;
             }
 
             if (noecho)
@@ -159,7 +159,7 @@ namespace LdapForNet.Native
             }
             else
             {
-                return (int)Native.LdapResultCode.LDAP_NOT_SUPPORTED;
+                return (int)Native.ResultCode.LDAP_NOT_SUPPORTED;
             }
 
             if (interact.len > 0)
@@ -174,7 +174,7 @@ namespace LdapForNet.Native
                 interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
             }
 
-            return (int) Native.LdapResultCode.LDAP_SUCCESS;
+            return (int) Native.ResultCode.Success;
         }
 
 

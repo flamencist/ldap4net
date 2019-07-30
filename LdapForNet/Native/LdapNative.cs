@@ -66,7 +66,7 @@ namespace LdapForNet.Native
         
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
+            if (res != (int)ResultCode.Success)
             {
                 if (details != default)
                 {
@@ -83,7 +83,7 @@ namespace LdapForNet.Native
 
         internal void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string,string> details = default)
         {
-            if (res != (int)LdapResultCode.LDAP_SUCCESS)
+            if (res != (int)ResultCode.Success)
             {
                 var error = LdapError2String(res);
                 var info = GetAdditionalErrorInfo(ld);

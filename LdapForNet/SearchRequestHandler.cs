@@ -24,7 +24,7 @@ namespace LdapForNet
                     IntPtr.Zero,
                     IntPtr.Zero,
                     IntPtr.Zero,
-                    500,
+                    (int)LdapSizeLimit.LDAP_NO_LIMIT,
                     ref messageId);
             }
 
