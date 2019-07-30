@@ -27,7 +27,7 @@ script:
 deploy:
   skip_cleanup: true
   provider: script
-  script: dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg -k $NUGET_API_KEY -s $NUGET_SOURCE
+  script: if [ "$TRAVIS_OS_NAME" = "linux" ]; dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg -k $NUGET_API_KEY -s $NUGET_SOURCE ; fi
   on:
     tags: true
     all_branches: true
