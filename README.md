@@ -4,18 +4,19 @@
 [![Build Status](https://dev.azure.com/achermyanin/ldap4net/_apis/build/status/flamencist.ldap4net?branchName=master)](https://dev.azure.com/achermyanin/ldap4net/_build/latest?definitionId=1&branchName=master)
 [![NuGet](https://img.shields.io/nuget/v/LdapForNet.svg)](https://www.nuget.org/packages/LdapForNet/)
 
-Port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap) to DotNet Core
+Cross platform port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap)  
+and Windows Ldap (https://docs.microsoft.com/en-us/windows/win32/api/_ldap/) to DotNet Core
 
-You must ensure you have the latest OpenLDAP client libraries installed from http://www.openldap.org
+For Linux\OSX you must ensure you have the latest OpenLDAP client libraries installed from http://www.openldap.org
 
   
 It works with any LDAP protocol compatible directory server (including Microsoft Active Directory).
 
+Supported paswordless authentication (Kerberos) on all platforms (on Linux\OSX supported SASL GSSAPI (Kerberos) authentication!).
 
 
-Supported SASL GSSAPI (Kerberos) authentication!
 
-Sample usage (GSSAPI authentication)
+Sample usage (Kerberos authentication)
 
 ```cs
 using (var cn = new LdapConnection())
@@ -37,16 +38,21 @@ using (var cn = new LdapConnection())
 * [API](#api)
 	* [Connect](#connect)
 	* [Bind](#bind)
+	* [BindAsync](#bindAsync)
 	* [Search](#search)
+	* [SearchAsync](#searchAsync)
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
 	* [SetOption](#setoption)
 	* [Add](#add)
+	* [AddAsync](#addAsync)
 	* [Modify](#modify)
+	* [ModifyAsync](#modifyAsync)
 	* [Delete](#delete)
+	* [DeleteAsync](#deleteAsync)
 	* [Rename](#rename)
-	* [GetNativeLdapPtr](#getnativeldapptr)
-	* [Native](#native)
+	* [RenameAsync](#renameAsync)
+	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
 	* [License](#license)
 	* [Authors](#authors)
 
@@ -54,7 +60,8 @@ using (var cn = new LdapConnection())
 
 * Most of popular Linux distributives
 * OSX
-* Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono.
+* Windows
+* Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
 
 ## Installation
 
@@ -103,6 +110,18 @@ using (var cn = new LdapConnection())
 
 ```
 
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect("ldap.forumsys.com");
+	// bind using userdn and password
+	cn.Bind(LdapAuthMechanism.SIMPLE,"cn=read-only-admin,dc=example,dc=com","password");
+	...
+}
+
+```
+
 ### BindAsync
 
 
@@ -117,17 +136,6 @@ using (var cn = new LdapConnection())
 
 ```
 
-
-```cs
-using (var cn = new LdapConnection())
-{
-	cn.Connect("ldap.forumsys.com");
-	// bind using userdn and password
-	cn.Bind(LdapAuthMechanism.SIMPLE,"cn=read-only-admin,dc=example,dc=com","password");
-	...
-}
-
-```
 
 
 ### Search
@@ -232,6 +240,28 @@ using (var cn = new LdapConnection())
 ```
 
 ### Add
+   
+   
+   ```cs
+   using (var cn = new LdapConnection())
+   {
+   	cn.Connect();
+   	cn.Bind();
+   	cn.Add(new LdapEntry
+   	{
+   	Dn = "cn=test,dc=example,dc=com",
+   	Attributes = new Dictionary<string, List<string>>
+   	{
+   	    {"sn", new List<string> {"Winston"}},
+   	    {"objectclass", new List<string> {"inetOrgPerson"}},
+   	    {"givenName", new List<string> {"your_name"}},
+   	    {"description", new List<string> {"your_description"}}
+   	}
+   	});
+   }
+   ```
+
+### AddAsync
 
 
 ```cs
@@ -239,7 +269,7 @@ using (var cn = new LdapConnection())
 {
 	cn.Connect();
 	cn.Bind();
-	cn.Add(new LdapEntry
+	await cn.AddAsync(new LdapEntry
 	{
 	Dn = "cn=test,dc=example,dc=com",
 	Attributes = new Dictionary<string, List<string>>
@@ -295,6 +325,48 @@ using (var cn = new LdapConnection())
 }
 ```
 
+### ModifyAsync
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	await cn.ModifyAsync(new LdapModifyEntry
+	{
+	Dn = "cn=test,dc=example,dc=com",
+	Attributes = new List<LdapModifyAttribute>
+	{
+	    new LdapModifyAttribute
+	    {
+		LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+		Type = "givenName",
+		Values = new List<string> {"test_value_2"}
+	    },
+	    new LdapModifyAttribute
+	    {
+		LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+		Type = "displayName",
+		Values = new List<string> {"test_display_name"}
+	    },
+	    new LdapModifyAttribute
+	    {
+		LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
+		Type = "sn",
+		Values = new List<string> {"test"}
+	    },
+	    new LdapModifyAttribute
+	    {
+		LdapModOperation = LdapModOperation.LDAP_MOD_DELETE,
+		Type = "description",
+		Values = new List<string> {"test_value"}
+	    }
+	}
+	});
+}
+```
+
 ### Delete
 
 
@@ -304,6 +376,18 @@ using (var cn = new LdapConnection())
 	cn.Connect();
 	cn.Bind();
 	cn.Delete("cn=test,dc=example,dc=com");
+}
+```
+
+### DeleteAsync
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	await cn.DeleteAsync("cn=test,dc=example,dc=com");
 }
 ```
 
@@ -319,8 +403,47 @@ using (var cn = new LdapConnection())
 }
 ```
 
+### RenameAsync
 
-### GetNativeLdapPtr
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	await cn.RenameAsync("cn=test,dc=example,dc=com", "cn=test2", null, true);
+}
+```
+
+### SendRequest
+Generic method for ldap requests.
+Inspired by .NET Framework LdapConnection.SendRequest
+
+ ```cs
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+ 	cn.SendRequest(new DeleteRequest("cn=test,dc=example,dc=com"));
+ }
+ ```
+
+### SendRequestAsync
+Generic method for ldap requests.
+Inspired by .NET Framework LdapConnection.SendRequest
+
+ ```cs
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+ 	var cancellationTokenSource = new CancellationTokenSource();
+ 	await cn.SendRequestAsync(new DeleteRequest("cn=test,dc=example,dc=com"), cancellationTokenSource.Token);
+ }
+ ```
+
+
+### GetNativeLdapPtr (deprecated)
 
 For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can use this pointer in own implementations.
 For example, implement "DIGEST-MD5" authentication 
