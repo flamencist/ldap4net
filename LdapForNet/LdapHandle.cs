@@ -13,7 +13,7 @@ namespace LdapForNet
 
         protected override bool ReleaseHandle()
         {
-            return LdapNative.Instance.ldap_unbind_s(handle) == (int) Native.Native.LdapResultCode.LDAP_SUCCESS;
+            return LdapNative.Instance.ldap_unbind_s(handle) == (int) Native.Native.ResultCode.Success;
         }
     }
 }

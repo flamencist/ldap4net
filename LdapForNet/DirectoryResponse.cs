@@ -4,6 +4,9 @@ namespace LdapForNet
 {
     public abstract class DirectoryResponse
     {
+        public virtual Native.Native.ResultCode ResultCode { get; internal set; }
+
+        public virtual string ErrorMessage { get; internal set; }
     }
     
     public class SearchResponse : DirectoryResponse
