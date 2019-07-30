@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using LdapForNet.Native;
 using LdapForNet.Utils;
 
-namespace LdapForNet
+namespace LdapForNet.RequestHandlers
 {
-    internal class AddRequestHandler : IRequestHandler
+    internal class AddRequestHandler : RequestHandler
     {
-        public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is AddRequest addRequest)
             {
@@ -29,7 +28,7 @@ namespace LdapForNet
                 var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
 
-                return LdapNative.Instance.ldap_add_ext(handle,
+                return Native.ldap_add_ext(handle,
                     addRequest.LdapEntry.Dn,
                     ptr,                
                     IntPtr.Zero, 
@@ -42,12 +41,12 @@ namespace LdapForNet
 
         }
 
-        public LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
             {
-                case Native.Native.LdapResultType.LDAP_RES_ADD:
+                case LdapForNet.Native.Native.LdapResultType.LDAP_RES_ADD:
                     response = new AddResponse();
                     return LdapResultCompleteStatus.Complete;
                 default:
@@ -60,7 +59,7 @@ namespace LdapForNet
             return ToLdapMod(new LdapModifyAttribute
             {
                 Type = attribute.Key,
-                LdapModOperation = Native.Native.LdapModOperation.LDAP_MOD_ADD,
+                LdapModOperation = LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_ADD,
                 Values = attribute.Value
             });
         }

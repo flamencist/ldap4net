@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Native;
+using LdapForNet.RequestHandlers;
 
 namespace LdapForNet
 {
@@ -192,7 +193,7 @@ namespace LdapForNet
 
 
         private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
-            IRequestHandler requestHandler, int messageId,
+            RequestHandler requestHandler, int messageId,
             CancellationToken token)
         {
             var status = LdapResultCompleteStatus.Unknown;
@@ -222,7 +223,7 @@ namespace LdapForNet
             return response;
         }
 
-        private IRequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
+        private RequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
         {
             var operation = GetLdapOperation(directoryRequest);
             var requestHandler = GetSendRequestHandler(operation);
@@ -244,7 +245,7 @@ namespace LdapForNet
             }
         }
 
-        private static IRequestHandler GetSendRequestHandler(LdapOperation operation)
+        private static RequestHandler GetSendRequestHandler(LdapOperation operation)
         {
             switch (operation)
             {

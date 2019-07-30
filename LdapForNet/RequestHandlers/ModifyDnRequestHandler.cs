@@ -1,12 +1,11 @@
 using System;
 using System.Runtime.InteropServices;
-using LdapForNet.Native;
 
-namespace LdapForNet
+namespace LdapForNet.RequestHandlers
 {
-    internal class ModifyDnRequestHandler: IRequestHandler
+    internal class ModifyDnRequestHandler: RequestHandler
     {
-        public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is ModifyDNRequest modifyDnRequest)
             {
@@ -15,7 +14,7 @@ namespace LdapForNet
                 {
                     throw new ArgumentNullException(nameof(dn));
                 }
-                return LdapNative.Instance.ldap_rename(handle,
+                return Native.ldap_rename(handle,
                     dn,
                     modifyDnRequest.NewName,
                     modifyDnRequest.NewParentDistinguishedName ,    
@@ -29,12 +28,12 @@ namespace LdapForNet
             return 0;
         }
 
-        public LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
             {
-                case Native.Native.LdapResultType.LDAP_RES_MODDN:
+                case LdapForNet.Native.Native.LdapResultType.LDAP_RES_MODDN:
                     response = new ModifyDNResponse();
                     return LdapResultCompleteStatus.Complete;
                 default:

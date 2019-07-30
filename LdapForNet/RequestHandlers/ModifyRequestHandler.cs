@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using LdapForNet.Native;
 using LdapForNet.Utils;
 
-namespace LdapForNet
+namespace LdapForNet.RequestHandlers
 {
-    internal class ModifyRequestHandler : IRequestHandler
+    internal class ModifyRequestHandler : RequestHandler
     {
-        public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is ModifyRequest modifyRequest)
             {
@@ -29,7 +28,7 @@ namespace LdapForNet
                 var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
                 
-                return LdapNative.Instance.ldap_modify_ext(handle,
+                return Native.ldap_modify_ext(handle,
                     entry.Dn,
                     ptr,                
                     IntPtr.Zero, 
@@ -41,12 +40,12 @@ namespace LdapForNet
             return 0;
         }
 
-        public LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
             {
-                case Native.Native.LdapResultType.LDAP_RES_MODIFY:
+                case LdapForNet.Native.Native.LdapResultType.LDAP_RES_MODIFY:
                     response = new ModifyResponse();
                     return LdapResultCompleteStatus.Complete;
                 default:

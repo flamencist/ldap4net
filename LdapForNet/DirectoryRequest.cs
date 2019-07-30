@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using System.ComponentModel;
 
 namespace LdapForNet

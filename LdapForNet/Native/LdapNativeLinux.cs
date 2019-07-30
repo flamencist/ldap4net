@@ -104,7 +104,6 @@ namespace LdapForNet.Native
         private static int SaslInteraction(uint flags, Native.SaslInteract interact, Native.LdapSaslDefaults defaults)
         {
             var noecho = false;
-            var challenge = false;
             switch (interact.id)
             {
                 case (int)Native.SaslCb.SASL_CB_GETREALM:
@@ -133,10 +132,8 @@ namespace LdapForNet.Native
                     break;
                 case (int)Native.SaslCb.SASL_CB_NOECHOPROMPT:
                     noecho = true;
-                    challenge = true;
                     break;
                 case (int)Native.SaslCb.SASL_CB_ECHOPROMPT:
-                    challenge = true;
                     break;
             }
 
