@@ -52,6 +52,8 @@ using (var cn = new LdapConnection())
 	* [DeleteAsync](#deleteAsync)
 	* [Rename](#rename)
 	* [RenameAsync](#renameAsync)
+	* [SendRequest](#sendRequest)
+	* [SendRequestAsync](#sendRequestAsync)
 	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
 	* [License](#license)
 	* [Authors](#authors)
@@ -443,7 +445,7 @@ Inspired by .NET Framework LdapConnection.SendRequest
  ```
 
 
-### GetNativeLdapPtr (deprecated)
+### GetNativeLdapPtr
 
 For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can use this pointer in own implementations.
 For example, implement "DIGEST-MD5" authentication 
