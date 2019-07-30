@@ -15,10 +15,10 @@ namespace LdapExample
         /// LdapSearch
         /// </summary>
         /// <example>
-        ///  LdapExample --auth=GSSAPI --host=v04.example.com --base="dc=v04,dc=example,dc=com" --filter="(objectclass=*)" --port 389
+        ///  LdapExample --auth=GSSAPI --host=v04.example.com --base="dc=v04,dc=example,dc=com" --filter="(objectclass=*)" --port=389
         /// </example>
         ///  <example>
-        ///  LdapExample --auth=Simple --host=ldap.forumsys.com --base="dc=example,dc=com" --filter="(objectclass=*)" --who="cn=read-only-admin,dc=example,dc=com" --password=password --port 389
+        ///  LdapExample --auth=Simple --host=ldap.forumsys.com --base="dc=example,dc=com" --filter="(objectclass=*)" --who="cn=read-only-admin,dc=example,dc=com" --password=password --port=389
         /// </example>
         /// <param name="args"></param>
         static void Main(string[] args)
@@ -76,7 +76,7 @@ namespace LdapExample
                     cmds.TryGetValue("password", out var password);
                     who = who ?? "cn=read-only-admin,dc=example,dc=com";
                     password = password ?? "password";
-                    await cn.BindAsync(LdapAuthMechanism.SIMPLE,who,password);
+                    cn.Bind(LdapAuthMechanism.SIMPLE,who,password);
                 }
 
                 IList<LdapEntry> entries;

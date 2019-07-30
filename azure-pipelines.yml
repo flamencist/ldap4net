@@ -4,18 +4,23 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master
+- feature/windows
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-latest'  
 
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
+
 steps:
 - task: NuGetToolInstaller@1
+- task: Npm@1
+  inputs:
+    command: 'install'
+    workingDir: '.test_config'
 
 - task: NuGetCommand@2
   inputs:
@@ -27,7 +32,11 @@ steps:
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-
+    
+- task: CmdLine@2
+  inputs:
+    script: 'START /B "" node ".test_config\index.js"'
+    
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
