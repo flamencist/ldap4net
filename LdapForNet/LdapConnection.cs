@@ -40,7 +40,7 @@ namespace LdapForNet
             );
         }
 
-        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
+        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
         {
             ThrowIfNotInitialized();
@@ -48,20 +48,20 @@ namespace LdapForNet
             {
                 _native.ThrowIfError(_ld, _native.BindSimple(_ld, userDn, password), nameof(_native.BindSimple));
             }
-            else if (Native.Native.LdapAuthMechanism.GSSAPI.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
             {
                 _native.ThrowIfError(_ld, _native.BindKerberos(_ld), nameof(_native.BindKerberos));
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.GSSAPI} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
             }
 
             _bound = true;
         }
 
-        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.GSSAPI, string userDn = null,
+        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
         {
             ThrowIfNotInitialized();
@@ -70,14 +70,14 @@ namespace LdapForNet
             {
                 result = await _native.BindSimpleAsync(_ld, userDn, password);
             }
-            else if (Native.Native.LdapAuthMechanism.GSSAPI.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
             {
                 result = await _native.BindKerberosAsync(_ld);
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.GSSAPI} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
             }
 
             if (result != IntPtr.Zero)

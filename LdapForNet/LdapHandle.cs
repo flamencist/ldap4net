@@ -4,7 +4,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace LdapForNet
 {
-    public class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid
+    internal class LdapHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         public LdapHandle(IntPtr handle) : base(true)
         {

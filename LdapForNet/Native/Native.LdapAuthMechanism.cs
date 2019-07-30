@@ -6,6 +6,7 @@ namespace LdapForNet.Native
         public static class LdapAuthMechanism
         {
             public const string GSSAPI = "GSSAPI";
+            public const string Kerberos = "GSSAPI";
             public const string SIMPLE = "SIMPLE";
         }
     }
