@@ -183,7 +183,11 @@ namespace LdapForNet.Native
             
             return await Task.Factory.StartNew(() =>
             {
-                var berval = new Native.berval(password);
+                var berval = new Native.berval
+                {
+                    bv_len = password.Length,
+                    bv_val = Marshal.StringToHGlobalAnsi(password)
+                };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
@@ -269,11 +273,18 @@ namespace LdapForNet.Native
         internal override int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
             ref int msgidp) =>
             NativeMethodsOsx.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
+        
+        internal override int ldap_extended_operation(SafeHandle ld, string requestoid, IntPtr requestdata, IntPtr serverctrls,
+            IntPtr clientctrls, ref int msgidp) =>
+            NativeMethodsOsx.ldap_extended_operation(ld, requestoid, requestdata, serverctrls, clientctrls, ref msgidp);
 
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
             IntPtr clientctrls, ref int msgidp) =>
             NativeMethodsOsx.ldap_rename(ld, dn, newrdn, newparent, deleteoldrdn, serverctrls, clientctrls, ref msgidp);
 
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
+            NativeMethodsOsx.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
+        
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsOsx.ldap_controls_free(ctrls);
     }
 }

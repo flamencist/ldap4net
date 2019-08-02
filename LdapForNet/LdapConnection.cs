@@ -261,8 +261,9 @@ namespace LdapForNet
                     return new ModifyDnRequestHandler();
 //                case LdapOperation.LdapCompare:
 //                    break;
-//                case LdapOperation.LdapExtendedRequest:
-//                    break;
+                case LdapOperation.LdapExtendedRequest:
+                    return new ExtendedRequestHandler();
+                    break;
                 default:
                     throw new LdapException("Not supported operation: " + operation);
             }
