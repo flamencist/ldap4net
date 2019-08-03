@@ -61,6 +61,9 @@ namespace LdapForNet.Native
         internal abstract int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         internal abstract int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         internal abstract int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal abstract int ldap_extended_operation(SafeHandle ld,string requestoid,IntPtr requestdata,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
+        internal abstract int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt);
+
         internal abstract void ldap_controls_free(IntPtr ctrls);
         
         

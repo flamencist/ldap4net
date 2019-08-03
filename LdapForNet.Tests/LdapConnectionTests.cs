@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
@@ -127,6 +128,25 @@ namespace LdapForNetTests
             await AddLdapEntryAsync();
             await ModifyLdapEntryAsync();
             await DeleteLdapEntryAsync();                    
+        }
+
+        /// <summary>
+        /// https://github.com/delphij/openldap/blob/master/clients/tools/ldapwhoami.c
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task LdapConnection_Extended_Operation_WhoAmI_Async()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"));
+                var extendedResponse = (ExtendedResponse) result;
+                Assert.True(result.ResultCode==ResultCode.Success);
+                var name = Encoding.ASCII.GetString(extendedResponse.ResponseValue);
+                Assert.Equal($"dn:{Config.LdapUserDn}",name);
+            }
         }
 
         private async Task ModifyLdapEntryAsync()
