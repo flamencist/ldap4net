@@ -242,7 +242,14 @@ server.search(SUFFIX, authorize, function(req, res, next) {
   return next();
 });
 
-
+// LDAP whoami
+server.exop('1.3.6.1.4.1.4203.1.11.3', function(req, res, next) {
+  console.log('name: ' + req.name);
+  console.log('value: ' + req.value);
+  res.value = 'dn:cn=admin,dc=example,dc=com';
+  res.end();
+  return next();
+});
 
 ///--- Fire it up
 

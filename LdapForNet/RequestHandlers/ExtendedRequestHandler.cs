@@ -46,6 +46,7 @@ namespace LdapForNet.RequestHandlers
                         if (requestName != IntPtr.Zero)
                         {
                             name = Marshal.PtrToStringAnsi(requestName);
+                            Native.ldap_memfree(requestName);
                         }
 
                         if (requestValue != IntPtr.Zero)
@@ -56,6 +57,7 @@ namespace LdapForNet.RequestHandlers
                                 value = new byte[berval.bv_len];
                                 Marshal.Copy(berval.bv_val,value,0,berval.bv_len);
                             }
+                            Native.ldap_memfree(requestValue);
                         }
                     }
                     response = new ExtendedResponse

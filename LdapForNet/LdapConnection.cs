@@ -360,6 +360,9 @@ namespace LdapForNet
                 case ModifyDNRequest _:
                     operation = LdapOperation.LdapModifyDn;
                     break;
+                case ExtendedRequest _:
+                    operation = LdapOperation.LdapExtendedRequest;
+                    break;
                 default:
                     throw new LdapException($"Unknown ldap operation for {request.GetType()}");
             }
