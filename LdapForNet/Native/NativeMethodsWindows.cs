@@ -247,7 +247,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        internal static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
 
         
         /// <summary>

@@ -61,4 +61,9 @@ namespace LdapForNet
             internal set => _value = value;
         }
     }
+
+    public class CompareResponse : DirectoryResponse
+    {
+        
+    }
 }

@@ -270,9 +270,26 @@ namespace LdapForNet.Native
 
         internal override int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => NativeMethodsLinux.ldap_delete_ext(ld, dn, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
-            ref int msgidp) =>
-            NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
+        internal override int Compare(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
+            ref int msgidp)
+        {
+            var ptr = bvalue == IntPtr.Zero && value != null ?
+                StringToBerVal(value) : bvalue;
+            return NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, ptr, serverctrls, clientctrls, ref msgidp);
+        }
+
+        private static IntPtr StringToBerVal(string value)
+        {
+            var berval = new Native.berval
+            {
+                bv_len = value.Length,
+                bv_val = Marshal.StringToHGlobalAnsi(value)
+            };
+            var bervalPtr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
+            Marshal.StructureToPtr(berval, bervalPtr, true);
+            return bervalPtr;
+        }
+
 
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
             IntPtr clientctrls, ref int msgidp) =>

@@ -149,6 +149,45 @@ namespace LdapForNetTests
             }
         }
 
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_Async_Returns_If_Attribute_Exists()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(new LdapEntry
+                {
+                    Dn = Config.LdapUserDn,
+                    Attributes = new Dictionary<string,List<string>>
+                    {
+                        ["objectClass"]=new List<string>{"top"}
+                    }
+                }));
+                Assert.True(result.ResultCode==ResultCode.CompareTrue,result.ResultCode.ToString());
+            }
+        }
+        
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_Async_Returns_False_If_Attribute_Not_Exist()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(new LdapEntry
+                {
+                    Dn = Config.LdapUserDn,
+                    Attributes = new Dictionary<string,List<string>>
+                    {
+                        ["objectClass"]=new List<string>{"organizationalUnit"}
+                    }
+                }));
+                Assert.True(result.ResultCode==ResultCode.CompareFalse,result.ResultCode.ToString());
+            }
+        }
+
+        
         private async Task ModifyLdapEntryAsync()
         {
             using (var connection = new LdapConnection())

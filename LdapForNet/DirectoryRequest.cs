@@ -130,4 +130,14 @@ namespace LdapForNet
             set => _requestValue = value;
         }
     }
+    
+    public class CompareRequest:DirectoryRequest 
+    {
+        public CompareRequest(LdapEntry ldapEntry)
+        {
+            LdapEntry = ldapEntry;
+        }
+        
+        public LdapEntry LdapEntry { get; set; }
+    }   
 }
