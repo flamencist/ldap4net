@@ -440,7 +440,10 @@ Inspired by .NET Framework LdapConnection.SendRequest
  	cn.Connect();
  	cn.Bind();
  	var cancellationTokenSource = new CancellationTokenSource();
- 	await cn.SendRequestAsync(new DeleteRequest("cn=test,dc=example,dc=com"), cancellationTokenSource.Token);
+ 	//whoami
+ 	var res = await cn.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"), cancellationTokenSource.Token);
+ 	var extendedResponse = (ExtendedResponse) res;
+ 	var name = Encoding.ASCII.GetString(extendedResponse.ResponseValue);
  }
  ```
 
