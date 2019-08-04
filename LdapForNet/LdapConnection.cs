@@ -225,8 +225,7 @@ namespace LdapForNet
 
         private RequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
         {
-            var operation = GetLdapOperation(directoryRequest);
-            var requestHandler = GetSendRequestHandler(operation);
+            var requestHandler = GetSendRequestHandler(directoryRequest);
             messageId = 0;
             _native.ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),
                 requestHandler.GetType().Name);
@@ -245,26 +244,26 @@ namespace LdapForNet
             }
         }
 
-        private static RequestHandler GetSendRequestHandler(LdapOperation operation)
+        private static RequestHandler GetSendRequestHandler(DirectoryRequest request)
         {
-            switch (operation)
+            switch (request)
             {
-                case LdapOperation.LdapAdd:
+                case AddRequest _:
                     return new AddRequestHandler();
-                case LdapOperation.LdapModify:
+                case ModifyRequest _:
                     return new ModifyRequestHandler();
-                case LdapOperation.LdapSearch:
+                case SearchRequest _:
                     return new SearchRequestHandler();
-                case LdapOperation.LdapDelete:
+                case DeleteRequest _:
                     return new DeleteRequestHandler();
-                case LdapOperation.LdapModifyDn:
+                case ModifyDNRequest _:
                     return new ModifyDnRequestHandler();
-                case LdapOperation.LdapCompare:
+                case CompareRequest _:
                     return new CompareRequestHandler();
-                case LdapOperation.LdapExtendedRequest:
+                case ExtendedRequest _:
                     return new ExtendedRequestHandler();
                 default:
-                    throw new LdapException("Not supported operation: " + operation);
+                    throw new LdapException("Not supported operation of request: " + request.GetType());
             }
         }
 
@@ -339,38 +338,6 @@ namespace LdapForNet
         }
 
 
-        private static LdapOperation GetLdapOperation(DirectoryRequest request)
-        {
-            LdapOperation operation;
-            switch (request)
-            {
-                case DeleteRequest _:
-                    operation = LdapOperation.LdapDelete;
-                    break;
-                case AddRequest _:
-                    operation = LdapOperation.LdapAdd;
-                    break;
-                case ModifyRequest _:
-                    operation = LdapOperation.LdapModify;
-                    break;
-                case SearchRequest _:
-                    operation = LdapOperation.LdapSearch;
-                    break;
-                case ModifyDNRequest _:
-                    operation = LdapOperation.LdapModifyDn;
-                    break;
-                case ExtendedRequest _:
-                    operation = LdapOperation.LdapExtendedRequest;
-                    break;
-                case CompareRequest _:
-                    operation = LdapOperation.LdapCompare;
-                    break;
-
-                default:
-                    throw new LdapException($"Unknown ldap operation for {request.GetType()}");
-            }
-
-            return operation;
-        }
+        
     }
 }
