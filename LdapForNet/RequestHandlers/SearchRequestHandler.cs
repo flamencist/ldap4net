@@ -8,7 +8,7 @@ namespace LdapForNet.RequestHandlers
     internal class SearchRequestHandler : RequestHandler
     {
         private readonly SearchResponse _response = new SearchResponse();
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is SearchRequest searchRequest)
             {

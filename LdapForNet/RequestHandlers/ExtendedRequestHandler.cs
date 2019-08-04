@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace LdapForNet.RequestHandlers
 {
     internal class ExtendedRequestHandler:RequestHandler{
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is ExtendedRequest extendedRequest)
             {
