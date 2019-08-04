@@ -345,7 +345,7 @@ namespace LdapForNet.Native
         [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_free",
             CharSet = CharSet.Unicode)]
         internal static extern int ldap_control_free(IntPtr control);
-        [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_free",
+        [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_create_sort_control",
             CharSet = CharSet.Unicode)]
         internal static extern int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
             ref IntPtr control);
