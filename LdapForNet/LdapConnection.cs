@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Native;
 using LdapForNet.RequestHandlers;
+using LdapForNet.Utils;
 
 namespace LdapForNet
 {
@@ -232,6 +234,53 @@ namespace LdapForNet
             return requestHandler;
         }
 
+        private (IntPtr,IntPtr) AllocControls(DirectoryRequest request)
+        {
+            var serverControlArray = IntPtr.Zero;
+            Native.Native.LdapControl[] managedServerControls = null;
+            var clientControlArray = IntPtr.Zero;
+            Native.Native.LdapControl[] managedClientControls = null;
+            var tempPtr = IntPtr.Zero;
+
+            // Build server control.
+            managedServerControls = BuildControlArray(request.Controls, true);
+            var structSize = Marshal.SizeOf(typeof(Native.Native.LdapControl));
+
+            if (managedServerControls != null)
+            {
+                serverControlArray = MarshalUtils.AllocHGlobalIntPtrArray(managedServerControls.Length + 1);
+                for (var i = 0; i < managedServerControls.Length; i++)
+                {
+                    var controlPtr = Marshal.AllocHGlobal(structSize);
+                    Marshal.StructureToPtr(managedServerControls[i], controlPtr, false);
+                    tempPtr = (IntPtr)((long)serverControlArray + IntPtr.Size * i);
+                    Marshal.WriteIntPtr(tempPtr, controlPtr);
+                }
+
+                tempPtr = (IntPtr)((long)serverControlArray + IntPtr.Size * managedServerControls.Length);
+                Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+            }
+
+            // build client control
+            managedClientControls = BuildControlArray(request.Controls, false);
+            if (managedClientControls != null)
+            {
+                clientControlArray = MarshalUtils.AllocHGlobalIntPtrArray(managedClientControls.Length + 1);
+                for (var i = 0; i < managedClientControls.Length; i++)
+                {
+                    var controlPtr = Marshal.AllocHGlobal(structSize);
+                    Marshal.StructureToPtr(managedClientControls[i], controlPtr, false);
+                    tempPtr = (IntPtr)((long)clientControlArray + IntPtr.Size * i);
+                    Marshal.WriteIntPtr(tempPtr, controlPtr);
+                }
+
+                tempPtr = (IntPtr)((long)clientControlArray + IntPtr.Size * managedClientControls.Length);
+                Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+            }
+
+            return (serverControlArray, clientControlArray);
+        }
+
         private void ThrowIfResultError(DirectoryRequest directoryRequest, Native.Native.LdapResultType resType)
         {
             switch (resType)
@@ -326,6 +375,72 @@ namespace LdapForNet
             {
                 throw new LdapException($"Not bound. Please invoke {nameof(Bind)} method before.");
             }
+        }
+        
+        private static Native.Native.LdapControl[] BuildControlArray(List<DirectoryControl> controls, bool serverControl)
+        {
+            Native.Native.LdapControl[] managedControls = null;
+
+            if (controls != null && controls.Count != 0)
+            {
+                var controlList = new ArrayList();
+                foreach (DirectoryControl col in controls)
+                {
+                    if (serverControl)
+                    {
+                        if (col.ServerSide)
+                        {
+                            controlList.Add(col);
+                        }
+                    }
+                    else if (!col.ServerSide)
+                    {
+                        controlList.Add(col);
+                    }
+                }
+
+                if (controlList.Count != 0)
+                {
+                    int count = controlList.Count;
+                    managedControls = new Native.Native.LdapControl[count];
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        managedControls[i] = new Native.Native.LdapControl()
+                        {
+                            // Get the control type.
+                            ldctl_oid = Marshal.StringToHGlobalUni(((DirectoryControl)controlList[i]).Type),
+
+                            // Get the control cricality.
+                            ldctl_iscritical = ((DirectoryControl)controlList[i]).IsCritical
+                        };
+
+                        // Get the control value.
+                        DirectoryControl tempControl = (DirectoryControl)controlList[i];
+                        byte[] byteControlValue = tempControl.GetValue();
+                        if (byteControlValue == null || byteControlValue.Length == 0)
+                        {
+                            // Treat the control value as null.
+                            managedControls[i].ldctl_value = new Native.Native.berval
+                            {
+                                bv_len = 0,
+                                bv_val = IntPtr.Zero
+                            };
+                        }
+                        else
+                        {
+                            managedControls[i].ldctl_value = new Native.Native.berval
+                            {
+                                bv_len = byteControlValue.Length,
+                                bv_val = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(byte)) * byteControlValue.Length)
+                            };
+                            Marshal.Copy(byteControlValue, 0, managedControls[i].ldctl_value.bv_val, managedControls[i].ldctl_value.bv_len);
+                        }
+                    }
+                }
+            }
+
+            return managedControls;
         }
         
         private void ThrowIfResponseError(DirectoryResponse response)

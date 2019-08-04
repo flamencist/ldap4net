@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace LdapForNet
@@ -6,6 +7,8 @@ namespace LdapForNet
     public abstract class DirectoryRequest
     {
         internal DirectoryRequest(){}
+        
+        public List<DirectoryControl> Controls { get; } = new List<DirectoryControl>();       
     }
     
     public class DeleteRequest : DirectoryRequest
