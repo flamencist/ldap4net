@@ -65,6 +65,34 @@ namespace LdapForNet.Native
         internal abstract int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt);
 
         internal abstract void ldap_controls_free(IntPtr ctrls);
+        internal abstract int ldap_control_free(IntPtr control);
+        internal abstract int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical, ref IntPtr control);
+        internal abstract IntPtr ber_alloc(int option);
+        internal abstract int ber_printf_emptyarg(SafeHandle berElement, string format);
+
+        internal abstract int ber_printf_int(SafeHandle berElement, string format, int value);
+
+        internal abstract int ber_printf_bytearray(SafeHandle berElement, string format, HGlobalMemHandle value, int length);
+
+        internal abstract int ber_printf_berarray(SafeHandle berElement, string format, IntPtr value);
+
+        internal abstract int ber_flatten(SafeHandle berElement, ref IntPtr value);
+
+        internal abstract IntPtr ber_init(Native.berval value);
+
+        internal abstract int ber_scanf(SafeHandle berElement, string format);
+
+        internal abstract int ber_scanf_int(SafeHandle berElement, string format, ref int value);
+
+        internal abstract int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
+
+        internal abstract int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
+
+        internal abstract int ber_bvfree(IntPtr value);
+
+        internal abstract int ber_bvecfree(IntPtr value);
+        
+        internal abstract IntPtr ber_free([In] IntPtr berelement, int option);
         
         
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)

@@ -301,5 +301,50 @@ namespace LdapForNet.Native
             NativeMethodsOsx.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
         
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsOsx.ldap_controls_free(ctrls);
+        internal override int ldap_control_free(IntPtr control) => NativeMethodsOsx.ldap_control_free(control);
+
+        internal override int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
+            ref IntPtr control)
+            => NativeMethodsOsx.ldap_create_sort_control(handle, keys, critical, ref control);
+
+        internal override IntPtr ber_alloc(int option) => NativeMethodsOsx.ber_alloc(option);
+
+        internal override int ber_printf_emptyarg(SafeHandle berElement, string format)
+            => NativeMethodsOsx.ber_printf_emptyarg(berElement, format);
+
+        internal override int ber_printf_int(SafeHandle berElement, string format, int value)
+            => NativeMethodsOsx.ber_printf_int(berElement, format, value);
+        internal override int ber_printf_bytearray(SafeHandle berElement, string format, HGlobalMemHandle value, int length)
+            => NativeMethodsOsx.ber_printf_bytearray(berElement, format, value, length);
+
+        internal override int ber_printf_berarray(SafeHandle berElement, string format, IntPtr value)
+            => NativeMethodsOsx.ber_printf_berarray(berElement, format, value);
+
+        internal override int ber_flatten(SafeHandle berElement, ref IntPtr value)
+            => NativeMethodsOsx.ber_flatten(berElement, ref value);
+
+        internal override IntPtr ber_init(Native.berval value)
+            => NativeMethodsOsx.ber_init(value);
+
+        internal override int ber_scanf(SafeHandle berElement, string format)
+            => NativeMethodsOsx.ber_scanf(berElement,format);
+
+        internal override int ber_scanf_int(SafeHandle berElement, string format, ref int value)
+            => NativeMethodsOsx.ber_scanf_int(berElement, format, ref value);
+
+        internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
+            => NativeMethodsOsx.ber_scanf_ptr(berElement, format, ref value);
+
+        internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
+            => NativeMethodsOsx.ber_scanf_bitstring(berElement, format, ref value, ref length);
+
+        internal override int ber_bvfree(IntPtr value)
+            => NativeMethodsOsx.ber_bvfree(value);
+
+        internal override int ber_bvecfree(IntPtr value)
+            => NativeMethodsOsx.ber_bvecfree(value);
+
+        internal override IntPtr ber_free(IntPtr berelem, int option)
+            => NativeMethodsOsx.ber_free(berelem, option);
     }
 }

@@ -47,6 +47,20 @@ namespace LdapForNet.Utils
 
             Marshal.Copy(ptrArray.ToArray(),0,ptr,ptrArray.Count);  
         }
+        
+        internal static IntPtr AllocHGlobalIntPtrArray(int size)
+        {
+            checked
+            {
+                var intPtrArray = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)) * size);
+                for (var i = 0; i < size; i++)
+                {
+                    var tempPtr = (IntPtr)((long)intPtrArray + Marshal.SizeOf(typeof(IntPtr)) * i);
+                    Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+                }
+                return intPtrArray;
+            }
+        }
        
     }
 }
