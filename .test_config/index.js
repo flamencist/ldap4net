@@ -91,12 +91,12 @@ server.compare(SUFFIX, authorize, function(req, res, next) {
   var dn = req.dn.toString().replaceSpaces();
   if (!db[dn])
     return next(new ldap.NoSuchObjectError(dn));
-
-  if (!db[dn][req.attribute])
+  var key = Object.keys(db[dn]).find(_=>_.toLowerCase() === req.attribute);
+  if (!key)
     return next(new ldap.NoSuchAttributeError(req.attribute));
 
   var matches = false;
-  var vals = db[dn][req.attribute];
+  var vals = db[dn][key];
   for (var i = 0; i < vals.length; i++) {
     if (vals[i] === req.value) {
       matches = true;

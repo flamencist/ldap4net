@@ -150,7 +150,7 @@ namespace LdapForNetTests
         }
 
         [Fact]
-        public async Task LdapConnection_Compare_Operation_Async_Returns_If_Attribute_Exists()
+        public async Task LdapConnection_Compare_Operation_Async_Returns_True_If_Attribute_Exists()
         {
             using (var connection = new LdapConnection())
             {
