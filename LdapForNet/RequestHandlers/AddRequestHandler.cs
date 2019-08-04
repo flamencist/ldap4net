@@ -31,8 +31,8 @@ namespace LdapForNet.RequestHandlers
                 return Native.ldap_add_ext(handle,
                     addRequest.LdapEntry.Dn,
                     ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero ,
+                    serverControlArray, 
+                    clientControlArray ,
                     ref messageId
                 );    
             }

@@ -19,8 +19,8 @@ namespace LdapForNet.RequestHandlers
                     searchRequest.Filter,
                     null,
                     (int) LdapForNet.Native.Native.LdapSearchAttributesOnly.False,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
+                    serverControlArray,
+                    clientControlArray,
                     IntPtr.Zero,
                     (int)LdapForNet.Native.Native.LdapSizeLimit.LDAP_NO_LIMIT,
                     ref messageId);

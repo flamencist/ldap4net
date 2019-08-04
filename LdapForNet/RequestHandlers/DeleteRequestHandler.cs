@@ -16,8 +16,8 @@ namespace LdapForNet.RequestHandlers
                 }
                 return Native.ldap_delete_ext(handle,
                     dn,
-                    IntPtr.Zero, 
-                    IntPtr.Zero ,    
+                    serverControlArray, 
+                    clientControlArray ,    
                     ref messageId
                 );  
             }

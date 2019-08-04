@@ -23,7 +23,7 @@ namespace LdapForNet.RequestHandlers
                     Marshal.StructureToPtr(berValue, berValuePtr, true);
                 }
 
-                return Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
+                return Native.ldap_extended_operation(handle, name, berValuePtr, serverControlArray, clientControlArray,
                     ref messageId);
             }
 

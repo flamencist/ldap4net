@@ -23,7 +23,7 @@ namespace LdapForNet.RequestHandlers
                 var value = assertion.Value[0];
                 //TODO implement for bytes assertion
                 
-                return Native.Compare(handle,compareRequest.LdapEntry.Dn,name,value,IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref messageId);
+                return Native.Compare(handle,compareRequest.LdapEntry.Dn,name,value,IntPtr.Zero, serverControlArray, clientControlArray, ref messageId);
 
             }
 

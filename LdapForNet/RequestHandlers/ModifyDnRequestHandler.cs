@@ -19,8 +19,8 @@ namespace LdapForNet.RequestHandlers
                     modifyDnRequest.NewName,
                     modifyDnRequest.NewParentDistinguishedName ,    
                     modifyDnRequest.DeleteOldRdn?1:0,
-                    IntPtr.Zero, 
-                    IntPtr.Zero, 
+                    serverControlArray, 
+                    clientControlArray, 
                     ref messageId
                 );  
             }
