@@ -259,11 +259,10 @@ namespace LdapForNet
                     return new DeleteRequestHandler();
                 case LdapOperation.LdapModifyDn:
                     return new ModifyDnRequestHandler();
-//                case LdapOperation.LdapCompare:
-//                    break;
+                case LdapOperation.LdapCompare:
+                    return new CompareRequestHandler();
                 case LdapOperation.LdapExtendedRequest:
                     return new ExtendedRequestHandler();
-                    break;
                 default:
                     throw new LdapException("Not supported operation: " + operation);
             }
@@ -363,6 +362,10 @@ namespace LdapForNet
                 case ExtendedRequest _:
                     operation = LdapOperation.LdapExtendedRequest;
                     break;
+                case CompareRequest _:
+                    operation = LdapOperation.LdapCompare;
+                    break;
+
                 default:
                     throw new LdapException($"Unknown ldap operation for {request.GetType()}");
             }

@@ -154,10 +154,11 @@ namespace LdapForNet.Native
 
         internal override int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => NativeMethodsWindows.ldap_delete_ext(ld, dn, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
+        internal override int Compare(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls,
+            IntPtr clientctrls,
             ref int msgidp) =>
-            NativeMethodsWindows.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
-        
+            NativeMethodsWindows.ldap_compare_ext(ld, dn, attr, value, bvalue, serverctrls, clientctrls, ref msgidp);
+
         internal override int ldap_extended_operation(SafeHandle ld, string requestoid, IntPtr requestdata, IntPtr serverctrls,
             IntPtr clientctrls, ref int msgidp) =>
             NativeMethodsWindows.ldap_extended_operation(ld, requestoid, requestdata, serverctrls, clientctrls, ref msgidp);
