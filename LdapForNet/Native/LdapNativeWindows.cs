@@ -128,7 +128,7 @@ namespace LdapForNet.Native
 
         internal override string GetAdditionalErrorInfo(SafeHandle ld) => NativeMethodsWindows.GetAdditionalErrorInfo(ld);
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
+        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
 
         internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message) => NativeMethodsWindows.ldap_first_entry(ld, message);
 

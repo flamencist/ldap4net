@@ -340,23 +340,7 @@ namespace LdapForNet
         }
 
 
-        private IEnumerable<LdapEntry> GetLdapReferences(SafeHandle ld, IntPtr msg)
-        {
-            string[] refs = null;
-            var ctrls = IntPtr.Zero;
-            var rc = _native.ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
-            _native.ThrowIfError(ld, rc, nameof(_native.ldap_parse_reference));
-            if (refs != null)
-            {
-            }
 
-            if (ctrls != IntPtr.Zero)
-            {
-                _native.ldap_controls_free(ctrls);
-            }
-
-            return default;
-        }
 
         private void ThrowIfNotInitialized()
         {

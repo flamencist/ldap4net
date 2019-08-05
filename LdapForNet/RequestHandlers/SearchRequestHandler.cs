@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Utils;
 
@@ -70,6 +72,11 @@ namespace LdapForNet.RequestHandlers
                     Native.ldap_msgfree(msg);
                     return LdapResultCompleteStatus.Partial;
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_REFERENCE:
+                    var reference = GetLdapReference(handle, msg);
+                    if (reference != null)
+                    {
+                        _response.References.Add(reference);
+                    }
                     return LdapResultCompleteStatus.Partial;
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_RESULT:
                     response = _response;
@@ -124,6 +131,35 @@ namespace LdapForNet.RequestHandlers
             Native.ldap_memfree(ptr);        
             return dn;
         }
+        
+        private LdapSearchResultReference GetLdapReference(SafeHandle ld, IntPtr msg)
+        {
+            string[] refs = null;
+            var ctrls = IntPtr.Zero;
+
+            try
+            {
+                var rc = Native.ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
+                Native.ThrowIfError(ld, rc, nameof(Native.ldap_parse_reference));
+                if (refs != null)
+                {
+                    var uris = refs.Select(_ => new Uri(_)).ToArray();
+                    return new LdapSearchResultReference(uris,null);
+                }
+
+            }
+            finally
+            {
+                if (ctrls != IntPtr.Zero)
+                {
+                    Native.ldap_controls_free(ctrls);
+                }
+            }
+
+            return null;
+        }
+        
+       
 
 
     }

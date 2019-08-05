@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LdapForNet.RequestHandlers;
 
 namespace LdapForNet
 {
@@ -56,6 +57,7 @@ namespace LdapForNet
     public class SearchResponse : DirectoryResponse
     {
         public List<LdapEntry> Entries { get; internal set; } = new List<LdapEntry>();
+        public List<LdapSearchResultReference> References { get; } = new List<LdapSearchResultReference>();
     }
 
     public class AddResponse : DirectoryResponse
