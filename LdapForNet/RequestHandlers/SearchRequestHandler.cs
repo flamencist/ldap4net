@@ -47,7 +47,7 @@ namespace LdapForNet.RequestHandlers
             int i;
             for (i = 0; i < attributeCount; i++)
             {
-                var controlPtr = Marshal.StringToHGlobalUni(searchRequest.Attributes[i]);
+                var controlPtr = Marshal.StringToHGlobalAnsi(searchRequest.Attributes[i]);
                 tempPtr = (IntPtr) ((long) searchAttributes + IntPtr.Size * i);
                 Marshal.WriteIntPtr(tempPtr, controlPtr);
             }
@@ -99,15 +99,16 @@ namespace LdapForNet.RequestHandlers
                 attr != IntPtr.Zero;
                 attr = Native.ldap_next_attribute(ld, entry, ber))
             {
-                var values = Native.ldap_get_values(ld, entry, attr);
-                if (values != IntPtr.Zero)
+                var attrName = Marshal.PtrToStringAnsi(attr);
+                if (attrName != null)    
                 {
-                    var attrName = Marshal.PtrToStringAnsi(attr);
-                    if (attrName != null)    
+                    dict.Add(attrName, new List<string>());
+                    var values = Native.ldap_get_values(ld, entry, attr);
+                    if (values != IntPtr.Zero)
                     {
-                        dict.Add(attrName, MarshalUtils.PtrToStringArray(values));
+                        dict[attrName] = MarshalUtils.PtrToStringArray(values);
+                        Native.ldap_value_free(values);
                     }
-                    Native.ldap_value_free(values);
                 }
 
                 Native.ldap_memfree(attr);
