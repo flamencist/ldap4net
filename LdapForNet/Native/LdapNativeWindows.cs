@@ -111,8 +111,8 @@ namespace LdapForNet.Native
         
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsWindows.ldap_unbind_s(ld);
 
-        internal override int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs, int attrsonly,
-            IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp) =>
+        internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attrs, int attrsonly,
+            IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp) =>
             NativeMethodsWindows.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
                 serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 

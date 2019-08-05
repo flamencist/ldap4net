@@ -121,8 +121,8 @@ namespace LdapForNet.Native
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
         [DllImport(Lib_Wldap32)]
-        internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
-            int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
+        internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, IntPtr attrs,
+            int attrsonly, IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp);
 
         /// <summary>
         /// ldap_result <a href="https://linux.die.net/man/3/ldap_result">Documentation</a>

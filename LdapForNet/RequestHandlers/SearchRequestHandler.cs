@@ -12,21 +12,50 @@ namespace LdapForNet.RequestHandlers
         {
             if (request is SearchRequest searchRequest)
             {
-                return Native.ldap_search_ext(
+                var attributes = GetAttributesPtr(searchRequest);
+                var searchTimeLimit = (int)(searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
+                return Native.Search(
                     handle,
                     searchRequest.DistinguishedName,
                     (int) searchRequest.Scope,
                     searchRequest.Filter,
-                    null,
-                    (int) LdapForNet.Native.Native.LdapSearchAttributesOnly.False,
+                    attributes,
+                     searchRequest.AttributesOnly?1:0,
                     serverControlArray,
                     clientControlArray,
-                    IntPtr.Zero,
-                    (int)LdapForNet.Native.Native.LdapSizeLimit.LDAP_NO_LIMIT,
+                    searchTimeLimit,
+                    searchRequest.SizeLimit,
                     ref messageId);
             }
 
             return 0;
+        }
+
+        private static IntPtr GetAttributesPtr(SearchRequest searchRequest)
+        {
+            
+            var attributeCount = searchRequest.Attributes?.Count ?? 0;
+            var searchAttributes = IntPtr.Zero;
+            if (searchRequest.Attributes == null || attributeCount == 0)
+            {
+                return searchAttributes;
+            }
+            
+            
+            IntPtr tempPtr;
+            searchAttributes = MarshalUtils.AllocHGlobalIntPtrArray(attributeCount + 1);
+            int i;
+            for (i = 0; i < attributeCount; i++)
+            {
+                var controlPtr = Marshal.StringToHGlobalUni(searchRequest.Attributes[i]);
+                tempPtr = (IntPtr) ((long) searchAttributes + IntPtr.Size * i);
+                Marshal.WriteIntPtr(tempPtr, controlPtr);
+            }
+
+            tempPtr = (IntPtr) ((long) searchAttributes + IntPtr.Size * i);
+            Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+
+            return searchAttributes;
         }
 
         public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
@@ -70,15 +99,15 @@ namespace LdapForNet.RequestHandlers
                 attr != IntPtr.Zero;
                 attr = Native.ldap_next_attribute(ld, entry, ber))
             {
-                var vals = Native.ldap_get_values(ld, entry, attr);
-                if (vals != IntPtr.Zero)
+                var values = Native.ldap_get_values(ld, entry, attr);
+                if (values != IntPtr.Zero)
                 {
                     var attrName = Marshal.PtrToStringAnsi(attr);
                     if (attrName != null)    
                     {
-                        dict.Add(attrName, MarshalUtils.PtrToStringArray(vals));
+                        dict.Add(attrName, MarshalUtils.PtrToStringArray(values));
                     }
-                    Native.ldap_value_free(vals);
+                    Native.ldap_value_free(values);
                 }
 
                 Native.ldap_memfree(attr);

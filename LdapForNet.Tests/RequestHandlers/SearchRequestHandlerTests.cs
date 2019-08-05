@@ -22,18 +22,18 @@ namespace LdapForNetTests.RequestHandlers
             var ldapSearchScope = Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
             var ldapFilter = "(objectclass=*)";
 
-            native.Setup(_ => _.ldap_search_ext(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
-                    It.IsAny<string[]>(), It.IsAny<int>(),
-                    It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), ref messageId))
+            native.Setup(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
+                    It.IsAny<IntPtr>(), It.IsAny<int>(),
+                    It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), It.IsAny<int>(), ref messageId))
                 .Returns(20);
 
             
             var res = requestHandler.SendRequest(new LdapHandle(IntPtr.Zero), 
                 new SearchRequest(dn, ldapFilter, ldapSearchScope), ref messageId);
             Assert.Equal(20,res);
-            native.Verify(_=>_.ldap_search_ext(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
-                null, (int)Native.LdapSearchAttributesOnly.False,
-                IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, (int)Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
+            native.Verify(_=>_.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
+                IntPtr.Zero, (int)Native.LdapSearchAttributesOnly.False,
+                IntPtr.Zero, IntPtr.Zero, 0, (int)Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
             
         }
 
