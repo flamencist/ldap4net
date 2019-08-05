@@ -91,13 +91,15 @@ namespace LdapExample
                         LdapSearchScope.LDAP_SCOPE_SUBTREE,"objectClass","cn")
                     {
                         AttributesOnly = false,
-                        Controls =
-                        {
-                            new SearchOptionsControl(SearchOption.PhantomRoot),
-                            
-                        }
+                        TimeLimit = TimeSpan.Zero,
+//                        Controls =
+//                        {
+//                            new SearchOptionsControl(SearchOption.PhantomRoot),
+//                            
+//                        }
                     };
-                    entries = ((SearchResponse) (await cn.SendRequestAsync(searchRequest))).Entries;
+                    var searchResponse = ((SearchResponse) (await cn.SendRequestAsync(searchRequest)));
+                    entries = searchResponse.Entries;
                 }
                 foreach (var ldapEntry in entries)
                 {
