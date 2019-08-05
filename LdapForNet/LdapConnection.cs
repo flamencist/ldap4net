@@ -216,9 +216,14 @@ namespace LdapForNet
                 
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-                    var res = ParseResultError(msg, out var errorMessage, out _);
+                    var responseReferral = new Uri[0];
+                    var responseControl = new DirectoryControl[0];
+                    var res = ParseResultError(msg, out var errorMessage, out var matchedDn,ref responseReferral,ref responseControl);
                     response.ResultCode = (Native.Native.ResultCode) res;
                     response.ErrorMessage = errorMessage;
+                    response.Referral = responseReferral;
+                    response.Controls = responseControl;
+                    response.MatchedDN = matchedDn;
                 }
             }
 
@@ -271,7 +276,9 @@ namespace LdapForNet
 
         private void ThrowIfParseResultError(IntPtr msg)
         {
-            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage);
+            var responseReferral = new Uri[0];
+            var responseControl = new DirectoryControl[0];
+            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage, ref responseReferral, ref responseControl);
             _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
             {
                 [nameof(errorMessage)] = errorMessage,
@@ -279,19 +286,57 @@ namespace LdapForNet
             });
         }
         
-        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedMessage)
+        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedDn, ref Uri[] responseReferral, ref DirectoryControl[] responseControl)
         {
-            var matchedMessagePtr = IntPtr.Zero;
+            var matchedDnPtr = IntPtr.Zero;
             var errorMessagePtr = IntPtr.Zero;
-            var res = 0;
+            var rc = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
-            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr, ref errorMessagePtr,
+            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref rc, ref matchedDnPtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
             errorMessage = Marshal.PtrToStringAnsi(errorMessagePtr);
-            matchedMessage = Marshal.PtrToStringAnsi(matchedMessagePtr);
+            matchedDn = Marshal.PtrToStringAnsi(matchedDnPtr);
+            if (referrals != IntPtr.Zero)
+            {
+                
+            }
             
-            return res;
+            if (serverctrls != IntPtr.Zero)
+            {
+                var i = 0;
+                var tempControlPtr = serverctrls;
+                var singleControl = Marshal.ReadIntPtr(tempControlPtr, 0);
+                var controlList = new ArrayList();
+                while (singleControl != IntPtr.Zero)
+                {
+                    var directoryControl = ConstructControl(singleControl);
+                    controlList.Add(directoryControl);
+
+                    i++;
+                    singleControl = Marshal.ReadIntPtr(tempControlPtr, i * IntPtr.Size);
+                }
+
+                responseControl = new DirectoryControl[controlList.Count];
+                controlList.CopyTo(responseControl);
+            }
+            
+            return rc;
+        }
+        
+        private DirectoryControl ConstructControl(IntPtr controlPtr)
+        {
+            var control = new Native.Native.LdapControl();
+            Marshal.PtrToStructure(controlPtr, control);
+
+            var controlType = Marshal.PtrToStringAnsi(control.ldctl_oid);
+
+            var bytes = new byte[control.ldctl_value.bv_len];
+            Marshal.Copy(control.ldctl_value.bv_val, bytes, 0, control.ldctl_value.bv_len);
+
+            var criticality = control.ldctl_iscritical;
+
+            return new DirectoryControl(controlType, bytes, criticality, true);
         }
 
 

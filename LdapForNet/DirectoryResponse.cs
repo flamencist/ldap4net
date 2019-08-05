@@ -5,9 +5,52 @@ namespace LdapForNet
 {
     public abstract class DirectoryResponse
     {
+        private DirectoryControl[] _directoryControls;
+        private Uri[] _directoryReferral;
         public virtual Native.Native.ResultCode ResultCode { get; internal set; }
 
         public virtual string ErrorMessage { get; internal set; }
+        
+        public virtual DirectoryControl[] Controls
+        {
+            get
+            {
+                if (_directoryControls == null)
+                {
+                    return Array.Empty<DirectoryControl>();
+                }
+
+                var tempControls = new DirectoryControl[_directoryControls.Length];
+                for (int i = 0; i < _directoryControls.Length; i++)
+                {
+                    tempControls[i] = new DirectoryControl(_directoryControls[i].Type, _directoryControls[i].GetValue(), _directoryControls[i].IsCritical, _directoryControls[i].ServerSide);
+                }
+                DirectoryControl.TransformControls(tempControls);
+                return tempControls;
+            }
+            internal set => _directoryControls = value;
+        }
+        
+        public virtual Uri[] Referral
+        {
+            get
+            {
+                if (_directoryReferral == null)
+                {
+                    return Array.Empty<Uri>();
+                }
+
+                var tempReferral = new Uri[_directoryReferral.Length];
+                for (int i = 0; i < _directoryReferral.Length; i++)
+                {
+                    tempReferral[i] = new Uri(_directoryReferral[i].AbsoluteUri);
+                }
+                return tempReferral;
+            }
+            internal set => _directoryReferral = value;
+        }
+        
+        public virtual string MatchedDN { get; internal set; }
     }
     
     public class SearchResponse : DirectoryResponse
