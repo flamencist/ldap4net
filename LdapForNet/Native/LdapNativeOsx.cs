@@ -231,16 +231,31 @@ namespace LdapForNet.Native
             int attrsonly,
             IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp)
         {
-            var timeval = new LDAP_TIMEVAL
+            var timePtr = IntPtr.Zero;
+
+            try
             {
-                tv_sec = timeout
-            };
-            var timePtr = Marshal.AllocHGlobal(Marshal.SizeOf<LDAP_TIMEVAL>());
-            Marshal.StructureToPtr(timeval,timePtr, true);
-            var rc = NativeMethodsOsx.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
-                serverctrls, clientctrls, timePtr, sizelimit, ref msgidp);
-            Marshal.FreeHGlobal(timePtr);
-            return rc;
+                if (timeout > 0)
+                {
+                    var timeval = new LDAP_TIMEVAL
+                    {
+                        tv_sec = timeout
+                    };
+                    timePtr = Marshal.AllocHGlobal(Marshal.SizeOf<LDAP_TIMEVAL>());
+                    Marshal.StructureToPtr(timeval,timePtr, true);
+                }
+            
+                return NativeMethodsOsx.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
+                    serverctrls, clientctrls, timePtr, sizelimit, ref msgidp);
+            }
+            finally
+            {
+                if (timePtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(timePtr);
+
+                }
+            }
         }
 
         internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
