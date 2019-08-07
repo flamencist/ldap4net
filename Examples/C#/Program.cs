@@ -98,6 +98,10 @@ namespace LdapExample
 
         private static void PrintEntry(LdapEntry entry)
         {
+            if (entry == null)
+            {
+                return;
+            }
             Console.WriteLine($"dn: {entry.Dn}");
             foreach (var pair in entry.Attributes.SelectMany(_ => _.Value.Select(x => new KeyValuePair<string, string>(_.Key, x))))
             {

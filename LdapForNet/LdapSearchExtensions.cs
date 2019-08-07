@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 using static LdapForNet.Native.Native;
@@ -11,6 +12,12 @@ namespace LdapForNet
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             return connection.Search(@base, $"(cn={cn})", scope);
+        }
+
+        public static LdapEntry GetRootDse(this ILdapConnection connection)
+        {
+            return connection.Search(null, "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASE)
+                .FirstOrDefault();
         }
 
         public static async Task<IList<LdapEntry>> SearchByCnAsync(this ILdapConnection connection, string @base,
