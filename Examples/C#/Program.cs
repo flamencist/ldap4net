@@ -87,16 +87,21 @@ namespace LdapExample
                 }
                 else
                 {
+                    var rootDse = cn.GetRootDse();
+                    PrintEntry(rootDse);
                     var searchRequest = new SearchRequest(@base, filter,
-                        LdapSearchScope.LDAP_SCOPE_SUBTREE,"objectClass","cn")
+                        LdapSearchScope.LDAP_SCOPE_SUBTREE)
                     {
                         AttributesOnly = false,
                         TimeLimit = TimeSpan.Zero,
-//                        Controls =
-//                        {
-//                            new SearchOptionsControl(SearchOption.PhantomRoot),
-//                            
-//                        }
+                        Controls =
+                        {
+                            new PageResultRequestControl(500)
+                            {
+                                IsCritical = true
+                            }
+                            
+                        }
                     };
                     var searchResponse = ((SearchResponse) (await cn.SendRequestAsync(searchRequest)));
                     entries = searchResponse.Entries;
@@ -110,6 +115,10 @@ namespace LdapExample
 
         private static void PrintEntry(LdapEntry entry)
         {
+            if (entry == null)
+            {
+                return;
+            }
             Console.WriteLine($"dn: {entry.Dn}");
             foreach (var pair in entry.Attributes.SelectMany(_ => _.Value.Select(x => new KeyValuePair<string, string>(_.Key, x))))
             {

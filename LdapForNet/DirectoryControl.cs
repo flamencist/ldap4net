@@ -558,7 +558,7 @@ namespace LdapForNet
             {
                 if (value < 0)
                 {
-                    throw new ArgumentException("Not valud value", nameof(value));
+                    throw new ArgumentException("Not valid value", nameof(value));
                 }
 
                 _size = value;
