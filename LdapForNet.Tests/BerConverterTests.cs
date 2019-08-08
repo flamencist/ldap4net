@@ -104,7 +104,7 @@ namespace LdapForNetTests
         [InlineData("{{}}}")]
         public void Encode_InvalidFormat_ThrowsBerConversionException(string format)
         {
-            Assert.Throws<ArgumentException>(() => BerConverter.Encode(format, new object[0]));
+            Assert.Throws<LdapException>(() => BerConverter.Encode(format, new object[0]));
         }
 
         public static IEnumerable<object[]> Decode_TestData()
@@ -156,7 +156,7 @@ namespace LdapForNetTests
         [InlineData("BBB", new byte[] { 48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0 })]
         public void Decode_Invalid_ThrowsBerConversionException(string format, byte[] values)
         {
-            Assert.Throws<ArgumentException>(() => BerConverter.Decode(format, values));
+            Assert.Throws<LdapException>(() => BerConverter.Decode(format, values));
         }
     }
 }
