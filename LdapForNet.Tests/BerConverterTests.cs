@@ -18,7 +18,7 @@ namespace LdapForNetTests
             yield return new object[] { "b", new object[] { true, false, true, false }, new byte[] { 1, 1, 255 } };
 
             yield return new object[] { "{", new object[] { "a" }, new byte[] { 48, 0, 0, 0, 0, 0 } };
-            /*yield return new object[] { "{}", new object[] { "a" }, new byte[] { 48, 132, 0, 0, 0, 0 } };
+            yield return new object[] { "{}", new object[] { "a" }, new byte[] { 48, 132, 0, 0, 0, 0 } };
             yield return new object[] { "[", new object[] { "a" }, new byte[] { 49, 0, 0, 0, 0, 0 } };
             yield return new object[] { "[]", new object[] { "a" }, new byte[] { 49, 132, 0, 0, 0, 0 } };
             yield return new object[] { "n", new object[] { "a" }, new byte[] { 5, 0 } };
@@ -34,7 +34,7 @@ namespace LdapForNetTests
             yield return new object[] { "vv", new object[] { null, new string[] { "abc", "", null } }, new byte[] { 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
             yield return new object[] { "{vv}", new object[] { null, new string[] { "abc", "", null } }, new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
             yield return new object[] { "VVVV", new object[] { null, new byte[][] { new byte[] { 0, 1, 2, 3 }, null }, new byte[][] { new byte[0] }, new byte[0][] }, new byte[] { 4, 4, 0, 1, 2, 3, 4, 0, 4, 0 } };
-            */
+            
         }
 
         [Theory]
