@@ -55,6 +55,7 @@ namespace LdapForNet
                     // one int argument
                     error = LdapNative.Instance.ber_printf_int(berElement, new string(fmt, 1), (int)value[valueCount]);
 
+                    
                     // increase the value count
                     valueCount++;
                 }
@@ -93,11 +94,9 @@ namespace LdapForNet
                     }
 
                     // one string argument       
-                    byte[] tempValue = null;
-                    if (value[valueCount] != null)
-                    {
-                        tempValue = utf8Encoder.GetBytes((string)value[valueCount]);
-                    }
+                    value[valueCount] = value[valueCount] ?? string.Empty;
+                    var tempValue = utf8Encoder.GetBytes((string)value[valueCount]);
+                    
                     error = EncodingByteArrayHelper(berElement, tempValue, 'o');
 
                     // increase the value count
@@ -118,7 +117,7 @@ namespace LdapForNet
                         throw new ArgumentException("type should be byte[], but receiving value has type of "+ value[valueCount].GetType());
                     }
 
-                    var tempValue = (byte[])value[valueCount];
+                    var tempValue = (byte[])value[valueCount] ?? new byte[0];
                     error = EncodingByteArrayHelper(berElement, tempValue, fmt);
 
                     valueCount++;
@@ -282,15 +281,16 @@ namespace LdapForNet
 
             var error = 0;
 
-            for (var formatCount = 0; formatCount < format.Length; formatCount++)
+            foreach (var fmt in format)
             {
-                var fmt = format[formatCount];
                 if (fmt == '{' || fmt == '}' || fmt == '[' || fmt == ']' || fmt == 'n' || fmt == 'x')
                 {
                     error = LdapNative.Instance.ber_scanf(berElement, new string(fmt, 1));
 
                     if (error != 0)
+                    {
                         Debug.WriteLine("ber_scanf for {, }, [, ], n or x failed");
+                    }
                 }
                 else if (fmt == 'i' || fmt == 'e' || fmt == 'b')
                 {
@@ -302,11 +302,7 @@ namespace LdapForNet
                         if (fmt == 'b')
                         {
                             // should return a bool
-                            var boolResult = false;
-                            if (result == 0)
-                                boolResult = false;
-                            else
-                                boolResult = true;
+                            var boolResult = result != 0;
                             resultList.Add(boolResult);
                         }
                         else
@@ -315,7 +311,9 @@ namespace LdapForNet
                         }
                     }
                     else
+                    {
                         Debug.WriteLine("ber_scanf for format character 'i', 'e' or 'b' failed");
+                    }
                 }
                 else if (fmt == 'a')
                 {
@@ -366,24 +364,23 @@ namespace LdapForNet
                 else if (fmt == 'v')
                 {
                     //null terminate strings
-                    byte[][] byteArrayresult = null;
                     string[] stringArray = null;
 
-                    byteArrayresult = DecodingMultiByteArrayHelper(berElement, 'V', ref error);
+                    var byteArrayResult = DecodingMultiByteArrayHelper(berElement, 'V', ref error);
                     if (error == 0)
                     {
-                        if (byteArrayresult != null)
+                        if (byteArrayResult != null)
                         {
-                            stringArray = new string[byteArrayresult.Length];
-                            for (var i = 0; i < byteArrayresult.Length; i++)
+                            stringArray = new string[byteArrayResult.Length];
+                            for (var i = 0; i < byteArrayResult.Length; i++)
                             {
-                                if (byteArrayresult[i] == null)
+                                if (byteArrayResult[i] == null)
                                 {
                                     stringArray[i] = null;
                                 }
                                 else
                                 {
-                                    stringArray[i] = utf8Encoder.GetString(byteArrayresult[i]);
+                                    stringArray[i] = utf8Encoder.GetString(byteArrayResult[i]);
                                 }
                             }
                         }
@@ -393,9 +390,7 @@ namespace LdapForNet
                 }
                 else if (fmt == 'V')
                 {
-                    byte[][] result = null;
-
-                    result = DecodingMultiByteArrayHelper(berElement, fmt, ref error);
+                    var result = DecodingMultiByteArrayHelper(berElement, fmt, ref error);
                     if (error == 0)
                     {
                         resultList.Add(result);

@@ -31,9 +31,9 @@ namespace LdapForNetTests
 
             yield return new object[] { "ssss", new object[] { null, "", "abc", "\0" }, new byte[] { 4, 0, 4, 0, 4, 3, 97, 98, 99, 4, 1, 0 } };
             yield return new object[] { "oXo", new object[] { null, new byte[] { 0, 1, 2, 255 }, new byte[0] }, new byte[] { 4, 0, 3, 4, 0, 1, 2, 255, 4, 0 } };
-            yield return new object[] { "vv", new object[] { null, new string[] { "abc", "", null } }, new byte[] { 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
-            yield return new object[] { "{vv}", new object[] { null, new string[] { "abc", "", null } }, new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
-            yield return new object[] { "VVVV", new object[] { null, new byte[][] { new byte[] { 0, 1, 2, 3 }, null }, new byte[][] { new byte[0] }, new byte[0][] }, new byte[] { 4, 4, 0, 1, 2, 3, 4, 0, 4, 0 } };
+            yield return new object[] { "vv", new object[] { null, new[] { "abc", "", null } }, new byte[] { 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
+            yield return new object[] { "{vv}", new object[] { null, new[] { "abc", "", null } }, new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
+            yield return new object[] { "VVVV", new object[] { null, new[] { new byte[] { 0, 1, 2, 3 }, null }, new[] { new byte[0] }, new byte[0][] }, new byte[] { 4, 4, 0, 1, 2, 3, 4, 0, 4, 0 } };
             
         }
 
