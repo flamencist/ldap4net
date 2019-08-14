@@ -287,7 +287,7 @@ namespace LdapForNet
                 {
                     error = LdapNative.Instance.ber_scanf(berElement, new string(fmt, 1));
 
-                    if (error != 0)
+                    if (error == -1)
                     {
                         Debug.WriteLine("ber_scanf for {, }, [, ], n or x failed");
                     }
@@ -297,7 +297,7 @@ namespace LdapForNet
                     var result = 0;
                     error = LdapNative.Instance.ber_scanf_int(berElement, new string(fmt, 1), ref result);
 
-                    if (error == 0)
+                    if (error  != -1)
                     {
                         if (fmt == 'b')
                         {
@@ -319,7 +319,7 @@ namespace LdapForNet
                 {
                     // return a string
                     var byteArray = DecodingByteArrayHelper(berElement, 'O', ref error);
-                    if (error == 0)
+                    if (error  != -1)
                     {
                         string s = null;
                         if (byteArray != null)
@@ -332,7 +332,7 @@ namespace LdapForNet
                 {
                     // return berval                   
                     var byteArray = DecodingByteArrayHelper(berElement, fmt, ref error);
-                    if (error == 0)
+                    if (error != -1)
                     {
                         // add result to the list
                         resultList.Add(byteArray);
@@ -345,7 +345,7 @@ namespace LdapForNet
                     var length = 0;
                     error = LdapNative.Instance.ber_scanf_bitstring(berElement, "B", ref ptrResult, ref length);
 
-                    if (error == 0)
+                    if (error != -1)
                     {
                         byte[] byteArray = null;
                         if (ptrResult != IntPtr.Zero)
@@ -367,7 +367,7 @@ namespace LdapForNet
                     string[] stringArray = null;
 
                     var byteArrayResult = DecodingMultiByteArrayHelper(berElement, 'V', ref error);
-                    if (error == 0)
+                    if (error != -1)
                     {
                         if (byteArrayResult != null)
                         {
@@ -391,7 +391,7 @@ namespace LdapForNet
                 else if (fmt == 'V')
                 {
                     var result = DecodingMultiByteArrayHelper(berElement, fmt, ref error);
-                    if (error == 0)
+                    if (error != -1)
                     {
                         resultList.Add(result);
                     }
@@ -401,7 +401,7 @@ namespace LdapForNet
                     throw new ArgumentException("Format string contains undefined character\n");
                 }
 
-                if (error != 0)
+                if (error == -1)
                 {
                     // decode failed, just return
                     return decodeResult;
