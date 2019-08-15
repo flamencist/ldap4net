@@ -41,6 +41,7 @@ namespace LdapForNetTests
             yield return new object[] { "vv", new object[] { null, new[] { "abc", "", null } }, new byte[] { 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
             yield return new object[] { "{vv}", new object[] { null, new[] { "abc", "", null } }, new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 } };
             yield return new object[] { "VVVV", new object[] { null, new[] { new byte[] { 0, 1, 2, 3 }, null }, new[] { new byte[0] }, new byte[0][] }, new byte[] { 4, 4, 0, 1, 2, 3, 4, 0, 4, 0 } };
+            yield return new object[] { "{VV}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }, new byte[] { 48,132,0,0,0,12,4,4,1,2,3,4,4,4,5,6,7,8 } };
             
         }
 
@@ -128,9 +129,9 @@ namespace LdapForNetTests
 //            yield return new object[] { "{BB}", new byte[] { 48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0 }, new object[] { new byte[] { 255 }, new byte[] { 0 } } };
             yield return new object[] { "{BB}", new byte[] { 48, 132, 0, 0, 0, 8, 3, 2, 7, 255, 3, 2, 7, 1}, new object[] { new byte[] { 255 }, new byte[]{1} } };
             yield return new object[] { "{vv}", new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 }, new object[] { null, null } };
-            yield return new object[] { "{vv}", new byte[] { 48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0 }, new object[] { new string[] { "\x01" }, null } };
+            yield return new object[] { "{vv}", new byte[] { 48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0 }, new object[] { new[] { "\x01" }, null } };
             yield return new object[] { "{VV}", new byte[] { 48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0 }, new object[] { null, null } };
-            yield return new object[] { "{VV}", new byte[] { 48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0 }, new object[] { new byte[][] { new byte[] { 1 } }, null } };
+            yield return new object[] { "{VV}", new byte[] { 48,132,0,0,0,12,4,4,1,2,3,4,4,4,5,6,7,8 }, new object[] { new[] { new byte[] { 1, 2, 3, 4 } }, new[] { new byte[]{ 5,6,7,8} } } };
         }
 
         [Theory]

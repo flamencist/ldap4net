@@ -212,7 +212,7 @@ namespace LdapForNet
                     Marshal.PtrToStructure(flattenptr, binaryValue);
                 }
 
-                if (binaryValue == null || binaryValue.bv_len == 0)
+                if (binaryValue.bv_len == 0)
                 {
                     encodingResult = Array.Empty<byte>();
                 }
