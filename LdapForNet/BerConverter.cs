@@ -234,12 +234,8 @@ namespace LdapForNet
 
         public static object[] Decode(string format, byte[] value)
         {
-            bool decodeSucceeded;
-            var decodeResult = TryDecode(format, value, out decodeSucceeded);
-            if (decodeSucceeded)
-                return decodeResult;
-            else
-                throw new LdapException("BerConversionException");
+            var decodeResult = TryDecode(format, value, out var decodeSucceeded);
+            return decodeSucceeded ? decodeResult : throw new LdapException("BerConversionException");
         }
 
         internal static object[] TryDecode(string format, byte[] value, out bool decodeSucceeded)
@@ -452,7 +448,7 @@ namespace LdapForNet
 
             try
             {
-                if (error == 0)
+                if (error != -1)
                 {
                     if (result != IntPtr.Zero)
                     {
@@ -556,7 +552,7 @@ namespace LdapForNet
             {
                 error = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
 
-                if (error == 0)
+                if (error != -1)
                 {
                     if (ptrResult != IntPtr.Zero)
                     {
