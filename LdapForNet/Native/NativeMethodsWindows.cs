@@ -302,7 +302,7 @@ namespace LdapForNet.Native
         
         
         [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_alloc_t", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr ber_alloc(int option);
+        internal static extern IntPtr ber_alloc_t(int option);
 
         [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_printf", CharSet = CharSet.Unicode)]
         internal static extern int ber_printf_emptyarg(SafeHandle berElement, string format);

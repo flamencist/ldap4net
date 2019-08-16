@@ -336,7 +336,7 @@ namespace LdapForNet.Native
             ref IntPtr control)
             => NativeMethodsLinux.ldap_create_sort_control(handle, keys, critical, ref control);
 
-        internal override IntPtr ber_alloc(int option) => NativeMethodsLinux.ber_alloc(option);
+        internal override IntPtr ber_alloc_t(int option) => NativeMethodsLinux.ber_alloc_t(option);
 
         internal override int ber_printf_emptyarg(SafeHandle berElement, string format)
             => NativeMethodsLinux.ber_printf_emptyarg(berElement, format);

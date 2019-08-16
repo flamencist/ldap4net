@@ -67,7 +67,7 @@ namespace LdapForNet.Native
         internal abstract void ldap_controls_free(IntPtr ctrls);
         internal abstract int ldap_control_free(IntPtr control);
         internal abstract int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical, ref IntPtr control);
-        internal abstract IntPtr ber_alloc(int option);
+        internal abstract IntPtr ber_alloc_t(int option);
         internal abstract int ber_printf_emptyarg(SafeHandle berElement, string format);
 
         internal abstract int ber_printf_int(SafeHandle berElement, string format, int value);

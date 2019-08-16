@@ -22,7 +22,7 @@ namespace LdapForNet
     {
         internal BerSafeHandle() : base(true)
         {
-            SetHandle(LdapNative.Instance.ber_alloc(1));
+            SetHandle(LdapNative.Instance.ber_alloc_t(1));
             if (handle == IntPtr.Zero)
             {
                 throw new OutOfMemoryException();

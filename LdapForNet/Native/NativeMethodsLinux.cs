@@ -264,7 +264,7 @@ namespace LdapForNet.Native
         internal static extern int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
             ref IntPtr control);
         [DllImport(LIB_LBER_PATH)]
-        internal static extern IntPtr ber_alloc(int option);
+        internal static extern IntPtr ber_alloc_t(int option);
         [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
         internal static extern int ber_printf_emptyarg(SafeHandle berElement, string format);
         [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
