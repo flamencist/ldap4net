@@ -17,7 +17,7 @@ namespace LdapForNet
 
             // no need to turn on invalid encoding detection as we just do string->byte[] conversion.
             var utf8Encoder = new UTF8Encoding();
-            byte[] encodingResult = null;
+            byte[] encodingResult;
             // value is allowed to be null in certain scenario, so if it is null, just set it to empty array.
             if (value == null)
                 value = Array.Empty<object>();
@@ -177,6 +177,23 @@ namespace LdapForNet
 
                     error = EncodingMultiByteArrayHelper(berElement, tempValue, fmt);
 
+                    valueCount++;
+                }
+                else if (fmt == 'B')
+                {
+                    // we need to have one arguments
+                    if (valueCount >= value.Length)
+                    {
+                        // we don't have enough argument for the format string
+                        throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                    }
+                    if (value[valueCount] != null && !(value[valueCount] is byte[]))
+                    {
+                        // argument is wrong
+                        throw new ArgumentException("type should be byte[], but receiving value has type of "+value[valueCount].GetType());
+                    }
+                    
+                    var tempValue = (byte[])value[valueCount];
                     valueCount++;
                 }
                 else

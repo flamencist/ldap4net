@@ -49,7 +49,6 @@ namespace LdapForNetTests
         [MemberData(nameof(Encode_TestData))]
         public void Encode_Objects_ReturnsExpected(string format, object[] values, byte[] expected)
         {
-            
             var actual = BerConverter.Encode(format, values);
             _testOutputHelper.WriteLine($"expected: [{string.Join(',',expected)}]");
             _testOutputHelper.WriteLine($"actual: [{string.Join(',',actual)}]");
@@ -172,6 +171,24 @@ namespace LdapForNetTests
         public void Decode_Invalid_ThrowsBerConversionException(string format, byte[] values)
         {
             Assert.Throws<LdapException>(() => BerConverter.Decode(format, values));
+        }
+        
+        public static IEnumerable<object[]> Encode_Decode_TestData()
+        {
+            yield return new object[] { "{bb}", new object[] { true, false } };
+            yield return new object[] { "{ee}", new object[] { 2, 3 } };
+            yield return new object[] { "{ii}", new object[] { 2, 3 } };
+            yield return new object[] { "{BB}", new object[] { new byte[]{1}, new byte[]{2} } };
+        }
+        
+        [Theory]
+        [MemberData(nameof(Encode_Decode_TestData))]
+        public void Encode_Decode_Should_Returns_Expected(string format, object[] values)
+        {
+            var encoded = BerConverter.Encode(format, values);
+            _testOutputHelper.WriteLine($"encoded: [{string.Join(',',encoded)}]");
+            var decoded = BerConverter.Decode(format, encoded);
+            Assert.Equal(values,decoded);
         }
     }
 }
