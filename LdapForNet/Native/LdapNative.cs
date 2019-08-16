@@ -85,6 +85,7 @@ namespace LdapForNet.Native
         internal abstract int ber_scanf_int(SafeHandle berElement, string format, ref int value);
 
         internal abstract int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
+        internal abstract int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
 
         internal abstract int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
 
@@ -93,7 +94,7 @@ namespace LdapForNet.Native
         internal abstract int ber_bvecfree(IntPtr value);
         
         internal abstract IntPtr ber_free([In] IntPtr berelement, int option);
-        
+        internal abstract void ber_memfree(IntPtr value);
         
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {

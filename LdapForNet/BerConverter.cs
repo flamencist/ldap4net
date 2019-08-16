@@ -29,9 +29,8 @@ namespace LdapForNet
 
             var valueCount = 0;
             var error = 0;
-            for (var formatCount = 0; formatCount < format.Length; formatCount++)
+            foreach (var fmt in format)
             {
-                var fmt = format[formatCount];
                 if (fmt == '{' || fmt == '}' || fmt == '[' || fmt == ']' || fmt == 'n')
                 {
                     // no argument needed
@@ -102,7 +101,7 @@ namespace LdapForNet
                     // increase the value count
                     valueCount++;
                 }
-                else if (fmt == 'o' || fmt == 'X')
+                else if (fmt == 'o' || fmt == 'X' || fmt == 'B')
                 {
                     // we need to have one arguments
                     if (valueCount >= value.Length)
@@ -179,23 +178,6 @@ namespace LdapForNet
 
                     valueCount++;
                 }
-                else if (fmt == 'B')
-                {
-                    // we need to have one arguments
-                    if (valueCount >= value.Length)
-                    {
-                        // we don't have enough argument for the format string
-                        throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
-                    }
-                    if (value[valueCount] != null && !(value[valueCount] is byte[]))
-                    {
-                        // argument is wrong
-                        throw new ArgumentException("type should be byte[], but receiving value has type of "+value[valueCount].GetType());
-                    }
-                    
-                    var tempValue = (byte[])value[valueCount];
-                    valueCount++;
-                }
                 else
                 {
                     throw new ArgumentException("Format string contains undefined character: "+new string(fmt, 1));
@@ -258,14 +240,16 @@ namespace LdapForNet
         internal static object[] TryDecode(string format, byte[] value, out bool decodeSucceeded)
         {
             if (format == null)
+            {
                 throw new ArgumentNullException(nameof(format));
+            }
 
             Debug.WriteLine("Begin decoding\n");
 
             var utf8Encoder = new UTF8Encoding(false, true);
             var berValue = new Native.Native.berval();
             var resultList = new ArrayList();
-            BerSafeHandle berElement = null;
+            BerSafeHandle berElement;
 
             object[] decodeResult = null;
             decodeSucceeded = false;
@@ -289,7 +273,9 @@ namespace LdapForNet
             finally
             {
                 if (berValue.bv_val != IntPtr.Zero)
+                {
                     Marshal.FreeHGlobal(berValue.bv_val);
+                }
             }
 
             var error = 0;
@@ -341,10 +327,20 @@ namespace LdapForNet
                         resultList.Add(s);
                     }
                 }
-                else if (fmt == 'O')
+                else if (fmt == 'O' )
                 {
                     // return berval                   
                     var byteArray = DecodingByteArrayHelper(berElement, fmt, ref error);
+                    if (error != -1)
+                    {
+                        // add result to the list
+                        resultList.Add(byteArray);
+                    }
+                }
+                else if (fmt == 'o' )
+                {
+                    // return berval                   
+                    var byteArray = DecodingOString(berElement, fmt, ref error);
                     if (error != -1)
                     {
                         // add result to the list
@@ -356,7 +352,7 @@ namespace LdapForNet
                     // return a bitstring and its length
                     var ptrResult = IntPtr.Zero;
                     var length = 0;
-                    error = LdapNative.Instance.ber_scanf_bitstring(berElement, "B", ref ptrResult, ref length);
+                    error = LdapNative.Instance.ber_scanf_bitstring(berElement, new string(fmt, 1), ref ptrResult, ref length);
 
                     if (error != -1)
                     {
@@ -433,7 +429,7 @@ namespace LdapForNet
 
         private static int EncodingByteArrayHelper(BerSafeHandle berElement, byte[] tempValue, char fmt)
         {
-            var error = 0;
+            int tag;
 
             // one byte array, one int arguments
             if (tempValue != null)
@@ -442,14 +438,47 @@ namespace LdapForNet
                 Marshal.Copy(tempValue, 0, tmp, tempValue.Length);
                 var memHandle = new HGlobalMemHandle(tmp);
 
-                error = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), memHandle, tempValue.Length);
+                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), memHandle, tempValue.Length);
             }
             else
             {
-                error = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), new HGlobalMemHandle(IntPtr.Zero), 0);
+                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), new HGlobalMemHandle(IntPtr.Zero), 0);
             }
 
-            return error;
+            return tag;
+        }
+        
+        private static byte[] DecodingOString(BerSafeHandle berElement, char fmt, ref int error)
+        {
+            error = 0;
+            var result = Marshal.AllocHGlobal(Marshal.SizeOf<Native.Native.berval>());
+            var binaryValue = new Native.Native.berval();
+            byte[] byteArray = null;
+
+            error = LdapNative.Instance.ber_scanf_ostring(berElement, new string(fmt, 1), result);
+
+            try
+            {
+                if (error != -1)
+                {
+                    if (result != IntPtr.Zero)
+                    {
+                        Marshal.PtrToStructure(result, binaryValue);
+
+                        byteArray = new byte[binaryValue.bv_len];
+                        Marshal.Copy(binaryValue.bv_val, byteArray, 0, binaryValue.bv_len);
+                    }
+                }
+                else
+                    Debug.WriteLine("ber_scanf for format character 'O' failed");
+            }
+            finally
+            {
+                if (result != IntPtr.Zero)
+                    LdapNative.Instance.ber_memfree(result);
+            }
+
+            return byteArray;
         }
 
         private static byte[] DecodingByteArrayHelper(BerSafeHandle berElement, char fmt, ref int error)

@@ -204,6 +204,9 @@ namespace LdapForNet.Native
         internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
             => NativeMethodsWindows.ber_scanf_ptr(berElement, format, ref value);
 
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value)
+            => NativeMethodsWindows.ber_scanf_ostring(berElement, format, value);
+
         internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
             => NativeMethodsWindows.ber_scanf_bitstring(berElement, format, ref value, ref length);
 
@@ -215,5 +218,8 @@ namespace LdapForNet.Native
 
         internal override IntPtr ber_free(IntPtr berelem, int option)
             => NativeMethodsWindows.ber_free(berelem, option);
+
+        internal override void ber_memfree(IntPtr value)
+            => NativeMethodsWindows.ber_bvfree(value);
     }
 }

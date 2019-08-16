@@ -333,6 +333,8 @@ namespace LdapForNet.Native
 
         [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
         internal static extern int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
+        [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
+        internal static extern int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
 
         [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_bvfree", CharSet = CharSet.Unicode)]
         internal static extern int ber_bvfree(IntPtr value);

@@ -286,11 +286,15 @@ namespace LdapForNet.Native
         internal static extern int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
         [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]
         internal static extern int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
+        [DllImport(LIB_LBER_PATH, EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_bvfree(IntPtr value);
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_bvecfree(IntPtr value);
         [DllImport(LIB_LBER_PATH)]
         internal static extern IntPtr ber_free(IntPtr berelement, int option);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern void ber_memfree(IntPtr value);
     }
 }
