@@ -336,11 +336,13 @@ namespace LdapForNet
                 else if (fmt == 's')
                 {
                     var ptr = Marshal.AllocHGlobal(IntPtr.Size);
-                    var length = 0;    
+                    var length = -1;    
                     error = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ptr, ref length );
                     if (error != -1)
                     {
-                        var s = Marshal.PtrToStringAnsi(ptr,length);
+                        var byteArray = new byte[length];
+                        Marshal.Copy(ptr, byteArray, 0, length);
+                        var s = utf8Encoder.GetString(byteArray);
                         resultList.Add(s);
                     }
                     else
