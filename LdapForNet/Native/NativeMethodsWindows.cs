@@ -352,5 +352,7 @@ namespace LdapForNet.Native
         internal static extern int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
             ref IntPtr control);
 
+        [DllImport(Lib_Wldap32, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
+        internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
     }
 }

@@ -121,6 +121,25 @@ namespace LdapForNet
 
                     valueCount++;
                 }
+                else if (fmt == 'O')
+                {
+                    // we need to have one arguments
+                    if (valueCount >= value.Length)
+                    {
+                        // we don't have enough argument for the format string
+                        throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                    }
+                    if (value[valueCount] != null && !(value[valueCount] is byte[]))
+                    {
+                        // argument is wrong
+                        throw new ArgumentException("type should be byte[], but receiving value has type of "+ value[valueCount].GetType());
+                    }
+
+                    var tempValue = (byte[])value[valueCount] ?? new byte[0];
+                    error = EncodingBerValHelper(berElement, tempValue, fmt);
+                    valueCount++;
+
+                }
                 else if (fmt == 'v')
                 {
                     // we need to have one arguments
@@ -314,6 +333,22 @@ namespace LdapForNet
                         Debug.WriteLine("ber_scanf for format character 'i', 'e' or 'b' failed");
                     }
                 }
+                else if (fmt == 's')
+                {
+                    var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+                    var length = 0;    
+                    error = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ptr, ref length );
+                    if (error != -1)
+                    {
+                        var s = Marshal.PtrToStringAnsi(ptr,length);
+                        resultList.Add(s);
+                    }
+                    else
+                    {
+                        Debug.WriteLine("ber_scanf for format character 's' failed");
+                    }
+                    Marshal.FreeHGlobal(ptr);
+                }
                 else if (fmt == 'a')
                 {
                     // return a string
@@ -322,7 +357,9 @@ namespace LdapForNet
                     {
                         string s = null;
                         if (byteArray != null)
+                        {
                             s = utf8Encoder.GetString(byteArray);
+                        }
 
                         resultList.Add(s);
                     }
@@ -516,6 +553,42 @@ namespace LdapForNet
             return byteArray;
         }
 
+        private static int EncodingBerValHelper(BerSafeHandle berElement, byte[] value, char fmt)
+        {
+            int error;
+            var valPtr = IntPtr.Zero;
+            Native.Native.SafeBerval managedBerVal = null;
+            try
+            {
+                managedBerVal = new Native.Native.SafeBerval();
+                if (value == null)
+                {
+                    value = new byte[0];
+                }
+                managedBerVal.bv_len = value.Length;
+                managedBerVal.bv_val = Marshal.AllocHGlobal(value.Length);
+                Marshal.Copy(value, 0, managedBerVal.bv_val, value.Length);
+
+                // allocate memory for the unmanaged structure
+                valPtr = Marshal.AllocHGlobal(Marshal.SizeOf(managedBerVal));
+                Marshal.StructureToPtr(managedBerVal, valPtr, false);
+
+                error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), valPtr);
+            }
+            finally
+            {
+                if (valPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(valPtr);    
+                }
+
+                if (managedBerVal != null && managedBerVal.bv_val != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(managedBerVal.bv_val);
+                }
+            }
+            return error;
+        }
         private static int EncodingMultiByteArrayHelper(BerSafeHandle berElement, byte[][] tempValue, char fmt)
         {
             var berValArray = IntPtr.Zero;

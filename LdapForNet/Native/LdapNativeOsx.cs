@@ -364,6 +364,9 @@ namespace LdapForNet.Native
         internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value) => 
             NativeMethodsOsx.ber_scanf_ostring(berElement, format, value);
 
+        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
+            => NativeMethodsOsx.ber_scanf_string(berElement, format, value, ref  length);
+
         internal override void ber_memfree(IntPtr value) => NativeMethodsOsx.ber_memfree(value);
 
         internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
