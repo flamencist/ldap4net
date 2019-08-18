@@ -183,7 +183,10 @@ namespace LdapForNetTests
             yield return new object[] { "{oo}", new object[] { new byte[]{3}, new byte[]{4} } };
             yield return new object[] { "{OO}", new object[] { new byte[]{3}, new byte[]{4} } };
             yield return new object[] { "{ss}", new object[] { "abc", "dfe" } };
-            yield return new object[] { "{{v}{v}}", new object[] { new []{"82DA", "82AB"}, new []{"81AD"} } };
+            yield return new object[] { "{{v}{v}}", new object[] { new []{"82DA", "82AB"}, new []{"81AD"} } }; 
+            yield return new object[] { "{{V}{V}}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }};
+            //yield return new object[] { "{W}{W}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }};
+            
         }
         
         [Theory]
