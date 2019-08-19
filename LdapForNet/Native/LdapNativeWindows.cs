@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -6,6 +7,7 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeWindows : LdapNative
     {
+        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']'};
         internal override int Init(ref IntPtr ld, string hostname, int port)
         {
             ld =  NativeMethodsWindows.ldap_init(hostname, port);
@@ -225,5 +227,8 @@ namespace LdapForNet.Native
 
         internal override void ber_memfree(IntPtr value)
             => NativeMethodsWindows.ber_bvfree(value);
+
+        internal override bool BerScanfSupports(char fmt) => 
+            _supportedFormats.Contains(fmt);
     }
 }

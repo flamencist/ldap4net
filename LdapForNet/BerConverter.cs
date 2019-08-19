@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LdapForNet.Native;
@@ -269,9 +270,16 @@ namespace LdapForNet
             {
                 throw new ArgumentNullException(nameof(format));
             }
+            
+            
 
             Debug.WriteLine("Begin decoding\n");
 
+            if (!format.All(LdapNative.Instance.BerScanfSupports))
+            {
+                throw new PlatformNotSupportedException($"{nameof(format)} has unsupported format characters");
+            }
+            
             var utf8Encoder = new UTF8Encoding(false, true);
             var berValue = new Native.Native.berval();
             var resultList = new ArrayList();
@@ -524,7 +532,7 @@ namespace LdapForNet
         
         private static byte[] DecodingBerValOstringHelper(BerSafeHandle berElement, char fmt, ref int error)
         {
-            error = 0;
+            error = 1;
             var result = Marshal.AllocHGlobal(IntPtr.Size);
             var binaryValue = new Native.Native.berval();
             byte[] byteArray = null;

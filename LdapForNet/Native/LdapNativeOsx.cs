@@ -380,5 +380,6 @@ namespace LdapForNet.Native
 
         internal override IntPtr ber_free(IntPtr berelem, int option)
             => NativeMethodsOsx.ber_free(berelem, option);
+        internal override bool BerScanfSupports(char fmt) => true;
     }
 }

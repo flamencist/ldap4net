@@ -384,5 +384,6 @@ namespace LdapForNet.Native
             => NativeMethodsLinux.ber_free(berelem, option);
 
         internal override void ber_memfree(IntPtr value) => NativeMethodsLinux.ber_memfree(value);
+        internal override bool BerScanfSupports(char fmt) => true;
     }
 }

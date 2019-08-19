@@ -96,6 +96,8 @@ namespace LdapForNet.Native
         
         internal abstract IntPtr ber_free([In] IntPtr berelement, int option);
         internal abstract void ber_memfree(IntPtr value);
+
+        internal abstract bool BerScanfSupports(char fmt);
         
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
@@ -128,6 +130,8 @@ namespace LdapForNet.Native
                 throw new LdapException(message, method, res);
             }
         }
+        
+        
 
     }
 }
