@@ -11,20 +11,20 @@ namespace LdapForNet.Native
         private const string LIB_LDAP_PATH = "Wldap32";
         internal delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
         
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_initW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr ldap_init(string host, int port);
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_connect(SafeHandle ld,LDAP_TIMEVAL timeout);
 
-        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bindW")]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bindW", CharSet = CharSet.Unicode)]
         internal static extern int ldap_bind(SafeHandle ld, string who,  SEC_WINNT_AUTH_IDENTITY_EX credentials, BindMethod method, ref int msgidp); 
         
-        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bind_sW")]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bind_sW", CharSet = CharSet.Unicode)]
         internal static extern int ldap_bind_s(SafeHandle ld, string who,  SEC_WINNT_AUTH_IDENTITY_EX credentials, BindMethod method);
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode)]
         internal static extern int ldap_simple_bind_s(SafeHandle ld, string who, string cred);
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode)]
         internal static extern int ldap_simple_bind(SafeHandle ld, string who, string cred);
 
 
@@ -39,7 +39,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl         **clientctrls</param>
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode)]
         internal static extern int ldap_sasl_bind(SafeHandle ld, string dn, string mechanism,
             IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         
@@ -56,7 +56,7 @@ namespace LdapForNet.Native
         /// <param name="proc">delegate</param>
         /// <param name="defaults">void *defaults</param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode)]
         internal static extern int ldap_sasl_interactive_bind_s(SafeHandle ld, string dn, string mechanism,
             IntPtr serverctrls, IntPtr clientctrls, uint flags,
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults);
@@ -76,7 +76,7 @@ namespace LdapForNet.Native
         /// <param name="rmech"></param>
         /// <param name="msgid"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode)]
         internal static extern int ldap_sasl_interactive_bind(SafeHandle ld, string dn, string mechanism,
             IntPtr serverctrls, IntPtr clientctrls, uint flags,
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults, IntPtr result, ref IntPtr rmech, ref int msgid);
@@ -118,7 +118,7 @@ namespace LdapForNet.Native
         /// <param name="sizelimit">int sizelimit</param>
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_search_extW",CharSet = CharSet.Unicode)]
         internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
 
@@ -134,11 +134,8 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
         
-        
-        
         [DllImport(LIB_LDAP_PATH)]
         private static extern uint LdapGetLastError();
-
         
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);
@@ -160,7 +157,7 @@ namespace LdapForNet.Native
         }
 
         
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_parse_referenceW", CharSet = CharSet.Unicode)]
         internal static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit);
         
         [DllImport(LIB_LDAP_PATH)]
@@ -206,7 +203,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl  **clientctrls</param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_add_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_add_ext(SafeHandle ld,string dn,IntPtr attrs,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
        
         /// <summary>
@@ -219,8 +216,8 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
-        internal static extern int ldap_modify_ext(SafeHandle ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_modify_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ldap_modify_ext(SafeHandle ld, string dn, IntPtr mods , IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         
         /// <summary>
         /// ldap_delete_ext <a href="https://linux.die.net/man/3/ldap_delete_s">Documentation</a>
@@ -231,7 +228,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_delete_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
 
         
@@ -246,7 +243,7 @@ namespace LdapForNet.Native
         /// <param name="clientctrls">LDAPControl     **clientctrls</param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_compare_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
 
         
@@ -262,7 +259,7 @@ namespace LdapForNet.Native
         /// <param name="newparent"></param>
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_rename_ext")]
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_rename_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         
         
@@ -295,7 +292,7 @@ namespace LdapForNet.Native
         [DllImport("lber")]
         internal static extern void ber_memvfree(IntPtr vector);
 
-        [DllImport(LIB_LDAP_PATH,CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_parse_result", CharSet = CharSet.Unicode)]
+        [DllImport(LIB_LDAP_PATH,CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_parse_resultW", CharSet = CharSet.Unicode)]
         internal static extern int ldap_parse_result([In] SafeHandle ld, [In] IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
     }
 }
