@@ -12,8 +12,8 @@ namespace LdapForNetTests.Utils
         [Fact]
         public void MarshalUtils_PtrToStringArray_Returns_List_Of_String()
         {
-            var data = Marshal.StringToHGlobalAnsi("test");
-            var data2 = Marshal.StringToHGlobalAnsi("test2");
+            var data = Marshal.StringToHGlobalUni("test");
+            var data2 = Marshal.StringToHGlobalUni("test2");
             
             var ptr = Marshal.AllocCoTaskMem(3*IntPtr.Size);
             Marshal.StructureToPtr(data, ptr, true);
@@ -43,9 +43,9 @@ namespace LdapForNetTests.Utils
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
             var ptr3 = Marshal.ReadIntPtr(actual,IntPtr.Size*2);
             
-            var first = Marshal.PtrToStringAnsi(ptr1);
-            var second = Marshal.PtrToStringAnsi(ptr2);
-            var third = Marshal.PtrToStringAnsi(ptr3);
+            var first = Marshal.PtrToStringUni(ptr1);
+            var second = Marshal.PtrToStringUni(ptr2);
+            var third = Marshal.PtrToStringUni(ptr3);
             
             Assert.Equal("test",first);
             Assert.Equal("other",second);
@@ -129,9 +129,9 @@ namespace LdapForNetTests.Utils
             var valPtr2 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size);
             var valPtr3 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size*2);
             
-            var valFirst = Marshal.PtrToStringAnsi(valPtr1);
-            var valSecond = Marshal.PtrToStringAnsi(valPtr2);
-            var valThird = Marshal.PtrToStringAnsi(valPtr3);
+            var valFirst = Marshal.PtrToStringUni(valPtr1);
+            var valSecond = Marshal.PtrToStringUni(valPtr2);
+            var valThird = Marshal.PtrToStringUni(valPtr3);
                 
             Assert.Equal(0,first.mod_op);
             Assert.Equal("test",first.mod_type);

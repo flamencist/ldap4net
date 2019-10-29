@@ -47,8 +47,8 @@ namespace LdapForNetTests.RequestHandlers
             var entry = new IntPtr(1);
             var dn = "cn=admin,dc=example,dc=com";
             var attribute = new KeyValuePair<string, List<string>>("cn",new List<string>(2){"admin",null});
-            var attributeNamePtr = Marshal.StringToHGlobalAnsi(attribute.Key);
-            var dnPtr = Marshal.StringToHGlobalAnsi(dn);
+            var attributeNamePtr = Marshal.StringToHGlobalUni(attribute.Key);
+            var dnPtr = Marshal.StringToHGlobalUni(dn);
             var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*attribute.Value.Count);
             MarshalUtils.StringArrayToPtr(attribute.Value, valuesPtr);
             

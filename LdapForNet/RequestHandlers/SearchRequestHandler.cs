@@ -73,7 +73,7 @@ namespace LdapForNet.RequestHandlers
                 var vals = Native.ldap_get_values(ld, entry, attr);
                 if (vals != IntPtr.Zero)
                 {
-                    var attrName = Marshal.PtrToStringAnsi(attr);
+                    var attrName = Marshal.PtrToStringUni(attr);
                     if (attrName != null)    
                     {
                         dict.Add(attrName, MarshalUtils.PtrToStringArray(vals));
@@ -90,7 +90,7 @@ namespace LdapForNet.RequestHandlers
         private string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = Native.ldap_get_dn(ld, entry);
-            var dn = Marshal.PtrToStringAnsi(ptr);
+            var dn = Marshal.PtrToStringUni(ptr);
             Native.ldap_memfree(ptr);        
             return dn;
         }

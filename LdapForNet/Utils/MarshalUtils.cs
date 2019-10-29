@@ -20,7 +20,7 @@ namespace LdapForNet.Utils
                 {
                     break;
                 }
-                result.Add(Marshal.PtrToStringAnsi(s));
+                result.Add(Marshal.PtrToStringUni(s));
                 offset += IntPtr.Size;
             }
             return result;
@@ -28,7 +28,7 @@ namespace LdapForNet.Utils
         
         internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
         {
-            var ptrArray = array.Select(Marshal.StringToHGlobalAnsi).ToArray();
+            var ptrArray = array.Select(Marshal.StringToHGlobalUni).ToArray();
             Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
         }
         

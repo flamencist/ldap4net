@@ -29,7 +29,7 @@ namespace LdapForNet.Native
             
             #define mod_bvalues mod_vals.modv_bvals
          */
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct LDAPMod
         {
             /// <summary>
@@ -57,7 +57,7 @@ namespace LdapForNet.Native
             /// <summary>
             /// Pointer to the attribute type that you want to add, delete, or replace.
             /// </summary>
-            [MarshalAs(UnmanagedType.LPStr)]
+            [MarshalAs(UnmanagedType.LPWStr)]
             public string mod_type;
 
             /// <summary>
@@ -69,7 +69,7 @@ namespace LdapForNet.Native
 
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct berval
         {
             public berval(string val)

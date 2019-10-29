@@ -287,8 +287,8 @@ namespace LdapForNet
             var serverctrls = IntPtr.Zero;
             _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
-            errorMessage = Marshal.PtrToStringAnsi(errorMessagePtr);
-            matchedMessage = Marshal.PtrToStringAnsi(matchedMessagePtr);
+            errorMessage = Marshal.PtrToStringUni(errorMessagePtr);
+            matchedMessage = Marshal.PtrToStringUni(matchedMessagePtr);
             
             return res;
         }
