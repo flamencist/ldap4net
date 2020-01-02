@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace LdapForNet.Native
 {
-    internal class LdapNativeLinux:LdapNative
+    internal class LdapNativeLinux : LdapNative
     {
-		internal override int Init(ref IntPtr ld, Uri uri) =>
-			NativeMethodsLinux.ldap_initialize(ref ld, uri.ToString());
+        internal override int Init(ref IntPtr ld, Uri uri) =>
+            NativeMethodsLinux.ldap_initialize(ref ld, uri.ToString());
 
-		internal override int Init(ref IntPtr ld, string hostname, int port) => 
-            NativeMethodsLinux.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
+        internal override int Init(ref IntPtr ld, string hostname, int port) =>
+            NativeMethodsLinux.ldap_initialize(ref ld, $"LDAP://{hostname}:{port}");
 
         internal override int BindKerberos(SafeHandle ld)
         {
@@ -22,13 +22,13 @@ namespace LdapForNet.Native
             return NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, ptr);
         }
-        
+
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
         {
             var defaults = new Native.LdapSaslDefaults { mech = Native.LdapAuthMechanism.GSSAPI };
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm), nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid), nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid), nameof(ldap_get_option));
             return defaults;
         }
 
@@ -47,10 +47,10 @@ namespace LdapForNet.Native
                 do
                 {
                     rc = NativeMethodsLinux.ldap_sasl_interactive_bind(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                        (uint) Native.LdapInteractionFlags.LDAP_SASL_QUIET,
-                        SaslInteractProc , ptr, result, ref rmech,
+                        (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET,
+                        SaslInteractProc, ptr, result, ref rmech,
                         ref msgid);
-                    if (rc != (int) Native.ResultCode.SaslBindInProgress)
+                    if (rc != (int)Native.ResultCode.SaslBindInProgress)
                     {
                         break;
                     }
@@ -58,17 +58,17 @@ namespace LdapForNet.Native
 
                     if (ldap_result(ld, msgid, 0, IntPtr.Zero, ref result) == Native.LdapResultType.LDAP_ERROR)
                     {
-                        ThrowIfError(rc,nameof(NativeMethodsLinux.ldap_sasl_interactive_bind));
+                        ThrowIfError(rc, nameof(NativeMethodsLinux.ldap_sasl_interactive_bind));
                     }
 
                     if (result == IntPtr.Zero)
                     {
                         throw new LdapException("Result is not initialized", nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), 1);
                     }
-                    
-                } while (rc == (int) Native.ResultCode.SaslBindInProgress);
-                
-                ThrowIfError(ld,rc, nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), new Dictionary<string, string>
+
+                } while (rc == (int)Native.ResultCode.SaslBindInProgress);
+
+                ThrowIfError(ld, rc, nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
                     [nameof(saslDefaults)] = saslDefaults.ToString()
                 });
@@ -76,8 +76,8 @@ namespace LdapForNet.Native
             });
             return await task.ConfigureAwait(false);
         }
-        
-        
+
+
         private static int SaslInteractProc(IntPtr ld, uint flags, IntPtr d, IntPtr @in)
         {
             var ptr = @in;
@@ -92,7 +92,7 @@ namespace LdapForNet.Native
             while (interact.id != (int)Native.SaslCb.SASL_CB_LIST_END)
             {
                 var rc = SaslInteraction(flags, interact, defaults);
-                if (rc != (int) Native.ResultCode.Success)
+                if (rc != (int)Native.ResultCode.Success)
                 {
                     return rc;
                 }
@@ -101,7 +101,7 @@ namespace LdapForNet.Native
                 interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
             }
 
-            return (int) Native.ResultCode.Success;
+            return (int)Native.ResultCode.Success;
         }
 
         private static int SaslInteraction(uint flags, Native.SaslInteract interact, Native.LdapSaslDefaults defaults)
@@ -143,13 +143,13 @@ namespace LdapForNet.Native
             if (flags != (uint)Native.LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)Native.SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
             {
                 interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
-                interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
-                return (int) Native.ResultCode.Success;
+                interact.len = interact.defresult != null ? (ushort)interact.defresult.Length : (ushort)0;
+                return (int)Native.ResultCode.Success;
             }
 
-            if (flags == (int) Native.LdapInteractionFlags.LDAP_SASL_QUIET)
+            if (flags == (int)Native.LdapInteractionFlags.LDAP_SASL_QUIET)
             {
-                return (int) Native.ResultCode.Other;
+                return (int)Native.ResultCode.Other;
             }
 
             if (noecho)
@@ -171,10 +171,10 @@ namespace LdapForNet.Native
             else
             {
                 interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
-                interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
+                interact.len = interact.defresult != null ? (ushort)interact.defresult.Length : (ushort)0;
             }
 
-            return (int) Native.ResultCode.Success;
+            return (int)Native.ResultCode.Success;
         }
 
 
@@ -183,7 +183,7 @@ namespace LdapForNet.Native
 
         internal override async Task<IntPtr> BindSimpleAsync(SafeHandle _ld, string userDn, string password)
         {
-            
+
             return await Task.Factory.StartNew(() =>
             {
                 var berval = new Native.berval
@@ -192,42 +192,42 @@ namespace LdapForNet.Native
                     bv_val = Marshal.StringToHGlobalAnsi(password)
                 };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
-                Marshal.StructureToPtr(berval,ptr,false);
+                Marshal.StructureToPtr(berval, ptr, false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
                 NativeMethodsLinux.ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result",  nameof(NativeMethodsLinux.ldap_sasl_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result", nameof(NativeMethodsLinux.ldap_sasl_bind), 1);
                 }
 
                 var rc = ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc,nameof(NativeMethodsLinux.ldap_sasl_bind));
+                    ThrowIfError((int)rc, nameof(NativeMethodsLinux.ldap_sasl_bind));
                 }
 
                 return result;
             }).ConfigureAwait(false);
         }
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
+        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue)
             => NativeMethodsLinux.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)=>
+        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue) =>
             NativeMethodsLinux.ldap_set_option(ld, option, ref invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
-            => NativeMethodsLinux.ldap_set_option(ld, option,  invalue);
+            => NativeMethodsLinux.ldap_set_option(ld, option, invalue);
 
 
-        internal override int ldap_get_option(SafeHandle ld, int option, ref string value) 
+        internal override int ldap_get_option(SafeHandle ld, int option, ref string value)
             => NativeMethodsLinux.ldap_get_option(ld, option, ref value);
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsLinux.ldap_get_option(ld, option, ref value);
-        
+
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsLinux.ldap_unbind_s(ld);
 
         internal override int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs, int attrsonly,
@@ -235,8 +235,8 @@ namespace LdapForNet.Native
             NativeMethodsLinux.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
                 serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 
-        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
-            NativeMethodsLinux.ldap_result(ld,msgid,all,timeout,ref pMessage);
+        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) =>
+            NativeMethodsLinux.ldap_result(ld, msgid, all, timeout, ref pMessage);
 
         internal override int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp,
             ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit) =>
@@ -302,8 +302,8 @@ namespace LdapForNet.Native
             IntPtr clientctrls, ref int msgidp) =>
             NativeMethodsLinux.ldap_extended_operation(ld, requestoid, requestdata, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsLinux.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) =>
+            NativeMethodsLinux.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
 
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsLinux.ldap_controls_free(ctrls);
     }

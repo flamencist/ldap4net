@@ -9,38 +9,38 @@ using LdapForNet.RequestHandlers;
 
 namespace LdapForNet
 {
-    public class LdapConnection:ILdapConnection
+    public class LdapConnection : ILdapConnection
     {
         private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
         private bool _bound;
 
-		public void Connect(Uri uri,
-			Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
-		{
-			var details = new Dictionary<string, string>
-			{
-				[nameof(uri)] = uri.ToString(),
-				[nameof(version)] = version.ToString()
-			};
-			var nativeHandle = IntPtr.Zero;
+        public void Connect(Uri uri,
+            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
+        {
+            var details = new Dictionary<string, string>
+            {
+                [nameof(uri)] = uri.ToString(),
+                [nameof(version)] = version.ToString()
+            };
+            var nativeHandle = IntPtr.Zero;
 
-			_native.ThrowIfError(
-				_native.Init(ref nativeHandle, uri),
-				nameof(_native.Init),
-				details
-			);
-			_ld = new LdapHandle(nativeHandle);
-			var ldapVersion = (int)version;
+            _native.ThrowIfError(
+                _native.Init(ref nativeHandle, uri),
+                nameof(_native.Init),
+                details
+            );
+            _ld = new LdapHandle(nativeHandle);
+            var ldapVersion = (int)version;
 
-			_native.ThrowIfError(
-				_native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
-				nameof(_native.ldap_set_option),
-				details
-			);
-		}
+            _native.ThrowIfError(
+                _native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
+                nameof(_native.ldap_set_option),
+                details
+            );
+        }
 
-		public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
+        public void Connect(string hostname, int port = (int)Native.Native.LdapPort.LDAP,
             Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
             var details = new Dictionary<string, string>
@@ -56,10 +56,10 @@ namespace LdapForNet
                 details
             );
             _ld = new LdapHandle(nativeHandle);
-            var ldapVersion = (int) version;
+            var ldapVersion = (int)version;
 
             _native.ThrowIfError(
-                _native.ldap_set_option(_ld, (int) Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
+                _native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
                 nameof(_native.ldap_set_option),
                 details
             );
@@ -116,28 +116,28 @@ namespace LdapForNet
         public void SetOption(Native.Native.LdapOption option, int value)
         {
             ThrowIfNotBound();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int)option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, string value)
         {
             ThrowIfNotBound();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int)option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
         {
             ThrowIfNotBound();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
+            _native.ThrowIfError(_native.ldap_set_option(_ld, (int)option, valuePtr), nameof(_native.ldap_set_option));
         }
 
         public IList<LdapEntry> Search(string @base, string filter,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
-            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            var response = (SearchResponse)SendRequest(new SearchRequest(@base, filter, scope));
+            if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {
                 ThrowIfResponseError(response);
             }
@@ -148,14 +148,14 @@ namespace LdapForNet
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
             CancellationToken token = default)
         {
-            var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
-            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            var response = (SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
+            if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {
                 ThrowIfResponseError(response);
             }
             return response.Entries;
         }
-        
+
         public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));
 
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
@@ -183,7 +183,7 @@ namespace LdapForNet
         }
 
 
-        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
 
         public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
@@ -207,11 +207,11 @@ namespace LdapForNet
 
         public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
             CancellationToken cancellationToken = default) =>
-            ThrowIfResponseError(await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
+            ThrowIfResponseError(await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn },
                 cancellationToken));
 
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
-            ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
+            ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn }));
 
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
@@ -236,11 +236,11 @@ namespace LdapForNet
                 {
                     throw new LdapException($"Unknown search type {resType}", nameof(_native.ldap_result), 1);
                 }
-                
+
                 if (status == LdapResultCompleteStatus.Complete)
                 {
                     var res = ParseResultError(msg, out var errorMessage, out _);
-                    response.ResultCode = (Native.Native.ResultCode) res;
+                    response.ResultCode = (Native.Native.ResultCode)res;
                     response.ErrorMessage = errorMessage;
                 }
             }
@@ -302,7 +302,7 @@ namespace LdapForNet
                 [nameof(matchedMessage)] = matchedMessage
             });
         }
-        
+
         private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedMessage)
         {
             var matchedMessagePtr = IntPtr.Zero;
@@ -314,7 +314,7 @@ namespace LdapForNet
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
             errorMessage = Marshal.PtrToStringAnsi(errorMessagePtr);
             matchedMessage = Marshal.PtrToStringAnsi(matchedMessagePtr);
-            
+
             return res;
         }
 
@@ -353,10 +353,10 @@ namespace LdapForNet
                 throw new LdapException($"Not bound. Please invoke {nameof(Bind)} method before.");
             }
         }
-        
+
         private void ThrowIfResponseError(DirectoryResponse response)
         {
-            _native.ThrowIfError(_ld, (int) response.ResultCode, nameof(_native.ldap_parse_result),
+            _native.ThrowIfError(_ld, (int)response.ResultCode, nameof(_native.ldap_parse_result),
                 new Dictionary<string, string>
                 {
                     [nameof(response.ErrorMessage)] = response.ErrorMessage,
