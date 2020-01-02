@@ -15,7 +15,32 @@ namespace LdapForNet
         private SafeHandle _ld;
         private bool _bound;
 
-        public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
+		public void Connect(Uri uri,
+			Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
+		{
+			var details = new Dictionary<string, string>
+			{
+				[nameof(uri)] = uri.ToString(),
+				[nameof(version)] = version.ToString()
+			};
+			var nativeHandle = IntPtr.Zero;
+
+			_native.ThrowIfError(
+				_native.Init(ref nativeHandle, uri),
+				nameof(_native.Init),
+				details
+			);
+			_ld = new LdapHandle(nativeHandle);
+			var ldapVersion = (int)version;
+
+			_native.ThrowIfError(
+				_native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
+				nameof(_native.ldap_set_option),
+				details
+			);
+		}
+
+		public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
             Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
             var details = new Dictionary<string, string>
