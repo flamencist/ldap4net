@@ -4,32 +4,32 @@ using System.Threading.Tasks;
 
 namespace LdapForNet.Native
 {
-    internal class LdapNativeWindows : LdapNative
-    {
-        private const string LDAPS = "LDAPS";
-        private const string LDAP = "LDAP";
+	internal class LdapNativeWindows : LdapNative
+	{
+		private const string LDAPS = "LDAPS";
+		private const string LDAP = "LDAP";
 
-        internal override int Init(ref IntPtr ld, Uri uri)
+		internal override int Init(ref IntPtr ld, Uri uri)
+		{
+			var port = uri.Port;
+			if (uri.IsDefaultPort)
+			{
+				if (string.Compare(uri.Scheme, LDAP, StringComparison.InvariantCultureIgnoreCase) == 0)
+				{
+					port = (int)LdapForNet.Native.Native.LdapPort.LDAP;
+				}
+				else if (string.Compare(uri.Scheme, LDAPS, StringComparison.InvariantCultureIgnoreCase) == 0)
+				{
+					port = (int)LdapForNet.Native.Native.LdapPort.LDAPS;
+				}
+			}
+
+			return Init(ref ld, uri.Host, port);
+		}
+
+		internal override int Init(ref IntPtr ld, string hostname, int port)
         {
-            var port = uri.Port;
-            if (uri.IsDefaultPort)
-            {
-                if (string.Compare(uri.Scheme, LDAP, StringComparison.InvariantCultureIgnoreCase) == 0)
-                {
-                    port = (int)LdapForNet.Native.Native.LdapPort.LDAP;
-                }
-                else if (string.Compare(uri.Scheme, LDAPS, StringComparison.InvariantCultureIgnoreCase) == 0)
-                {
-                    port = (int)LdapForNet.Native.Native.LdapPort.LDAPS;
-                }
-            }
-
-            return Init(ref ld, uri.Host, port);
-        }
-
-        internal override int Init(ref IntPtr ld, string hostname, int port)
-        {
-            ld = NativeMethodsWindows.ldap_init(hostname, port);
+            ld =  NativeMethodsWindows.ldap_init(hostname, port);
             if (ld == IntPtr.Zero)
             {
                 return -1;
@@ -43,7 +43,7 @@ namespace LdapForNet.Native
             {
                 tv_sec = (int)(TimeSpan.FromMinutes(10).Ticks / TimeSpan.TicksPerSecond)
             };
-            ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout), nameof(NativeMethodsWindows.ldap_connect));
+            ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
         internal override int BindKerberos(SafeHandle ld)
@@ -70,7 +70,7 @@ namespace LdapForNet.Native
 
             var task = Task.Factory.StartNew(() =>
             {
-                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE), nameof(NativeMethodsWindows.ldap_bind_s));
+                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(NativeMethodsWindows.ldap_bind_s));
 
                 return IntPtr.Zero;
             });
@@ -94,42 +94,42 @@ namespace LdapForNet.Native
                     bv_val = Marshal.StringToHGlobalAnsi(password)
                 };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
-                Marshal.StructureToPtr(berval, ptr, false);
+                Marshal.StructureToPtr(berval,ptr,false);
                 var result = IntPtr.Zero;
                 var msgidp = NativeMethodsWindows.ldap_simple_bind(ld, who, password);
-
+  
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_simple_bind)} returns wrong or empty result", nameof(NativeMethodsWindows.ldap_simple_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_simple_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_simple_bind), 1);
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc, nameof(NativeMethodsWindows.ldap_simple_bind));
+                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_simple_bind));
                 }
 
                 return result;
             }).ConfigureAwait(false);
         }
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue)
+        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue) =>
+        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)=>
             NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
-            => NativeMethodsWindows.ldap_set_option(ld, option, invalue);
+            => NativeMethodsWindows.ldap_set_option(ld, option,  invalue);
 
 
-        internal override int ldap_get_option(SafeHandle ld, int option, ref string value)
+        internal override int ldap_get_option(SafeHandle ld, int option, ref string value) 
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
-
+        
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsWindows.ldap_unbind_s(ld);
 
         internal override int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs, int attrsonly,
@@ -137,8 +137,8 @@ namespace LdapForNet.Native
             NativeMethodsWindows.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
                 serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 
-        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) =>
-            NativeMethodsWindows.ldap_result(ld, msgid, all, timeout, ref pMessage);
+        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
+            NativeMethodsWindows.ldap_result(ld,msgid,all,timeout,ref pMessage);
 
         internal override int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp,
             ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit) =>
@@ -188,8 +188,8 @@ namespace LdapForNet.Native
             IntPtr clientctrls, ref int msgidp) =>
             NativeMethodsWindows.ldap_rename(ld, dn, newrdn, newparent, deleteoldrdn, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) =>
-            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
+            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsWindows.ldap_controls_free(ctrls);
     }
 }
