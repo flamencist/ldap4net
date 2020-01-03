@@ -28,7 +28,8 @@ namespace LdapForNet.Native
             }
             throw new PlatformNotSupportedException();
         }
-        
+
+        internal abstract int Init(ref IntPtr ld, Uri uri);
         internal abstract int Init(ref IntPtr ld, string hostname, int port);
         internal abstract int BindKerberos(SafeHandle ld);
         internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld);
