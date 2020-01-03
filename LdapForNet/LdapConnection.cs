@@ -116,7 +116,9 @@ namespace LdapForNet
             {
                 ThrowIfResponseError(response);
             }
-            return response.Entries;
+            return response.Entries
+                .Select(_=>_.ToLdapEntry())
+                .ToList();
         }
 
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
@@ -128,7 +130,10 @@ namespace LdapForNet
             {
                 ThrowIfResponseError(response);
             }
-            return response.Entries;
+
+            return response.Entries
+                .Select(_ => _.ToLdapEntry())
+                .ToList();
         }
         
         public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));

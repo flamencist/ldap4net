@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using LdapForNet;
 using LdapForNet.Native;
 using LdapForNet.RequestHandlers;
@@ -46,11 +48,11 @@ namespace LdapForNetTests.RequestHandlers
             var ldapHandle = new LdapHandle(IntPtr.Zero);
             var entry = new IntPtr(1);
             var dn = "cn=admin,dc=example,dc=com";
-            var attribute = new KeyValuePair<string, List<string>>("cn",new List<string>(2){"admin",null});
+            var attribute = new KeyValuePair<string, byte[][]>("cn",new[] { new ASCIIEncoding().GetBytes("admin") });
             var attributeNamePtr = Marshal.StringToHGlobalAnsi(attribute.Key);
             var dnPtr = Marshal.StringToHGlobalAnsi(dn);
-            var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*attribute.Value.Count);
-            MarshalUtils.StringArrayToPtr(attribute.Value, valuesPtr);
+            var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*(attribute.Value.Length+1));
+            MarshalUtils.ByteArraysToBerValueArray(attribute.Value, valuesPtr);
             
             native.Setup(_ => _.ldap_first_entry(ldapHandle, msg))
                 .Returns(entry);
@@ -64,9 +66,9 @@ namespace LdapForNetTests.RequestHandlers
                 .Returns(attributeNamePtr);
             native.Setup(_ => _.ldap_next_attribute(ldapHandle, entry, It.IsAny<IntPtr>()))
                 .Returns(IntPtr.Zero);
-            native.Setup(_ => _.ldap_get_values(ldapHandle, entry, attributeNamePtr))
+            native.Setup(_ => _.ldap_get_values_len(ldapHandle, entry, attributeNamePtr))
                 .Returns(valuesPtr);
-            native.Setup(_ => _.ldap_value_free(It.IsAny<IntPtr>()))
+            native.Setup(_ => _.ldap_value_free_len(It.IsAny<IntPtr>()))
                 .Callback((IntPtr ptr) => Marshal.FreeHGlobal(ptr));
             
             var status = requestHandler.Handle(ldapHandle,
@@ -82,8 +84,8 @@ namespace LdapForNetTests.RequestHandlers
             Assert.Single(searchResult.Entries);
             Assert.Equal(dn,searchResult.Entries[0].Dn);
             Assert.Single(searchResult.Entries[0].Attributes);
-            Assert.True(searchResult.Entries[0].Attributes.ContainsKey(attribute.Key));
-            Assert.Equal(attribute.Value[0], searchResult.Entries[0].Attributes[attribute.Key][0]);
+            Assert.True(searchResult.Entries[0].Attributes.Exists(_=>_.Name == attribute.Key));
+            Assert.Equal(attribute.Value[0], searchResult.Entries[0].Attributes.Find(_=>_.Name == attribute.Key).GetValues<byte[]>().First());
         }
 
         private static SearchRequestHandler CreateRequestHandler(IMock<LdapNative> native)

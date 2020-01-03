@@ -176,7 +176,16 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
-        
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern void ldap_value_free_len(IntPtr vals);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_count_values_len(IntPtr vals);
+
         /// <summary>
         /// ldap_add_ext <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
         /// </summary>
