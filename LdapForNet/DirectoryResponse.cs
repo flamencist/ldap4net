@@ -12,7 +12,7 @@ namespace LdapForNet
     
     public class SearchResponse : DirectoryResponse
     {
-        public List<LdapEntry> Entries { get; internal set; } = new List<LdapEntry>();
+        public List<DirectoryEntry> Entries { get; internal set; } = new List<DirectoryEntry>();
     }
 
     public class AddResponse : DirectoryResponse

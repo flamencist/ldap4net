@@ -263,7 +263,16 @@ namespace LdapForNet.Native
 
         internal override IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsLinux.ldap_next_attribute(ld, entry, pBer);
 
+        internal override int ldap_count_values(IntPtr vals) => NativeMethodsLinux.ldap_count_values(vals);
+
         internal override void ldap_value_free(IntPtr vals) => NativeMethodsLinux.ldap_value_free(vals);
+
+        internal override IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer) =>
+            NativeMethodsLinux.ldap_get_values_len(ld, entry, pBer);
+
+        internal override int ldap_count_values_len(IntPtr vals)=> NativeMethodsLinux.ldap_count_values_len(vals);
+
+        internal override void ldap_value_free_len(IntPtr vals) => NativeMethodsLinux.ldap_value_free_len(vals);
 
         internal override IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsLinux.ldap_get_values(ld, entry, pBer);
 

@@ -70,10 +70,10 @@ namespace LdapForNet.Native
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct berval
+        public class berval
         {
-            public int bv_len;
-            public IntPtr bv_val;
+            public int bv_len = 0;
+            public IntPtr bv_val = IntPtr.Zero;
         }
     }
 }
