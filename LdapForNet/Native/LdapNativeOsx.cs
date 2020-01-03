@@ -7,6 +7,9 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeOsx:LdapNative
     {
+        internal override int Init(ref IntPtr ld, Uri uri) =>
+            NativeMethodsOsx.ldap_initialize(ref ld, uri.ToString());
+
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 

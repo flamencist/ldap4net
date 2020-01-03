@@ -6,6 +6,27 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeWindows : LdapNative
     {
+        private const string LDAPS = "LDAPS";
+        private const string LDAP = "LDAP";
+
+        internal override int Init(ref IntPtr ld, Uri uri)
+        {
+            var port = uri.Port;
+            if (uri.IsDefaultPort)
+            {
+                if (string.Compare(uri.Scheme, LDAP, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    port = (int)LdapForNet.Native.Native.LdapPort.LDAP;
+                }
+                else if (string.Compare(uri.Scheme, LDAPS, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    port = (int)LdapForNet.Native.Native.LdapPort.LDAPS;
+                }
+            }
+
+            return Init(ref ld, uri.Host, port);
+        }
+
         internal override int Init(ref IntPtr ld, string hostname, int port)
         {
             ld =  NativeMethodsWindows.ldap_init(hostname, port);
