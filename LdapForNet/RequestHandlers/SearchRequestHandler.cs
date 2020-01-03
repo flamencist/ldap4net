@@ -63,9 +63,9 @@ namespace LdapForNet.RequestHandlers
             }
         }
         
-        private List<DirectoryAttribute> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
+        private SearchResultAttributeCollection GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
-            var attributes = new List<DirectoryAttribute>();
+            var attributes = new SearchResultAttributeCollection();
             for (var attr = Native.ldap_first_attribute(ld, entry, ref ber);
                 attr != IntPtr.Zero;
                 attr = Native.ldap_next_attribute(ld, entry, ber))

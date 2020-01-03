@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -15,7 +16,7 @@ namespace LdapForNet
     public class DirectoryEntry
     {
         public string Dn { get; set; }
-        public List<DirectoryAttribute> Attributes { get; set; }
+        public SearchResultAttributeCollection Attributes { get; set; }
 
         public LdapEntry ToLdapEntry()
         {
@@ -101,6 +102,18 @@ namespace LdapForNet
             {
                 throw new NotSupportedException($"Not supported type. Type of values is {_values.First().GetType()}");
             }
+        }
+    }
+
+    public class SearchResultAttributeCollection : KeyedCollection<string,DirectoryAttribute>
+    {
+        internal SearchResultAttributeCollection() { }
+
+        public ICollection<string> AttributeNames => Dictionary.Keys;
+        
+        protected override string GetKeyForItem(DirectoryAttribute item)
+        {
+            return item.Name;
         }
     }
 }

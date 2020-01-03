@@ -84,8 +84,8 @@ namespace LdapForNetTests.RequestHandlers
             Assert.Single(searchResult.Entries);
             Assert.Equal(dn,searchResult.Entries[0].Dn);
             Assert.Single(searchResult.Entries[0].Attributes);
-            Assert.True(searchResult.Entries[0].Attributes.Exists(_=>_.Name == attribute.Key));
-            Assert.Equal(attribute.Value[0], searchResult.Entries[0].Attributes.Find(_=>_.Name == attribute.Key).GetValues<byte[]>().First());
+            Assert.True(searchResult.Entries[0].Attributes.Contains(attribute.Key));
+            Assert.Equal(attribute.Value[0], searchResult.Entries[0].Attributes[attribute.Key].GetValues<byte[]>().First());
         }
 
         private static SearchRequestHandler CreateRequestHandler(IMock<LdapNative> native)

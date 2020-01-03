@@ -308,6 +308,28 @@ namespace LdapForNetTests
                 connection.Delete($"{newRdn},{Config.RootDn}");
             }
         }
+
+        [Fact]
+        public async Task LdapConnection_SearchAsync_Retrieve_Binary_Values()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(new Uri($"LDAP://{Config.LdapHost}:{Config.LdapPort}"));
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn,Config.LdapPassword);
+                var response = (SearchResponse)await connection.SendRequestAsync(new SearchRequest(Config.LdapUserDn, "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE), CancellationToken.None);
+                _testOutputHelper.WriteLine("ResultCode {0}. ErrorMessage: {1}",response.ResultCode, response.ErrorMessage);
+                Assert.Equal(ResultCode.Success, response.ResultCode);
+                Assert.NotEmpty(response.Entries);
+                var directoryAttribute = response.Entries.First().Attributes["cn"];
+                var cnBinary= directoryAttribute.GetValues<byte[]>().First();
+                Assert.NotEmpty(cnBinary);
+                var actual = new ASCIIEncoding().GetString(cnBinary);
+                Assert.Equal("admin",actual);
+
+                var cn = directoryAttribute.GetValues<string>().First();
+                Assert.Equal("admin",cn);
+            }
+        }
         
         private void AddLdapEntry()
         {
