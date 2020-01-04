@@ -177,17 +177,6 @@ using (var cn = new LdapConnection())
 }
 ```
 
-
-```cs
-using (var cn = new LdapConnection())
-{
-	cn.Connect();
-	cn.Bind();
-	//search  objects in catalog at first level scope
-	var entries = cn.Search("dc=example,dc=com","(objectClass=*)", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
-}
-```
-
 ### SearchAsync
 
 ```cs
