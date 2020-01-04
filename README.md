@@ -40,6 +40,7 @@ using (var cn = new LdapConnection())
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
 	* [Search](#search)
+	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
 	* [SearchAsync](#searchAsync)
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
@@ -149,6 +150,30 @@ using (var cn = new LdapConnection())
 	cn.Bind();
 	//search all objects in catalog (default search scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
 	var entries = cn.Search("dc=example,dc=com","(objectClass=*)");
+}
+```
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	//search  objects in catalog at first level scope
+	var entries = cn.Search("dc=example,dc=com","(objectClass=*)", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+}
+```
+
+### Search (attributes with binary values)
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	var response = (SearchResponse) connection.SendRequest(new SearchRequest("cn=admin,dc=example,dc=com", "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE));
+	var directoryAttribute = response.Entries.First().Attributes["objectSid"];
+	var objectSid = directoryAttribute.GetValues<byte[]>().First();
 }
 ```
 
