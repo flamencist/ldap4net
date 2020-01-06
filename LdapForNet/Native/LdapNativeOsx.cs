@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -142,7 +143,7 @@ namespace LdapForNet.Native
 
             if (flags != (uint)Native.LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)Native.SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
+                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
                 interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
                 return (int) Native.ResultCode.Success;
             }
@@ -154,7 +155,7 @@ namespace LdapForNet.Native
 
             if (noecho)
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.promt);
+                interact.result = Encoder.Instance.StringToPtr(interact.promt);
                 interact.len = (ushort)interact.promt.Length;
             }
             else
@@ -170,7 +171,7 @@ namespace LdapForNet.Native
             }
             else
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
+                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
                 interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
             }
 
@@ -189,7 +190,7 @@ namespace LdapForNet.Native
                 var berval = new Native.berval
                 {
                     bv_len = password.Length,
-                    bv_val = Marshal.StringToHGlobalAnsi(password)
+                    bv_val = Encoder.Instance.StringToPtr(password)
                 };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
                 Marshal.StructureToPtr(berval,ptr,false);
@@ -293,7 +294,7 @@ namespace LdapForNet.Native
             var berval = new Native.berval
             {
                 bv_len = value.Length,
-                bv_val = Marshal.StringToHGlobalAnsi(value)
+                bv_val = Encoder.Instance.StringToPtr(value)
             };
             var bervalPtr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
             Marshal.StructureToPtr(berval, bervalPtr, true);

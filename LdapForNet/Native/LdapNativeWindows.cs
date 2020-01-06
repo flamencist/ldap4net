@@ -1,26 +1,24 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
     internal class LdapNativeWindows : LdapNative
     {
-        private const string LDAPS = "LDAPS";
-        private const string LDAP = "LDAP";
-
         internal override int Init(ref IntPtr ld, Uri uri)
         {
             var port = uri.Port;
             if (uri.IsDefaultPort)
             {
-                if (string.Compare(uri.Scheme, LDAP, StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (string.Compare(uri.Scheme, Native.LdapPort.LDAP.ToString(), StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    port = (int)LdapForNet.Native.Native.LdapPort.LDAP;
+                    port = (int)Native.LdapPort.LDAP;
                 }
-                else if (string.Compare(uri.Scheme, LDAPS, StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare(uri.Scheme, Native.LdapPort.LDAPS.ToString(), StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    port = (int)LdapForNet.Native.Native.LdapPort.LDAPS;
+                    port = (int)Native.LdapPort.LDAPS;
                 }
             }
 
@@ -91,7 +89,7 @@ namespace LdapForNet.Native
                 var berval = new Native.berval
                 {
                     bv_len = password.Length,
-                    bv_val = Marshal.StringToHGlobalAnsi(password)
+                    bv_val = Encoder.Instance.StringToPtr(password)
                 };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
                 Marshal.StructureToPtr(berval,ptr,false);

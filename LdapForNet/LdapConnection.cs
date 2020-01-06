@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Native;
 using LdapForNet.RequestHandlers;
+using LdapForNet.Utils;
 
 namespace LdapForNet
 {
@@ -317,8 +318,8 @@ namespace LdapForNet
             var serverctrls = IntPtr.Zero;
             _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
-            errorMessage = Marshal.PtrToStringUni(errorMessagePtr);
-            matchedMessage = Marshal.PtrToStringUni(matchedMessagePtr);
+            errorMessage = Encoder.Instance.PtrToString(errorMessagePtr);
+            matchedMessage = Encoder.Instance.PtrToString(matchedMessagePtr);
             
             return res;
         }

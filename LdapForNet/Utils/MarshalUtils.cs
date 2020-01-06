@@ -17,7 +17,7 @@ namespace LdapForNet.Utils
                 var tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
                 while (tempPtr != IntPtr.Zero)
                 {
-                    result.Add(Marshal.PtrToStringUni(tempPtr));
+                    result.Add(Encoder.Instance.PtrToString(tempPtr));
                     count++;
                     tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
                 }
@@ -73,7 +73,7 @@ namespace LdapForNet.Utils
 
         internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
         {
-            var ptrArray = array.Select(Marshal.StringToHGlobalUni).ToArray();
+            var ptrArray = array.Select(Encoder.Instance.StringToPtr).ToArray();
             Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
         }
         

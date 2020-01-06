@@ -13,8 +13,8 @@ namespace LdapForNetTests.Utils
         [Fact]
         public void MarshalUtils_PtrToStringArray_Returns_List_Of_String()
         {
-            var data = Marshal.StringToHGlobalUni("test");
-            var data2 = Marshal.StringToHGlobalUni("test2");
+            var data = Encoder.Instance.StringToPtr("test");
+            var data2 = Encoder.Instance.StringToPtr("test2");
             
             var ptr = Marshal.AllocCoTaskMem(3*IntPtr.Size);
             Marshal.StructureToPtr(data, ptr, true);
@@ -99,7 +99,7 @@ namespace LdapForNetTests.Utils
                 new Native.LDAPMod
                 {
                     mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
-                    mod_type = "test",
+                    mod_type = Encoder.Instance.StringToPtr("test"),
                     mod_vals_u = new Native.LDAPMod.mod_vals
                     {
                         modv_strvals  = valPtr
@@ -108,7 +108,7 @@ namespace LdapForNetTests.Utils
                 new Native.LDAPMod
                 {
                     mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
-                    mod_type = "test2",
+                    mod_type = Encoder.Instance.StringToPtr("test2"),
                     mod_vals_u = new Native.LDAPMod.mod_vals
                     {
                         modv_strvals  = IntPtr.Zero
@@ -130,17 +130,17 @@ namespace LdapForNetTests.Utils
             var valPtr2 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size);
             var valPtr3 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size*2);
             
-            var valFirst = Marshal.PtrToStringUni(valPtr1);
-            var valSecond = Marshal.PtrToStringUni(valPtr2);
-            var valThird = Marshal.PtrToStringUni(valPtr3);
+            var valFirst = Encoder.Instance.PtrToString(valPtr1);
+            var valSecond = Encoder.Instance.PtrToString(valPtr2);
+            var valThird = Encoder.Instance.PtrToString(valPtr3);
                 
             Assert.Equal(0,first.mod_op);
-            Assert.Equal("test",first.mod_type);
+            Assert.Equal("test", Encoder.Instance.PtrToString(first.mod_type));
             Assert.Equal("test",valFirst);
             Assert.Equal("other",valSecond);
             Assert.Equal("third",valThird);
             Assert.Equal(0,second.mod_op);
-            Assert.Equal("test2",second.mod_type);
+            Assert.Equal("test2", Encoder.Instance.PtrToString(second.mod_type));
             Assert.Equal(IntPtr.Zero,second.mod_vals_u.modv_strvals);
             Assert.Equal(IntPtr.Zero,ptr3);
             

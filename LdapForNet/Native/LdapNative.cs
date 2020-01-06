@@ -10,7 +10,7 @@ namespace LdapForNet.Native
 {
     internal abstract class LdapNative
     {
-        internal static LdapNative Instance { get; } = CreateInstance();
+        internal static LdapNative Instance => CreateInstance();
 
         private static LdapNative CreateInstance()
         {

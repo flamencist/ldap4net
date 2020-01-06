@@ -9,6 +9,7 @@ using LdapForNet.RequestHandlers;
 using LdapForNet.Utils;
 using Moq;
 using Xunit;
+using Encoder = LdapForNet.Utils.Encoder;
 
 namespace LdapForNetTests.RequestHandlers
 {
@@ -49,8 +50,8 @@ namespace LdapForNetTests.RequestHandlers
             var entry = new IntPtr(1);
             var dn = "cn=admin,dc=example,dc=com";
             var attribute = new KeyValuePair<string, byte[][]>("cn",new[] { new UTF8Encoding().GetBytes("admin") });
-            var attributeNamePtr = Marshal.StringToHGlobalAnsi(attribute.Key);
-            var dnPtr = Marshal.StringToHGlobalUni(dn);
+            var attributeNamePtr = Encoder.Instance.StringToPtr(attribute.Key);
+            var dnPtr = Encoder.Instance.StringToPtr(dn);
             var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*(attribute.Value.Length+1));
             MarshalUtils.ByteArraysToBerValueArray(attribute.Value, valuesPtr);
             

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -142,7 +143,7 @@ namespace LdapForNet.Native
 
         internal static string LdapError2String(int error)
         {
-            return Marshal.PtrToStringUni(ldap_err2string(error));
+            return Encoder.Instance.PtrToString(ldap_err2string(error));
         }
 
 
@@ -152,7 +153,7 @@ namespace LdapForNet.Native
             //Sets or retrieves the pointer to a TCHAR string giving the error message of the most recent LDAP error that occurred for this session.
             //The error string returned by this option should not be freed by the user
             ldap_get_option(ld,(int)Native.LdapOption.LDAP_OPT_ERROR_STRING,ref ptr);
-            var info = Marshal.PtrToStringUni(ptr);
+            var info = Encoder.Instance.PtrToString(ptr);
             return info;
         }
 

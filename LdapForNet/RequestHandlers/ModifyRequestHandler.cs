@@ -61,7 +61,7 @@ namespace LdapForNet.RequestHandlers
             return new Native.Native.LDAPMod
             {
                 mod_op = (int) attribute.LdapModOperation,
-                mod_type = attribute.Type,
+                mod_type = Encoder.Instance.StringToPtr(attribute.Type),
                 mod_vals_u = new Native.Native.LDAPMod.mod_vals
                 {
                     modv_strvals = modValuePtr,

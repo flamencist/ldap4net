@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
@@ -45,7 +46,7 @@ namespace LdapForNet.RequestHandlers
                     {
                         if (requestName != IntPtr.Zero)
                         {
-                            name = Marshal.PtrToStringAnsi(requestName);
+                            name = Encoder.Instance.PtrToString(requestName);
                             Native.ldap_memfree(requestName);
                         }
 
