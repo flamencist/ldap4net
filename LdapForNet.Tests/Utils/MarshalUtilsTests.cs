@@ -44,9 +44,9 @@ namespace LdapForNetTests.Utils
             var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
             var ptr3 = Marshal.ReadIntPtr(actual,IntPtr.Size*2);
             
-            var first = Marshal.PtrToStringUni(ptr1);
-            var second = Marshal.PtrToStringUni(ptr2);
-            var third = Marshal.PtrToStringUni(ptr3);
+            var first = Encoder.Instance.PtrToString(ptr1);
+            var second = Encoder.Instance.PtrToString(ptr2);
+            var third = Encoder.Instance.PtrToString(ptr3);
             
             Assert.Equal("test",first);
             Assert.Equal("other",second);
