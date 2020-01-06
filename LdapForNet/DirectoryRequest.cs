@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 
 namespace LdapForNet
@@ -91,4 +92,52 @@ namespace LdapForNet
         private string _directoryFilter = null;
         private Native.Native.LdapSearchScope _directoryScope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
     }
+    
+    public class ExtendedRequest : DirectoryRequest
+    {
+        private byte[] _requestValue = null;
+
+        public ExtendedRequest() { }
+
+        public ExtendedRequest(string requestName)
+        {
+            RequestName = requestName;
+        }
+
+        public ExtendedRequest(string requestName, byte[] requestValue) : this(requestName)
+        {
+            _requestValue = requestValue;
+        }
+
+        public string RequestName { get; set; }
+
+        public byte[] RequestValue
+        {
+            get
+            {
+                if (_requestValue == null)
+                {
+                    return Array.Empty<byte>();
+                }
+
+                byte[] tempValue = new byte[_requestValue.Length];
+                for (int i = 0; i < _requestValue.Length; i++)
+                {
+                    tempValue[i] = _requestValue[i];
+                }
+                return tempValue;
+            }
+            set => _requestValue = value;
+        }
+    }
+    
+    public class CompareRequest:DirectoryRequest 
+    {
+        public CompareRequest(LdapEntry ldapEntry)
+        {
+            LdapEntry = ldapEntry;
+        }
+        
+        public LdapEntry LdapEntry { get; set; }
+    }   
 }

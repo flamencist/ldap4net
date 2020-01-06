@@ -40,6 +40,7 @@ using (var cn = new LdapConnection())
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
 	* [Search](#search)
+	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
 	* [SearchAsync](#searchAsync)
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
@@ -160,6 +161,19 @@ using (var cn = new LdapConnection())
 	cn.Bind();
 	//search  objects in catalog at first level scope
 	var entries = cn.Search("dc=example,dc=com","(objectClass=*)", LdapSearchScope.LDAP_SCOPE_ONELEVEL);
+}
+```
+
+### Search (attributes with binary values)
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	var response = (SearchResponse) connection.SendRequest(new SearchRequest("cn=admin,dc=example,dc=com", "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE));
+	var directoryAttribute = response.Entries.First().Attributes["objectSid"];
+	var objectSid = directoryAttribute.GetValues<byte[]>().First();
 }
 ```
 
@@ -440,7 +454,10 @@ Inspired by .NET Framework LdapConnection.SendRequest
  	cn.Connect();
  	cn.Bind();
  	var cancellationTokenSource = new CancellationTokenSource();
- 	await cn.SendRequestAsync(new DeleteRequest("cn=test,dc=example,dc=com"), cancellationTokenSource.Token);
+ 	//whoami
+ 	var res = await cn.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"), cancellationTokenSource.Token);
+ 	var extendedResponse = (ExtendedResponse) res;
+ 	var name = Encoding.ASCII.GetString(extendedResponse.ResponseValue);
  }
  ```
 

@@ -14,7 +14,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_initW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr ldap_init(string host, int port);
         
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_connect(SafeHandle ld,LDAP_TIMEVAL timeout);
 
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_bindW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
@@ -134,7 +134,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH,CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
         internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
         
-        [DllImport(LIB_LDAP_PATH)]
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint LdapGetLastError();
         
         [DllImport(LIB_LDAP_PATH,EntryPoint="ldap_err2stringW", CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
@@ -192,7 +192,16 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH,EntryPoint ="ldap_get_valuesW" ,CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
-        
+
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer);
+
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ldap_value_free_len(IntPtr vals);
+
+        [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ldap_count_values_len(IntPtr vals);
+
         /// <summary>
         /// ldap_add_ext <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
         /// </summary>
@@ -244,7 +253,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_compare_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal static extern int ldap_compare_ext(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
 
         
         /// <summary>
@@ -267,5 +276,11 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH,CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_parse_resultW", CharSet = CharSet.Unicode)]
         internal static extern int ldap_parse_result([In] SafeHandle ld, [In] IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
+        
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern int ldap_extended_operation(SafeHandle ld, string requestoid, IntPtr requestdata, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern int ldap_parse_extended_result([In] SafeHandle ldapHandle, [In] IntPtr result, ref IntPtr oid, ref IntPtr data, int freeIt);
     }
 }

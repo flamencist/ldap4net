@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
@@ -129,6 +130,64 @@ namespace LdapForNetTests
             await DeleteLdapEntryAsync();                    
         }
 
+        /// <summary>
+        /// https://github.com/delphij/openldap/blob/master/clients/tools/ldapwhoami.c
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task LdapConnection_Extended_Operation_WhoAmI_Async()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"));
+                var extendedResponse = (ExtendedResponse) result;
+                Assert.True(result.ResultCode==ResultCode.Success);
+                var name = Encoding.ASCII.GetString(extendedResponse.ResponseValue);
+                Assert.Equal($"dn:{Config.LdapUserDn}",name);
+            }
+        }
+
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_Async_Returns_True_If_Attribute_Exists()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(new LdapEntry
+                {
+                    Dn = Config.LdapUserDn,
+                    Attributes = new Dictionary<string,List<string>>
+                    {
+                        ["objectClass"]=new List<string>{"top"}
+                    }
+                }));
+                Assert.True(result.ResultCode==ResultCode.CompareTrue,result.ResultCode.ToString());
+            }
+        }
+        
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_Async_Returns_False_If_Attribute_Not_Exist()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(new LdapEntry
+                {
+                    Dn = Config.LdapUserDn,
+                    Attributes = new Dictionary<string,List<string>>
+                    {
+                        ["objectClass"]=new List<string>{"organizationalUnit"}
+                    }
+                }));
+                Assert.True(result.ResultCode==ResultCode.CompareFalse,result.ResultCode.ToString());
+            }
+        }
+
+        
         private async Task ModifyLdapEntryAsync()
         {
             using (var connection = new LdapConnection())
@@ -247,6 +306,28 @@ namespace LdapForNetTests
                 Assert.Equal($"{newRdn},{Config.RootDn}", actual[0].Dn);
                 
                 connection.Delete($"{newRdn},{Config.RootDn}");
+            }
+        }
+
+        [Fact]
+        public async Task LdapConnection_SearchAsync_Retrieve_Binary_Values()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(new Uri($"LDAP://{Config.LdapHost}:{Config.LdapPort}"));
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn,Config.LdapPassword);
+                var response = (SearchResponse)await connection.SendRequestAsync(new SearchRequest(Config.LdapUserDn, "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE), CancellationToken.None);
+                _testOutputHelper.WriteLine("ResultCode {0}. ErrorMessage: {1}",response.ResultCode, response.ErrorMessage);
+                Assert.Equal(ResultCode.Success, response.ResultCode);
+                Assert.NotEmpty(response.Entries);
+                var directoryAttribute = response.Entries.First().Attributes["cn"];
+                var cnBinary= directoryAttribute.GetValues<byte[]>().First();
+                Assert.NotEmpty(cnBinary);
+                var actual = new ASCIIEncoding().GetString(cnBinary);
+                Assert.Equal("admin",actual);
+
+                var cn = directoryAttribute.GetValues<string>().First();
+                Assert.Equal("admin",cn);
             }
         }
         

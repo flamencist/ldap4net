@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace LdapForNet
@@ -11,7 +12,7 @@ namespace LdapForNet
     
     public class SearchResponse : DirectoryResponse
     {
-        public List<LdapEntry> Entries { get; internal set; } = new List<LdapEntry>();
+        public List<DirectoryEntry> Entries { get; internal set; } = new List<DirectoryEntry>();
     }
 
     public class AddResponse : DirectoryResponse
@@ -30,6 +31,38 @@ namespace LdapForNet
     }
     
     public class DeleteResponse : DirectoryResponse
+    {
+        
+    }
+    
+    public class ExtendedResponse : DirectoryResponse
+    {
+        private byte[] _value;
+
+        public string ResponseName { get; internal set; }
+
+        public byte[] ResponseValue
+        {
+            get
+            {
+                if (_value == null)
+                {
+                    return Array.Empty<byte>();
+                }
+
+                byte[] tmpValue = new byte[_value.Length];
+                for (int i = 0; i < _value.Length; i++)
+                {
+                    tmpValue[i] = _value[i];
+                }
+
+                return tmpValue;
+            }
+            internal set => _value = value;
+        }
+    }
+
+    public class CompareResponse : DirectoryResponse
     {
         
     }

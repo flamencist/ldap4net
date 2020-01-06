@@ -176,7 +176,16 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
-        
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern void ldap_value_free_len(IntPtr vals);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_count_values_len(IntPtr vals);
+
         /// <summary>
         /// ldap_add_ext <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
         /// </summary>
@@ -251,5 +260,12 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_extended_operation(SafeHandle ld, string requestoid, IntPtr requestdata, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_parse_extended_result([In] SafeHandle ldapHandle, [In] IntPtr result, ref IntPtr oid, ref IntPtr data, int freeIt);
+
     }
 }

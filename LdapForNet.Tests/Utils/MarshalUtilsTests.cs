@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Native;
 using LdapForNet.Utils;
@@ -146,7 +147,58 @@ namespace LdapForNetTests.Utils
             Marshal.FreeHGlobal(actual);
             Marshal.FreeHGlobal(valPtr);
         }
-        
+
+
+        [Theory]
+        [InlineData(new byte[] { 1, 2, 3, 4 },  new byte[] { 1, 2, 3, 4 , 5 })]
+        public void MarshalUtils_BerValArrayToByteArray_Returns_List_Of_ByteArray(params byte[][] sourceData)
+        {
+            var sourceDataPtrs = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length + 1)).ToArray();
+            for (var i = 0; i < sourceData.Length; i++)
+            {
+                Marshal.Copy(sourceData[i].Union(new byte[]{0}).ToArray(),0,sourceDataPtrs[i], sourceData[i].Length + 1);
+            }
+
+            var ptr = Marshal.AllocCoTaskMem((sourceData.Length + 1) * IntPtr.Size);
+            for (var i = 0; i < sourceDataPtrs.Length; i++)
+            {
+                var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<Native.berval>());
+                Marshal.StructureToPtr(new Native.berval
+                {
+                    bv_val = sourceDataPtrs[i],
+                    bv_len = sourceData[i].Length
+                }, berPtr, true);
+                Marshal.StructureToPtr(berPtr, new IntPtr(ptr.ToInt64() + i*IntPtr.Size), true);
+            }
+            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + sourceDataPtrs.Length * IntPtr.Size), true);
+
+            var actual = MarshalUtils.BerValArrayToByteArrays(ptr);
+
+            Assert.Equal(sourceData.Length, actual.Count);
+            Assert.Equal(sourceData, actual);
+
+            for (var i = 0; i < sourceDataPtrs.Length; i++)
+            {
+                var sourceDataPtr = sourceDataPtrs[i];
+                var tempPtr = Marshal.ReadIntPtr(ptr, i * IntPtr.Size);
+                Marshal.FreeHGlobal(tempPtr);
+                Marshal.FreeCoTaskMem(sourceDataPtr);
+            }
+
+            Marshal.FreeCoTaskMem(ptr);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 1, 2, 3, 4 }, new byte[] { 1, 2, 3, 4, 5 })]
+        public void MarshalUtils_ByteArraysToBerValueArray_Returns_Ptr_To_BerValueArrays(params byte[][] sourceData)
+        {
+            var ptr = Marshal.AllocCoTaskMem((sourceData.Length + 1) * IntPtr.Size);
+            MarshalUtils.ByteArraysToBerValueArray(sourceData, ptr);
+            var actual = MarshalUtils.BerValArrayToByteArrays(ptr);
+            Assert.Equal(sourceData, actual);
+            Marshal.FreeCoTaskMem(ptr);
+        }
+
     }
     
     public struct Point

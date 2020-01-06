@@ -7,6 +7,9 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeLinux:LdapNative
     {
+        internal override int Init(ref IntPtr ld, Uri uri) =>
+            NativeMethodsLinux.ldap_initialize(ref ld, uri.ToString());
+
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsLinux.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
@@ -183,7 +186,11 @@ namespace LdapForNet.Native
             
             return await Task.Factory.StartNew(() =>
             {
-                var berval = new Native.berval(password);
+                var berval = new Native.berval
+                {
+                    bv_len = password.Length,
+                    bv_val = Marshal.StringToHGlobalAnsi(password)
+                };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
@@ -256,7 +263,16 @@ namespace LdapForNet.Native
 
         internal override IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsLinux.ldap_next_attribute(ld, entry, pBer);
 
+        internal override int ldap_count_values(IntPtr vals) => NativeMethodsLinux.ldap_count_values(vals);
+
         internal override void ldap_value_free(IntPtr vals) => NativeMethodsLinux.ldap_value_free(vals);
+
+        internal override IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer) =>
+            NativeMethodsLinux.ldap_get_values_len(ld, entry, pBer);
+
+        internal override int ldap_count_values_len(IntPtr vals)=> NativeMethodsLinux.ldap_count_values_len(vals);
+
+        internal override void ldap_value_free_len(IntPtr vals) => NativeMethodsLinux.ldap_value_free_len(vals);
 
         internal override IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsLinux.ldap_get_values(ld, entry, pBer);
 
@@ -266,13 +282,37 @@ namespace LdapForNet.Native
 
         internal override int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp) => NativeMethodsLinux.ldap_delete_ext(ld, dn, serverctrls, clientctrls, ref msgidp);
 
-        internal override int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
-            ref int msgidp) =>
-            NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
+        internal override int Compare(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls,
+            ref int msgidp)
+        {
+            var ptr = bvalue == IntPtr.Zero && value != null ?
+                StringToBerVal(value) : bvalue;
+            return NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, ptr, serverctrls, clientctrls, ref msgidp);
+        }
+
+        private static IntPtr StringToBerVal(string value)
+        {
+            var berval = new Native.berval
+            {
+                bv_len = value.Length,
+                bv_val = Marshal.StringToHGlobalAnsi(value)
+            };
+            var bervalPtr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
+            Marshal.StructureToPtr(berval, bervalPtr, true);
+            return bervalPtr;
+        }
+
 
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
             IntPtr clientctrls, ref int msgidp) =>
             NativeMethodsLinux.ldap_rename(ld, dn, newrdn, newparent, deleteoldrdn, serverctrls, clientctrls, ref msgidp);
+
+        internal override int ldap_extended_operation(SafeHandle ld, string requestoid, IntPtr requestdata, IntPtr serverctrls,
+            IntPtr clientctrls, ref int msgidp) =>
+            NativeMethodsLinux.ldap_extended_operation(ld, requestoid, requestdata, serverctrls, clientctrls, ref msgidp);
+
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
+            NativeMethodsLinux.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
 
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsLinux.ldap_controls_free(ctrls);
     }

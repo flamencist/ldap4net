@@ -10,22 +10,67 @@ namespace LdapForNet.Utils
         
         internal static List<string> PtrToStringArray(IntPtr ptr)
         {
-            var offset = 0;
+            var count = 0;
             var result = new List<string>();
-            while (true)
+            if (ptr != IntPtr.Zero)
             {
-                var el = new IntPtr(ptr.ToInt64() + offset);
-                var s = Marshal.PtrToStructure<IntPtr>(el);
-                if (s == IntPtr.Zero)
+                var tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
+                while (tempPtr != IntPtr.Zero)
                 {
-                    break;
+                    result.Add(Marshal.PtrToStringUni(tempPtr));
+                    count++;
+                    tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
                 }
-                result.Add(Marshal.PtrToStringUni(s));
-                offset += IntPtr.Size;
             }
             return result;
         }
-        
+
+        internal static List<byte[]> BerValArrayToByteArrays(IntPtr ptr)
+        {
+            var result = new List<byte[]>();
+            if (ptr != IntPtr.Zero)
+            {
+                var count = 0;
+                var tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
+                while (tempPtr != IntPtr.Zero)
+                {
+                    var bervalue = new Native.Native.berval();
+                    Marshal.PtrToStructure(tempPtr, bervalue);
+                    if (bervalue.bv_len > 0 && bervalue.bv_val != IntPtr.Zero)
+                    {
+                        var byteArray = new byte[bervalue.bv_len];
+                        Marshal.Copy(bervalue.bv_val, byteArray, 0, bervalue.bv_len);
+                        result.Add(byteArray);
+                    }
+                    count++;
+                    tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
+                }
+            }
+
+            return result;
+        }
+
+        internal static void ByteArraysToBerValueArray(byte[][] sourceData, IntPtr ptr)
+        {
+            var sourceDataPtrs = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length + 1)).ToArray();
+            for (var i = 0; i < sourceData.Length; i++)
+            {
+                Marshal.Copy(sourceData[i].Union(new byte[] { 0 }).ToArray(), 0, sourceDataPtrs[i], sourceData[i].Length + 1);
+            }
+
+            for (var i = 0; i < sourceDataPtrs.Length; i++)
+            {
+                var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<Native.Native.berval>());
+                Marshal.StructureToPtr(new Native.Native.berval
+                {
+                    bv_val = sourceDataPtrs[i],
+                    bv_len = sourceData[i].Length
+                }, berPtr, true);
+                Marshal.StructureToPtr(berPtr, new IntPtr(ptr.ToInt64() + i * IntPtr.Size), true);
+            }
+            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + sourceDataPtrs.Length * IntPtr.Size), true);
+        }
+
         internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
         {
             var ptrArray = array.Select(Marshal.StringToHGlobalUni).ToArray();

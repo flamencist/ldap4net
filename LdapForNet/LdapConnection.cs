@@ -15,6 +15,31 @@ namespace LdapForNet
         private SafeHandle _ld;
         private bool _bound;
 
+        public void Connect(Uri uri,
+            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
+        {
+            var details = new Dictionary<string, string>
+            {
+                [nameof(uri)] = uri.ToString(),
+                [nameof(version)] = version.ToString()
+            };
+            var nativeHandle = IntPtr.Zero;
+
+            _native.ThrowIfError(
+                _native.Init(ref nativeHandle, uri),
+                nameof(_native.Init),
+                details
+            );
+            _ld = new LdapHandle(nativeHandle);
+            var ldapVersion = (int)version;
+
+            _native.ThrowIfError(
+                _native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
+                nameof(_native.ldap_set_option),
+                details
+            );
+        }
+
         public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
             Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
@@ -116,7 +141,9 @@ namespace LdapForNet
             {
                 ThrowIfResponseError(response);
             }
-            return response.Entries;
+            return response.Entries
+                .Select(_=>_.ToLdapEntry())
+                .ToList();
         }
 
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
@@ -128,7 +155,10 @@ namespace LdapForNet
             {
                 ThrowIfResponseError(response);
             }
-            return response.Entries;
+
+            return response.Entries
+                .Select(_ => _.ToLdapEntry())
+                .ToList();
         }
         
         public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));
@@ -259,10 +289,10 @@ namespace LdapForNet
                     return new DeleteRequestHandler();
                 case LdapOperation.LdapModifyDn:
                     return new ModifyDnRequestHandler();
-//                case LdapOperation.LdapCompare:
-//                    break;
-//                case LdapOperation.LdapExtendedRequest:
-//                    break;
+                case LdapOperation.LdapCompare:
+                    return new CompareRequestHandler();
+                case LdapOperation.LdapExtendedRequest:
+                    return new ExtendedRequestHandler();
                 default:
                     throw new LdapException("Not supported operation: " + operation);
             }
@@ -359,6 +389,13 @@ namespace LdapForNet
                 case ModifyDNRequest _:
                     operation = LdapOperation.LdapModifyDn;
                     break;
+                case ExtendedRequest _:
+                    operation = LdapOperation.LdapExtendedRequest;
+                    break;
+                case CompareRequest _:
+                    operation = LdapOperation.LdapCompare;
+                    break;
+
                 default:
                     throw new LdapException($"Unknown ldap operation for {request.GetType()}");
             }

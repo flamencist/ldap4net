@@ -28,7 +28,8 @@ namespace LdapForNet.Native
             }
             throw new PlatformNotSupportedException();
         }
-        
+
+        internal abstract int Init(ref IntPtr ld, Uri uri);
         internal abstract int Init(ref IntPtr ld, string hostname, int port);
         internal abstract int BindKerberos(SafeHandle ld);
         internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld);
@@ -54,13 +55,20 @@ namespace LdapForNet.Native
         internal abstract void ldap_msgfree(IntPtr message);
         internal abstract IntPtr ldap_first_attribute(SafeHandle ld, IntPtr entry, ref IntPtr ppBer);
         internal abstract IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer);
-        internal abstract void ldap_value_free(IntPtr vals);
         internal abstract IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
+        internal abstract int ldap_count_values(IntPtr vals);
+        internal abstract void ldap_value_free(IntPtr vals);
+        internal abstract IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer);
+        internal abstract int ldap_count_values_len(IntPtr vals);
+        internal abstract void ldap_value_free_len(IntPtr vals);
         internal abstract int ldap_add_ext(SafeHandle ld,string dn,IntPtr attrs,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
         internal abstract int ldap_modify_ext(SafeHandle ld, string dn,IntPtr mods , IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         internal abstract int ldap_delete_ext(SafeHandle ld, string dn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
-        internal abstract int ldap_compare_ext(SafeHandle ld, string dn, string attr, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal abstract int Compare(SafeHandle ld, string dn, string attr, string value, IntPtr bvalue, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         internal abstract int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal abstract int ldap_extended_operation(SafeHandle ld,string requestoid,IntPtr requestdata,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
+        internal abstract int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt);
+
         internal abstract void ldap_controls_free(IntPtr ctrls);
         
         
