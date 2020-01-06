@@ -11,49 +11,56 @@ namespace LdapForNetTests.Utils
 {
     public class MarshalUtilsTests
     {
-        [Fact]
-        public void MarshalUtils_PtrToStringArray_Returns_List_Of_String()
+        [Theory]
+        [InlineData("test","test2")]
+        [InlineData("раз", "два", "три")]
+        [InlineData("fünf", "zwölf")]
+        [InlineData("數字", "四")]
+        public void MarshalUtils_PtrToStringArray_Returns_List_Of_String(params string[] data)
         {
-            var data = Encoder.Instance.StringToPtr("test");
-            var data2 = Encoder.Instance.StringToPtr("test2");
-            
-            var ptr = Marshal.AllocCoTaskMem(3*IntPtr.Size);
-            Marshal.StructureToPtr(data, ptr, true);
-            Marshal.StructureToPtr(data2, new IntPtr(ptr.ToInt64() + IntPtr.Size), true);
-            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + 2*IntPtr.Size), true);
-                
+            var dataPtrs = data.Select(Encoder.Instance.StringToPtr).Union(new []{IntPtr.Zero, }).ToArray();
+            var ptr = Marshal.AllocCoTaskMem(dataPtrs.Length*IntPtr.Size);
+
+            for (var i = 0; i < dataPtrs.Length; i++)
+            {
+                Marshal.WriteIntPtr(ptr, IntPtr.Size * i, dataPtrs[i]);
+            }
+
             var actual = MarshalUtils.PtrToStringArray(ptr);
-            
-            Assert.Equal(2, actual.Count);
-            Assert.Equal("test", actual[0]);
-            Assert.Equal("test2", actual[1]);
-            
+
+            foreach (var dataPtr in dataPtrs)
+            {
+                Marshal.FreeHGlobal(dataPtr);
+            }
             Marshal.FreeCoTaskMem(ptr);
-            Marshal.FreeHGlobal(data);
-            Marshal.FreeHGlobal(data2);
+
+            Assert.Equal(data, actual);
         }
 
-        [Fact]
-        public void MarshalUtils_StringArrayToPtr_Returns_Ptr_To_StringArray()
+        [Theory]
+        [InlineData("test","other","third")]
+        [InlineData("раз", "два", "три")]
+        [InlineData("fünf", "zwölf")]
+        [InlineData("數字", "四")]
+        public void MarshalUtils_StringArrayToPtr_Returns_Ptr_To_StringArray(params string[] data)
         {
-            var data = new List<string> { "test","other","third"};
-            var actual = Marshal.AllocHGlobal(IntPtr.Size*data.Count+1);
+            var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Length+1));
             MarshalUtils.StringArrayToPtr(data, actual);
-            Assert.NotEqual(IntPtr.Zero, actual);
+            Marshal.WriteIntPtr(actual, IntPtr.Size * (data.Length),IntPtr.Zero);
 
-            var ptr1 = Marshal.ReadIntPtr(actual);
-            var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
-            var ptr3 = Marshal.ReadIntPtr(actual,IntPtr.Size*2);
-            
-            var first = Encoder.Instance.PtrToString(ptr1);
-            var second = Encoder.Instance.PtrToString(ptr2);
-            var third = Encoder.Instance.PtrToString(ptr3);
-            
-            Assert.Equal("test",first);
-            Assert.Equal("other",second);
-            Assert.Equal("third",third);
-            
+            var actualData = new List<string>();
+            var count = 0;
+            var tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
+            while (tempPtr != IntPtr.Zero)
+            {
+                actualData.Add(Encoder.Instance.PtrToString(tempPtr));
+                count++;
+                tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
+            }
             Marshal.FreeHGlobal(actual);
+
+            Assert.Equal(data, actualData);
+            
         }
 
         [Fact]
@@ -244,25 +251,5 @@ namespace LdapForNetTests.Utils
     {
         public int X;
         public int Y;
-    }
-
-    public class LambdaEqualityComparer<T> : IEqualityComparer<T>
-    {
-        private readonly Func<T, T, bool> _comparer;
-
-        public LambdaEqualityComparer(Func<T, T, bool> comparer)
-        {
-            _comparer = comparer;
-        }
-
-        public bool Equals(T a, T b)
-        {
-            return _comparer(a, b);
-        }
-
-        public int GetHashCode(T a)
-        {
-            return a.GetHashCode();
-        }
     }
 }
