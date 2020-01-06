@@ -381,13 +381,13 @@ namespace LdapForNetTests
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "displayname",
-                            Values = new List<string> {"test_display_name"}
+                            Values = new List<string> { "имя" }
                         },
                         new LdapModifyAttribute
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "sn",
-                            Values = new List<string> {"test"}
+                            Values = new List<string> { "數字" }
                         },
                         new LdapModifyAttribute
                         {
@@ -401,7 +401,7 @@ namespace LdapForNetTests
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=test,{Config.RootDn}", entries[0].Dn);
                 Assert.Equal("test_value_2", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
-                Assert.Equal("test_display_name", GetAttributeValue(entries[0].Attributes,"displayName")[0]);
+                Assert.Equal("имя", GetAttributeValue(entries[0].Attributes,"displayName")[0]);
                 Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
                 Assert.Equal("test", entries[0].Attributes["sn"][1]);
                 Assert.False(entries[0].Attributes.ContainsKey("description"));
