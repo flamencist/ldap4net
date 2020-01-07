@@ -270,7 +270,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp"></param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_rename_extW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int ldap_rename(SafeHandle ld,  IntPtr dn, IntPtr newrdn, IntPtr newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
+        internal static extern int ldap_rename(SafeHandle ld,  string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_controls_freeW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ldap_controls_free(IntPtr ctrls);

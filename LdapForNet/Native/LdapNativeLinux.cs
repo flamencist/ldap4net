@@ -20,8 +20,10 @@ namespace LdapForNet.Native
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
             Marshal.StructureToPtr(saslDefaults, ptr, false);
 
-            return NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
+            var rc = NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, ptr);
+            Marshal.FreeHGlobal(ptr);
+            return rc;
         }
         
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
@@ -68,6 +70,7 @@ namespace LdapForNet.Native
                     }
                     
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
+                Marshal.FreeHGlobal(ptr);
                 
                 ThrowIfError(ld,rc, nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
@@ -197,6 +200,7 @@ namespace LdapForNet.Native
                 var msgidp = 0;
                 var result = IntPtr.Zero;
                 NativeMethodsLinux.ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
+                Marshal.FreeHGlobal(ptr);
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result",  nameof(NativeMethodsLinux.ldap_sasl_bind), 1);

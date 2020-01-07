@@ -86,13 +86,6 @@ namespace LdapForNet.Native
             LdapConnect(ld);
             return await Task.Factory.StartNew(() =>
             {
-                var berval = new Native.berval
-                {
-                    bv_len = password.Length,
-                    bv_val = Encoder.Instance.StringToPtr(password)
-                };
-                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
-                Marshal.StructureToPtr(berval,ptr,false);
                 var result = IntPtr.Zero;
                 var msgidp = NativeMethodsWindows.ldap_simple_bind(ld, who, password);
   
@@ -193,9 +186,8 @@ namespace LdapForNet.Native
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
             IntPtr clientctrls, ref int msgidp)
         {
-            var newRdn = Encoder.Instance.StringToPtr(newrdn);
-            return NativeMethodsWindows.ldap_rename(ld, Encoder.Instance.StringToPtr(dn),
-                newRdn, Encoder.Instance.StringToPtr(newparent), deleteoldrdn,
+            return NativeMethodsWindows.ldap_rename(ld, dn,
+                newrdn,newparent, deleteoldrdn,
                 serverctrls, clientctrls, ref msgidp);
         }
 
