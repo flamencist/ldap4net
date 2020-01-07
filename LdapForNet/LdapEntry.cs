@@ -76,6 +76,8 @@ namespace LdapForNet
             throw new NotSupportedException($"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
         }
 
+        internal List<object> GetRawValues() => _values;
+
         internal void Add<T>(T value) where T : class, IEnumerable
         {
             ThrowIfWrongType<T>();

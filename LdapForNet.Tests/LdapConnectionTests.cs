@@ -167,7 +167,31 @@ namespace LdapForNetTests
                 Assert.True(result.ResultCode==ResultCode.CompareTrue,result.ResultCode.ToString());
             }
         }
-        
+
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_Binary_Async_Returns_True_If_Attribute_Exists()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(Config.LdapUserDn,"objectClass",LdapForNet.Utils.Encoder.Instance.GetBytes("top")));
+                Assert.True(result.ResultCode == ResultCode.CompareTrue, result.ResultCode.ToString());
+            }
+        }
+
+        [Fact]
+        public async Task LdapConnection_Compare_Operation_String_Async_Returns_True_If_Attribute_Exists()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var result = await connection.SendRequestAsync(new CompareRequest(Config.LdapUserDn, "objectClass", "top"));
+                Assert.True(result.ResultCode == ResultCode.CompareTrue, result.ResultCode.ToString());
+            }
+        }
+
         [Fact]
         public async Task LdapConnection_Compare_Operation_Async_Returns_False_If_Attribute_Not_Exist()
         {
@@ -280,7 +304,7 @@ namespace LdapForNetTests
         {
             var cn = Guid.NewGuid().ToString();
             var dn = $"cn={cn},{Config.RootDn}";
-            var newRdn = $"cn=новый{Guid.NewGuid().ToString()}";
+            var newRdn = $"cn={Guid.NewGuid().ToString()}";
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);

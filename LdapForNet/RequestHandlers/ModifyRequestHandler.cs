@@ -28,13 +28,22 @@ namespace LdapForNet.RequestHandlers
                 var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
                 
-                return Native.ldap_modify_ext(handle,
+                var result =  Native.ldap_modify_ext(handle,
                     entry.Dn,
                     ptr,                
                     IntPtr.Zero, 
                     IntPtr.Zero ,
                     ref messageId
-                );    
+                );
+                attrs.ForEach(_ =>
+                {
+                    MarshalUtils.BerValuesFree(_.mod_vals_u.modv_bvals);
+                    Marshal.FreeHGlobal(_.mod_vals_u.modv_bvals);
+                    Marshal.FreeHGlobal(_.mod_type);
+                });
+                Marshal.FreeHGlobal(ptr);
+
+                return result;
             }
 
             return 0;

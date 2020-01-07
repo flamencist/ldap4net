@@ -6,6 +6,7 @@ namespace LdapForNet.Utils
 {
     internal abstract class Encoder
     {
+        private static readonly Encoding Encoding = new UTF8Encoding();
         public static Encoder Instance => CreateInstance();
 
         private static Encoder CreateInstance()
@@ -25,18 +26,16 @@ namespace LdapForNet.Utils
             throw new PlatformNotSupportedException();
         }
 
-        public abstract string GetString(byte[] bytes);
-        public abstract byte[] GetBytes(string str);
+        public string GetString(byte[] bytes) => Encoding.GetString(bytes);
+
+        public byte[] GetBytes(string str) => Encoding.GetBytes(str);
+
         public abstract IntPtr StringToPtr(string str);
         public abstract string PtrToString(IntPtr ptr);
     }
 
-    internal class WindowsEncoder : Encoder {
-        private static readonly Encoding Encoding = new UTF8Encoding();
-        public override string GetString(byte[] bytes) => Encoding.GetString(bytes);
-
-        public override byte[] GetBytes(string str) => Encoding.GetBytes(str);
-
+    internal class WindowsEncoder : Encoder 
+    {
         public override IntPtr StringToPtr(string str) => Marshal.StringToHGlobalUni(str);
 
         public override string PtrToString(IntPtr ptr) => Marshal.PtrToStringUni(ptr);
@@ -44,11 +43,6 @@ namespace LdapForNet.Utils
 
     internal class UnixEncoder : Encoder
     {
-        private static readonly Encoding Encoding = new UTF8Encoding();
-        public override string GetString(byte[] bytes) => Encoding.GetString(bytes);
-
-        public override byte[] GetBytes(string str) => Encoding.GetBytes(str);
-
         public override IntPtr StringToPtr(string str) => Marshal.StringToHGlobalAnsi(str);
 
         public override string PtrToString(IntPtr ptr) => Marshal.PtrToStringAnsi(ptr);

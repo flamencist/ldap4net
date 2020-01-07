@@ -214,14 +214,11 @@ namespace LdapForNetTests.Utils
                     bv_val = sourceDataPtrs[i],
                     bv_len = sourceData[i].Length
                 }, berPtr, true);
-                Marshal.StructureToPtr(berPtr, new IntPtr(ptr.ToInt64() + i*IntPtr.Size), true);
+                Marshal.WriteIntPtr(ptr,i*IntPtr.Size,berPtr);
             }
-            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + sourceDataPtrs.Length * IntPtr.Size), true);
+            Marshal.WriteIntPtr(ptr, sourceDataPtrs.Length * IntPtr.Size, IntPtr.Zero);
 
             var actual = MarshalUtils.BerValArrayToByteArrays(ptr);
-
-            Assert.Equal(sourceData.Length, actual.Count);
-            Assert.Equal(sourceData, actual);
 
             for (var i = 0; i < sourceDataPtrs.Length; i++)
             {
@@ -232,6 +229,9 @@ namespace LdapForNetTests.Utils
             }
 
             Marshal.FreeCoTaskMem(ptr);
+
+            Assert.Equal(sourceData.Length, actual.Count);
+            Assert.Equal(sourceData, actual);
         }
 
         [Theory]

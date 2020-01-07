@@ -15,17 +15,13 @@ namespace LdapForNet.RequestHandlers
 
                 if (val != null && val.Length != 0)
                 {
-                    var berValue = new Native.Native.berval()
-                    {
-                        bv_len = val.Length,
-                        bv_val = Marshal.AllocHGlobal(val.Length)
-                    };
-                    Marshal.Copy(val, 0, berValue.bv_val, val.Length);
-                    Marshal.StructureToPtr(berValue, berValuePtr, true);
+                    berValuePtr = MarshalUtils.ByteArrayToBerValue(val);
                 }
 
-                return Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
+                var result =  Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
                     ref messageId);
+                MarshalUtils.BerValFree(berValuePtr);
+                return result;
             }
 
             return 0;
