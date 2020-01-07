@@ -52,10 +52,10 @@ namespace LdapForNet.Utils
 
         internal static void ByteArraysToBerValueArray(byte[][] sourceData, IntPtr ptr)
         {
-            var sourceDataPtrs = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length + 1)).ToArray();
+            var sourceDataPtrs = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length)).ToArray();
             for (var i = 0; i < sourceData.Length; i++)
             {
-                Marshal.Copy(sourceData[i].Union(new byte[] { 0 }).ToArray(), 0, sourceDataPtrs[i], sourceData[i].Length + 1);
+                Marshal.Copy(sourceData[i], 0, sourceDataPtrs[i], sourceData[i].Length);
             }
 
             for (var i = 0; i < sourceDataPtrs.Length; i++)
@@ -66,9 +66,9 @@ namespace LdapForNet.Utils
                     bv_val = sourceDataPtrs[i],
                     bv_len = sourceData[i].Length
                 }, berPtr, true);
-                Marshal.StructureToPtr(berPtr, new IntPtr(ptr.ToInt64() + i * IntPtr.Size), true);
+                Marshal.WriteIntPtr(ptr,i*IntPtr.Size,berPtr);
             }
-            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + sourceDataPtrs.Length * IntPtr.Size), true);
+            Marshal.WriteIntPtr(ptr,sourceDataPtrs.Length*IntPtr.Size,IntPtr.Zero);
         }
 
         internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
@@ -77,7 +77,7 @@ namespace LdapForNet.Utils
             Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
         }
         
-        internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) where T: struct
+        internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) 
         {
             var ptrArray = array.Select(structure =>
             {

@@ -250,14 +250,14 @@ namespace LdapForNetTests
                     {
                         {"sn", new List<string> {"Winston"}},
                         {"objectclass", new List<string> {"inetOrgPerson","top"}},
-                        {"givenname", new List<string> {"test_value"}},
+                        {"givenname", new List<string> {"винстон"}},
                         {"description", new List<string> {"test_value"}}
                     }
                 },cts.Token);
                 var entries = await connection.SearchAsync(Config.RootDn, "(&(objectclass=top)(cn=asyncTest))",token: cts.Token);
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
-                Assert.Equal("test_value", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
+                Assert.Equal("винстон", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
                 Assert.True(GetAttributeValue(entries[0].Attributes,"objectClass").Any());
             }
         }
@@ -403,7 +403,7 @@ namespace LdapForNetTests
                 Assert.Equal("test_value_2", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
                 Assert.Equal("имя", GetAttributeValue(entries[0].Attributes,"displayName")[0]);
                 Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
-                Assert.Equal("test", entries[0].Attributes["sn"][1]);
+                Assert.Equal("數字", entries[0].Attributes["sn"][1]);
                 Assert.False(entries[0].Attributes.ContainsKey("description"));
             }
         }

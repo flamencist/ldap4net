@@ -44,7 +44,6 @@ namespace LdapForNet
     public class DirectoryAttribute
     {
         private readonly List<object> _values = new List<object>();
-        private static readonly ASCIIEncoding Encoder = new ASCIIEncoding();//todo move to Utf8Encoding
 
         public string Name { get; set; }
 
@@ -64,13 +63,13 @@ namespace LdapForNet
 
             if (type == typeof(string))
             {
-                return _values.Select(_ => Encoder.GetString((byte[]) _))
+                return _values.Select(_ => Utils.Encoder.Instance.GetString((byte[]) _))
                     .Select(_ => _ as T);
             }
 
             if (type == typeof(byte[]))
             {
-                return _values.Select(_ => Encoder.GetBytes((string) _))
+                return _values.Select(_ => Utils.Encoder.Instance.GetBytes((string) _))
                     .Select(_ => _ as T);
             }
 

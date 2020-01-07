@@ -63,30 +63,25 @@ namespace LdapForNet.RequestHandlers
                 Values = attribute.Value
             });
         }
-        
+
         private static Native.Native.LDAPMod ToLdapMod(LdapModifyAttribute attribute)
         {
-            var modValue = GetModValue(attribute.Values);
-            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count));
-            MarshalUtils.StringArrayToPtr(modValue, modValuePtr);
+            var modValue = attribute.Values ?? new List<string>();
+            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count + 1));
+            MarshalUtils.ByteArraysToBerValueArray(modValue.Select(GetModValue).ToArray(), modValuePtr);
             return new Native.Native.LDAPMod
             {
-                mod_op = (int) attribute.LdapModOperation,
+                mod_op = (int)attribute.LdapModOperation | (int)LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_BVALUES,
                 mod_type = Encoder.Instance.StringToPtr(attribute.Type),
                 mod_vals_u = new Native.Native.LDAPMod.mod_vals
                 {
-                    modv_strvals = modValuePtr,
+                    modv_bvals = modValuePtr
                 },
                 mod_next = IntPtr.Zero
             };
         }
-        
-        private static List<string> GetModValue(List<string> values)
-        {
-            var res = values??new List<string>();
-            res.Add(null);
-            return res;
-        }
+
+        private static byte[] GetModValue(string str) => string.IsNullOrEmpty(str) ? new byte[0] : Encoder.Instance.GetBytes(str);
 
 
     }

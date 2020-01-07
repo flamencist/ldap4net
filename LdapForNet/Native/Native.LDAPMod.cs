@@ -30,7 +30,7 @@ namespace LdapForNet.Native
             #define mod_bvalues mod_vals.modv_bvals
          */
         [StructLayout(LayoutKind.Sequential)]
-        public struct LDAPMod
+        public sealed class LDAPMod
         {
             /// <summary>
             /// Values that you want to add, delete, or replace.
@@ -63,8 +63,21 @@ namespace LdapForNet.Native
             /// A NULL-terminated array of string values for the attribute.
             /// </summary>
             public mod_vals mod_vals_u;
-        
+
             public IntPtr mod_next;
+
+            // ~LDAPMod()
+            // {
+            //     if (mod_type != IntPtr.Zero)
+            //     {
+            //         Marshal.FreeHGlobal(mod_type);
+            //     }
+            //
+            //     if (mod_vals_u.modv_strvals != IntPtr.Zero)
+            //     {
+            //         Marshal.FreeHGlobal(mod_vals_u.modv_strvals);
+            //     }
+            // }
 
         }
 
