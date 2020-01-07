@@ -144,7 +144,7 @@ namespace LdapForNetTests
                 var result = await connection.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"));
                 var extendedResponse = (ExtendedResponse) result;
                 Assert.True(result.ResultCode==ResultCode.Success);
-                var name = Encoding.ASCII.GetString(extendedResponse.ResponseValue);
+                var name = LdapForNet.Utils.Encoder.Instance.GetString(extendedResponse.ResponseValue);
                 Assert.Equal($"dn:{Config.LdapUserDn}",name);
             }
         }
@@ -209,13 +209,13 @@ namespace LdapForNetTests
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "displayname",
-                            Values = new List<string> {"test_display_name"}
+                            Values = new List<string> { "имя" }
                         },
                         new LdapModifyAttribute
                         {
                             LdapModOperation = LdapModOperation.LDAP_MOD_ADD,
                             Type = "sn",
-                            Values = new List<string> {"test"}
+                            Values = new List<string> { "數字" }
                         },
                         new LdapModifyAttribute
                         {
@@ -229,9 +229,9 @@ namespace LdapForNetTests
                 Assert.True(entries.Count == 1);
                 Assert.Equal($"cn=asyncTest,{Config.RootDn}", entries[0].Dn);
                 Assert.Equal("test_value_2", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
-                Assert.Equal("test_display_name", GetAttributeValue(entries[0].Attributes,"displayName")[0]);
+                Assert.Equal("имя", GetAttributeValue(entries[0].Attributes,"displayName")[0]);
                 Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
-                Assert.Equal("test", entries[0].Attributes["sn"][1]);
+                Assert.Equal("數字", entries[0].Attributes["sn"][1]);
                 Assert.False(entries[0].Attributes.ContainsKey("description"));
             }
         }
@@ -345,7 +345,7 @@ namespace LdapForNetTests
                         {"cn",new List<string>{"test"}},
                         {"sn", new List<string> {"Winston"}},
                         {"objectclass", new List<string> {"inetOrgPerson","top"}},
-                        {"givenname", new List<string> {"test_value"}},
+                        {"givenname", new List<string> {"винстон"}},
                         {"description", new List<string> {"test_value"}}
                     }
                 });
@@ -354,7 +354,7 @@ namespace LdapForNetTests
                 _testOutputHelper.WriteLine(entries[0].Dn);
 
                 Assert.Equal($"cn=test,{Config.RootDn}", entries[0].Dn);
-                Assert.Equal("test_value", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
+                Assert.Equal("винстон", GetAttributeValue(entries[0].Attributes,"givenName")[0]);
                 Assert.True(GetAttributeValue(entries[0].Attributes,"objectClass").Any());
             }
         }

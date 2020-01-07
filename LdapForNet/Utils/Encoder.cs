@@ -44,7 +44,7 @@ namespace LdapForNet.Utils
 
     internal class UnixEncoder : Encoder
     {
-        private static readonly Encoding Encoding = new ASCIIEncoding();
+        private static readonly Encoding Encoding = new UTF8Encoding();
         public override string GetString(byte[] bytes) => Encoding.GetString(bytes);
 
         public override byte[] GetBytes(string str) => Encoding.GetBytes(str);
