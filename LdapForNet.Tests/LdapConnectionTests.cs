@@ -280,7 +280,7 @@ namespace LdapForNetTests
         {
             var cn = Guid.NewGuid().ToString();
             var dn = $"cn={cn},{Config.RootDn}";
-            var newRdn = $"cn={Guid.NewGuid().ToString()}";
+            var newRdn = $"cn=новый{Guid.NewGuid().ToString()}";
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);

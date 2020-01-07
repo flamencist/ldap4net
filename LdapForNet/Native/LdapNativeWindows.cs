@@ -191,8 +191,13 @@ namespace LdapForNet.Native
             NativeMethodsWindows.ldap_extended_operation(ld, requestoid, requestdata, serverctrls, clientctrls, ref msgidp);
 
         internal override int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls,
-            IntPtr clientctrls, ref int msgidp) =>
-            NativeMethodsWindows.ldap_rename(ld, dn, newrdn, newparent, deleteoldrdn, serverctrls, clientctrls, ref msgidp);
+            IntPtr clientctrls, ref int msgidp)
+        {
+            var newRdn = Encoder.Instance.StringToPtr(newrdn);
+            return NativeMethodsWindows.ldap_rename(ld, Encoder.Instance.StringToPtr(dn),
+                newRdn, Encoder.Instance.StringToPtr(newparent), deleteoldrdn,
+                serverctrls, clientctrls, ref msgidp);
+        }
 
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
             NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
