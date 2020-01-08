@@ -133,19 +133,11 @@ namespace LdapForNet.RequestHandlers
 
         private static void FreeAttributes(IntPtr attributes)
         {
-            if (attributes != IntPtr.Zero)
+            foreach (var tempPtr in MarshalUtils.GetPointerArray(attributes))
             {
-                var count = 0;
-                var tempPtr = Marshal.ReadIntPtr(attributes, count * IntPtr.Size);
-                while (tempPtr != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(tempPtr);
-                    count++;
-                    tempPtr = Marshal.ReadIntPtr(attributes, count * IntPtr.Size);
-                }
-
-                Marshal.FreeHGlobal(attributes);
+                Marshal.FreeHGlobal(tempPtr);
             }
+            Marshal.FreeHGlobal(attributes);
         }
 
 

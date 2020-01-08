@@ -48,15 +48,10 @@ namespace LdapForNetTests.Utils
             MarshalUtils.StringArrayToPtr(data, actual);
             Marshal.WriteIntPtr(actual, IntPtr.Size * (data.Length),IntPtr.Zero);
 
-            var actualData = new List<string>();
-            var count = 0;
-            var tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
-            while (tempPtr != IntPtr.Zero)
-            {
-                actualData.Add(Encoder.Instance.PtrToString(tempPtr));
-                count++;
-                tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
-            }
+            var actualData = MarshalUtils.GetPointerArray(actual)
+                .Select(Encoder.Instance.PtrToString)
+                .ToList();
+
             Marshal.FreeHGlobal(actual);
 
             Assert.Equal(data, actualData);

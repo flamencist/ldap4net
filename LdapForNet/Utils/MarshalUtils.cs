@@ -10,40 +10,23 @@ namespace LdapForNet.Utils
         
         internal static List<string> PtrToStringArray(IntPtr ptr)
         {
-            var count = 0;
-            var result = new List<string>();
-            if (ptr != IntPtr.Zero)
-            {
-                var tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
-                while (tempPtr != IntPtr.Zero)
-                {
-                    result.Add(Encoder.Instance.PtrToString(tempPtr));
-                    count++;
-                    tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
-                }
-            }
-            return result;
+            return GetPointerArray(ptr)
+                .Select(tempPtr => Encoder.Instance.PtrToString(tempPtr))
+                .ToList();
         }
 
         internal static List<byte[]> BerValArrayToByteArrays(IntPtr ptr)
         {
             var result = new List<byte[]>();
-            if (ptr != IntPtr.Zero)
+            foreach (var tempPtr in GetPointerArray(ptr))
             {
-                var count = 0;
-                var tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
-                while (tempPtr != IntPtr.Zero)
+                var bervalue = new Native.Native.berval();
+                Marshal.PtrToStructure(tempPtr, bervalue);
+                if (bervalue.bv_len > 0 && bervalue.bv_val != IntPtr.Zero)
                 {
-                    var bervalue = new Native.Native.berval();
-                    Marshal.PtrToStructure(tempPtr, bervalue);
-                    if (bervalue.bv_len > 0 && bervalue.bv_val != IntPtr.Zero)
-                    {
-                        var byteArray = new byte[bervalue.bv_len];
-                        Marshal.Copy(bervalue.bv_val, byteArray, 0, bervalue.bv_len);
-                        result.Add(byteArray);
-                    }
-                    count++;
-                    tempPtr = Marshal.ReadIntPtr(ptr, IntPtr.Size * count);
+                    var byteArray = new byte[bervalue.bv_len];
+                    Marshal.Copy(bervalue.bv_val, byteArray, 0, bervalue.bv_len);
+                    result.Add(byteArray);
                 }
             }
 
@@ -85,13 +68,9 @@ namespace LdapForNet.Utils
 
         internal static void BerValuesFree(IntPtr array)
         {
-            var count = 0;
-            var tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
-            while (tempPtr != IntPtr.Zero)
+            foreach (var ptr in GetPointerArray(array))
             {
-                BerValFree(tempPtr);
-                count++;
-                tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
+                BerValFree(ptr);
             }
         }
 
@@ -142,6 +121,22 @@ namespace LdapForNet.Utils
                 }
                 return intPtrArray;
             }
+        }
+
+        internal static IEnumerable<IntPtr> GetPointerArray(IntPtr array)
+        {
+            if (array != IntPtr.Zero)
+            {
+                var count = 0;
+                var tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
+                while (tempPtr != IntPtr.Zero)
+                {
+                    yield return tempPtr;
+                    count++;
+                    tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
+                }
+            }
+
         }
     }
 }
