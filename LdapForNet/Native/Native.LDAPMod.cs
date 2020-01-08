@@ -65,20 +65,7 @@ namespace LdapForNet.Native
             public mod_vals mod_vals_u;
 
             public IntPtr mod_next;
-
-            // ~LDAPMod()
-            // {
-            //     if (mod_type != IntPtr.Zero)
-            //     {
-            //         Marshal.FreeHGlobal(mod_type);
-            //     }
-            //
-            //     if (mod_vals_u.modv_strvals != IntPtr.Zero)
-            //     {
-            //         Marshal.FreeHGlobal(mod_vals_u.modv_strvals);
-            //     }
-            // }
-
+            
         }
 
         [StructLayout(LayoutKind.Sequential)]
