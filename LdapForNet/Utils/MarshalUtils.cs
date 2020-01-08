@@ -113,11 +113,10 @@ namespace LdapForNet.Utils
         {
             checked
             {
-                var intPtrArray = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)) * size);
+                var intPtrArray = Marshal.AllocHGlobal(IntPtr.Size * size);
                 for (var i = 0; i < size; i++)
                 {
-                    var tempPtr = (IntPtr)((long)intPtrArray + Marshal.SizeOf(typeof(IntPtr)) * i);
-                    Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+                    Marshal.WriteIntPtr(intPtrArray, IntPtr.Size * i,IntPtr.Zero);
                 }
                 return intPtrArray;
             }

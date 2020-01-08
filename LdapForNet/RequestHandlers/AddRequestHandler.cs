@@ -25,7 +25,7 @@ namespace LdapForNet.RequestHandlers
 
                 var attrs = entry.Attributes.Select(ToLdapMod).ToList();
 
-                var ptr = Marshal.AllocHGlobal(IntPtr.Size*(attrs.Count+1)); // alloc memory for list with last element null
+                var ptr = MarshalUtils.AllocHGlobalIntPtrArray(entry.Attributes.Count+1); 
                 MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
 
                 var result =  Native.ldap_add_ext(handle,
@@ -77,7 +77,7 @@ namespace LdapForNet.RequestHandlers
         private static Native.Native.LDAPMod ToLdapMod(LdapModifyAttribute attribute)
         {
             var modValue = attribute.Values ?? new List<string>();
-            var modValuePtr = Marshal.AllocHGlobal(IntPtr.Size * (modValue.Count + 1));
+            var modValuePtr = MarshalUtils.AllocHGlobalIntPtrArray(modValue.Count + 1);
             MarshalUtils.ByteArraysToBerValueArray(modValue.Select(GetModValue).ToArray(), modValuePtr);
             return new Native.Native.LDAPMod
             {
