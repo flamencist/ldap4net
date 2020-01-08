@@ -252,7 +252,7 @@ namespace LdapForNet.Native
                     Marshal.StructureToPtr(timeval, timePtr, true);
                 }
 
-                return NativeMethodsLinux.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
+                return NativeMethodsOsx.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
                     serverctrls, clientctrls, timePtr, sizelimit, ref msgidp);
             }
             finally
