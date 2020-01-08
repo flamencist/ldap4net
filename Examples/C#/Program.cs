@@ -104,7 +104,7 @@ namespace LdapExample
                         }
                     };
                     var searchResponse = ((SearchResponse) (await cn.SendRequestAsync(searchRequest)));
-                    entries = searchResponse.Entries;
+                    entries = searchResponse.Entries.Select(_=>_.ToLdapEntry()).ToList();
                 }
                 foreach (var ldapEntry in entries)
                 {
