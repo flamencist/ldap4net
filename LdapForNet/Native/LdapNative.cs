@@ -41,8 +41,8 @@ namespace LdapForNet.Native
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref string value);
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
         internal abstract int ldap_unbind_s(IntPtr ld);
-        internal abstract int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
-            int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
+        internal abstract int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes,
+            int attrsonly, IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp);
         internal abstract LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
         internal abstract int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
         internal abstract string LdapError2String(int error);

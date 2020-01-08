@@ -235,10 +235,35 @@ namespace LdapForNet.Native
         
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsLinux.ldap_unbind_s(ld);
 
-        internal override int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs, int attrsonly,
-            IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp) =>
-            NativeMethodsLinux.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
-                serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
+        internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes, int attrsonly, IntPtr serverctrls,
+            IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp)
+        {
+            var timePtr = IntPtr.Zero;
+
+            try
+            {
+                if (timeout > 0)
+                {
+                    var timeval = new LDAP_TIMEVAL
+                    {
+                        tv_sec = timeout
+                    };
+                    timePtr = Marshal.AllocHGlobal(Marshal.SizeOf<LDAP_TIMEVAL>());
+                    Marshal.StructureToPtr(timeval, timePtr, true);
+                }
+
+                return NativeMethodsLinux.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
+                    serverctrls, clientctrls, timePtr, sizelimit, ref msgidp);
+            }
+            finally
+            {
+                if (timePtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(timePtr);
+
+                }
+            }
+        }
 
         internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
             NativeMethodsLinux.ldap_result(ld,msgid,all,timeout,ref pMessage);

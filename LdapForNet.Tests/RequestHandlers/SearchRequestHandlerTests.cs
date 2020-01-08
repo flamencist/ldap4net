@@ -25,18 +25,18 @@ namespace LdapForNetTests.RequestHandlers
             var ldapSearchScope = Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
             var ldapFilter = "(objectclass=*)";
 
-            native.Setup(_ => _.ldap_search_ext(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
-                    It.IsAny<string[]>(), It.IsAny<int>(),
-                    It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), ref messageId))
+            native.Setup(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
+                    It.IsAny<IntPtr>(), It.IsAny<int>(),
+                    It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), It.IsAny<int>(), ref messageId))
                 .Returns(20);
 
             
             var res = requestHandler.SendRequest(new LdapHandle(IntPtr.Zero), 
                 new SearchRequest(dn, ldapFilter, ldapSearchScope), ref messageId);
             Assert.Equal(20,res);
-            native.Verify(_=>_.ldap_search_ext(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
-                null, (int)Native.LdapSearchAttributesOnly.False,
-                IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, (int)Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
+            native.Verify(_=>_.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
+                IntPtr.Zero, (int)Native.LdapSearchAttributesOnly.False,
+                IntPtr.Zero, IntPtr.Zero, 0, (int)Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
             
         }
 
@@ -49,7 +49,7 @@ namespace LdapForNetTests.RequestHandlers
             var ldapHandle = new LdapHandle(IntPtr.Zero);
             var entry = new IntPtr(1);
             var dn = "cn=admin,dc=example,dc=com";
-            var attribute = new KeyValuePair<string, byte[][]>("cn",new[] { new UTF8Encoding().GetBytes("admin") });
+            var attribute = new KeyValuePair<string, byte[][]>("cn",new[] { Encoder.Instance.GetBytes("admin") });
             var attributeNamePtr = Encoder.Instance.StringToPtr(attribute.Key);
             var dnPtr = Encoder.Instance.StringToPtr(dn);
             var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*(attribute.Value.Length+1));
