@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LdapExample", "LdapExample.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LdapForNet", "..\..\LdapForNet\LdapForNet.csproj", "{004EA428-8A0D-49B4-A26D-0B40E38E3597}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LdapExample.Net", "LdapExample.Net\LdapExample.Net.csproj", "{58EB83CB-8AAA-4480-84F5-3AC050DDCBD9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{004EA428-8A0D-49B4-A26D-0B40E38E3597}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{004EA428-8A0D-49B4-A26D-0B40E38E3597}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{004EA428-8A0D-49B4-A26D-0B40E38E3597}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58EB83CB-8AAA-4480-84F5-3AC050DDCBD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58EB83CB-8AAA-4480-84F5-3AC050DDCBD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58EB83CB-8AAA-4480-84F5-3AC050DDCBD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58EB83CB-8AAA-4480-84F5-3AC050DDCBD9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

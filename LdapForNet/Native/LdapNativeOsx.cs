@@ -2,11 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
     internal class LdapNativeOsx:LdapNative
     {
+        internal override int Init(ref IntPtr ld, Uri uri) =>
+            NativeMethodsOsx.ldap_initialize(ref ld, uri.ToString());
+
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
@@ -16,8 +20,10 @@ namespace LdapForNet.Native
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
             Marshal.StructureToPtr(saslDefaults, ptr, false);
 
-            return NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
+            var rc = NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                 (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, ptr);
+            Marshal.FreeHGlobal(ptr);
+            return rc;
         }
         
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
@@ -64,7 +70,8 @@ namespace LdapForNet.Native
                     }
                     
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
-                
+
+                Marshal.FreeHGlobal(ptr);
                 ThrowIfError(ld,rc, nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
                     [nameof(saslDefaults)] = saslDefaults.ToString()
@@ -139,7 +146,7 @@ namespace LdapForNet.Native
 
             if (flags != (uint)Native.LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)Native.SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
+                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
                 interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
                 return (int) Native.ResultCode.Success;
             }
@@ -151,7 +158,7 @@ namespace LdapForNet.Native
 
             if (noecho)
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.promt);
+                interact.result = Encoder.Instance.StringToPtr(interact.promt);
                 interact.len = (ushort)interact.promt.Length;
             }
             else
@@ -167,7 +174,7 @@ namespace LdapForNet.Native
             }
             else
             {
-                interact.result = Marshal.StringToHGlobalAnsi(interact.defresult);
+                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
                 interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
             }
 
@@ -186,13 +193,14 @@ namespace LdapForNet.Native
                 var berval = new Native.berval
                 {
                     bv_len = password.Length,
-                    bv_val = Marshal.StringToHGlobalAnsi(password)
+                    bv_val = Encoder.Instance.StringToPtr(password)
                 };
                 var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
                 NativeMethodsOsx.ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
+                Marshal.FreeHGlobal(ptr);
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsOsx.ldap_sasl_bind)} returns wrong or empty result",  nameof(NativeMethodsOsx.ldap_sasl_bind), 1);
@@ -227,9 +235,8 @@ namespace LdapForNet.Native
         
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsOsx.ldap_unbind_s(ld);
 
-        internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attrs,
-            int attrsonly,
-            IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp)
+        internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes, int attrsonly, IntPtr serverctrls,
+            IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp)
         {
             var timePtr = IntPtr.Zero;
 
@@ -242,10 +249,10 @@ namespace LdapForNet.Native
                         tv_sec = timeout
                     };
                     timePtr = Marshal.AllocHGlobal(Marshal.SizeOf<LDAP_TIMEVAL>());
-                    Marshal.StructureToPtr(timeval,timePtr, true);
+                    Marshal.StructureToPtr(timeval, timePtr, true);
                 }
-            
-                return NativeMethodsOsx.ldap_search_ext(ld, @base, scope, filter, attrs, attrsonly,
+
+                return NativeMethodsOsx.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
                     serverctrls, clientctrls, timePtr, sizelimit, ref msgidp);
             }
             finally
@@ -286,7 +293,14 @@ namespace LdapForNet.Native
 
         internal override IntPtr ldap_next_attribute(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsOsx.ldap_next_attribute(ld, entry, pBer);
 
+        internal override int ldap_count_values(IntPtr vals) => NativeMethodsOsx.ldap_count_values(vals);
         internal override void ldap_value_free(IntPtr vals) => NativeMethodsOsx.ldap_value_free(vals);
+        internal override IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer) =>
+            NativeMethodsOsx.ldap_get_values_len(ld, entry, pBer);
+
+        internal override int ldap_count_values_len(IntPtr vals) => NativeMethodsOsx.ldap_count_values_len(vals);
+
+        internal override void ldap_value_free_len(IntPtr vals) => NativeMethodsOsx.ldap_value_free_len(vals);
 
         internal override IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer) => NativeMethodsOsx.ldap_get_values(ld, entry, pBer);
 
@@ -309,7 +323,7 @@ namespace LdapForNet.Native
             var berval = new Native.berval
             {
                 bv_len = value.Length,
-                bv_val = Marshal.StringToHGlobalAnsi(value)
+                bv_val = Encoder.Instance.StringToPtr(value)
             };
             var bervalPtr = Marshal.AllocHGlobal(Marshal.SizeOf(berval));
             Marshal.StructureToPtr(berval, bervalPtr, true);

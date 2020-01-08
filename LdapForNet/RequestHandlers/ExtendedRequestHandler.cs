@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
@@ -14,17 +15,13 @@ namespace LdapForNet.RequestHandlers
 
                 if (val != null && val.Length != 0)
                 {
-                    var berValue = new Native.Native.berval()
-                    {
-                        bv_len = val.Length,
-                        bv_val = Marshal.AllocHGlobal(val.Length)
-                    };
-                    Marshal.Copy(val, 0, berValue.bv_val, val.Length);
-                    Marshal.StructureToPtr(berValue, berValuePtr, true);
+                    berValuePtr = MarshalUtils.ByteArrayToBerValue(val);
                 }
 
-                return Native.ldap_extended_operation(handle, name, berValuePtr, serverControlArray, clientControlArray,
+                var result =  Native.ldap_extended_operation(handle, name, berValuePtr, serverControlArray, clientControlArray,
                     ref messageId);
+                MarshalUtils.BerValFree(berValuePtr);
+                return result;
             }
 
             return 0;
@@ -45,7 +42,7 @@ namespace LdapForNet.RequestHandlers
                     {
                         if (requestName != IntPtr.Zero)
                         {
-                            name = Marshal.PtrToStringAnsi(requestName);
+                            name = Encoder.Instance.PtrToString(requestName);
                             Native.ldap_memfree(requestName);
                         }
 

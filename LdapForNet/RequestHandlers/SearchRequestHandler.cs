@@ -16,48 +16,23 @@ namespace LdapForNet.RequestHandlers
             {
                 var attributes = GetAttributesPtr(searchRequest);
                 var searchTimeLimit = (int)(searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
-                return Native.Search(
+                var res = Native.Search(
                     handle,
                     searchRequest.DistinguishedName,
-                    (int) searchRequest.Scope,
+                    (int)searchRequest.Scope,
                     searchRequest.Filter,
                     attributes,
-                     searchRequest.AttributesOnly?1:0,
+                    searchRequest.AttributesOnly ? 1 : 0,
                     serverControlArray,
                     clientControlArray,
                     searchTimeLimit,
                     searchRequest.SizeLimit,
                     ref messageId);
+                FreeAttributes(attributes);
+                return res;
             }
 
             return 0;
-        }
-
-        private static IntPtr GetAttributesPtr(SearchRequest searchRequest)
-        {
-            
-            var attributeCount = searchRequest.Attributes?.Count ?? 0;
-            var searchAttributes = IntPtr.Zero;
-            if (searchRequest.Attributes == null || attributeCount == 0)
-            {
-                return searchAttributes;
-            }
-            
-            
-            IntPtr tempPtr;
-            searchAttributes = MarshalUtils.AllocHGlobalIntPtrArray(attributeCount + 1);
-            int i;
-            for (i = 0; i < attributeCount; i++)
-            {
-                var controlPtr = Marshal.StringToHGlobalAnsi(searchRequest.Attributes[i]);
-                tempPtr = (IntPtr) ((long) searchAttributes + IntPtr.Size * i);
-                Marshal.WriteIntPtr(tempPtr, controlPtr);
-            }
-
-            tempPtr = (IntPtr) ((long) searchAttributes + IntPtr.Size * i);
-            Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
-
-            return searchAttributes;
         }
 
         public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
@@ -86,12 +61,12 @@ namespace LdapForNet.RequestHandlers
             }
         }
         
-        private IEnumerable<LdapEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
+        private IEnumerable<DirectoryEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
             for (var entry = Native.ldap_first_entry(ld, msg); entry != IntPtr.Zero;
                 entry = Native.ldap_next_entry(ld, entry))
             {
-                yield return new LdapEntry
+                yield return new DirectoryEntry
                 {
                     Dn = GetLdapDn(ld, entry),
                     Attributes = GetLdapAttributes(ld, entry, ref ber)
@@ -99,35 +74,39 @@ namespace LdapForNet.RequestHandlers
             }
         }
         
-        private Dictionary<string, List<string>> GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
+        private SearchResultAttributeCollection GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
-            var dict = new Dictionary<string, List<string>>();
+            var attributes = new SearchResultAttributeCollection();
             for (var attr = Native.ldap_first_attribute(ld, entry, ref ber);
                 attr != IntPtr.Zero;
                 attr = Native.ldap_next_attribute(ld, entry, ber))
             {
-                var attrName = Marshal.PtrToStringAnsi(attr);
-                if (attrName != null)    
+                var vals = Native.ldap_get_values_len(ld, entry, attr);
+                if (vals != IntPtr.Zero)
                 {
-                    dict.Add(attrName, new List<string>());
-                    var values = Native.ldap_get_values(ld, entry, attr);
-                    if (values != IntPtr.Zero)
+                    var attrName = Encoder.Instance.PtrToString(attr);
+                    if (attrName != null)    
                     {
-                        dict[attrName] = MarshalUtils.PtrToStringArray(values);
-                        Native.ldap_value_free(values);
+                        var directoryAttribute = new DirectoryAttribute
+                        {
+                            Name = attrName
+                        };
+                        directoryAttribute.AddValues(MarshalUtils.BerValArrayToByteArrays(vals));
+                        attributes.Add(directoryAttribute);
                     }
+                    Native.ldap_value_free_len(vals);
                 }
 
                 Native.ldap_memfree(attr);
             }
 
-            return dict;
+            return attributes;
         }
         
         private string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = Native.ldap_get_dn(ld, entry);
-            var dn = Marshal.PtrToStringAnsi(ptr);
+            var dn = Encoder.Instance.PtrToString(ptr);
             Native.ldap_memfree(ptr);        
             return dn;
         }
@@ -160,6 +139,39 @@ namespace LdapForNet.RequestHandlers
         }
         
        
+
+        private static IntPtr GetAttributesPtr(SearchRequest searchRequest)
+        {
+
+            var attributeCount = searchRequest.Attributes?.Count ?? 0;
+            var searchAttributes = IntPtr.Zero;
+            if (searchRequest.Attributes == null || attributeCount == 0)
+            {
+                return searchAttributes;
+            }
+
+
+            searchAttributes = MarshalUtils.AllocHGlobalIntPtrArray(attributeCount + 1);
+            int i;
+            for (i = 0; i < attributeCount; i++)
+            {
+                var controlPtr = Encoder.Instance.StringToPtr(searchRequest.Attributes[i]);
+                Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, controlPtr);
+            }
+
+            Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, IntPtr.Zero);
+
+            return searchAttributes;
+        }
+
+        private static void FreeAttributes(IntPtr attributes)
+        {
+            foreach (var tempPtr in MarshalUtils.GetPointerArray(attributes))
+            {
+                Marshal.FreeHGlobal(tempPtr);
+            }
+            Marshal.FreeHGlobal(attributes);
+        }
 
 
     }

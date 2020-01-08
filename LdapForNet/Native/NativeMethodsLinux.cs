@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -128,7 +129,7 @@ namespace LdapForNet.Native
 
         internal static string LdapError2String(int error)
         {
-            return Marshal.PtrToStringAnsi(ldap_err2string(error));
+            return Encoder.Instance.PtrToString(ldap_err2string(error));
         }
 
 
@@ -136,7 +137,7 @@ namespace LdapForNet.Native
         {
             var ptr = Marshal.AllocHGlobal(IntPtr.Size);
             ldap_get_option(ld,(int)Native.LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE,ref ptr);
-            var info = Marshal.PtrToStringAnsi(ptr);
+            var info = Encoder.Instance.PtrToString(ptr);
             ldap_memfree(ptr);
             return info;
         }
@@ -177,7 +178,16 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern IntPtr ldap_get_values(SafeHandle ld, IntPtr entry, IntPtr pBer);
-        
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern IntPtr ldap_get_values_len(SafeHandle ld, IntPtr entry, IntPtr pBer);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern void ldap_value_free_len(IntPtr vals);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_count_values_len(IntPtr vals);
+
         /// <summary>
         /// ldap_add_ext <a href="https://linux.die.net/man/3/ldap_add">Documentation</a>
         /// </summary>

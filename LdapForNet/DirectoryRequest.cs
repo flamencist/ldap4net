@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LdapForNet
 {
@@ -67,8 +68,8 @@ namespace LdapForNet
         private int _directorySizeLimit = 0;
         private TimeSpan _directoryTimeLimit = new TimeSpan(0);
 
-        
-        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope,params string[] attributeList)
+
+        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope, params string[] attributeList)
         {
             DistinguishedName = distinguishedName;
             Scope = searchScope;
@@ -103,7 +104,7 @@ namespace LdapForNet
         }
 
         public List<string> Attributes { get; } = new List<string>();
-        
+
 
         public int SizeLimit
         {
@@ -140,10 +141,9 @@ namespace LdapForNet
         }
 
         public bool AttributesOnly { get; set; }
-        
-        
+
     }
-    
+
     public class ExtendedRequest : DirectoryRequest
     {
         private byte[] _requestValue = null;
@@ -186,9 +186,36 @@ namespace LdapForNet
     {
         public CompareRequest(LdapEntry ldapEntry)
         {
-            LdapEntry = ldapEntry;
+            if (ldapEntry.Attributes.Count != 1)
+            {
+                throw new ArgumentException("Wrong number of attributes");
+            }
+            var attribute = ldapEntry.Attributes.Single();
+            if (attribute.Value.Count != 1)
+            {
+                throw new ArgumentException("Wrong number of attribute values");
+            }
+            DistinguishedName = ldapEntry.Dn;
+            Assertion.Name = attribute.Key;
+            Assertion.Add(attribute.Value.Single());
         }
-        
-        public LdapEntry LdapEntry { get; set; }
+
+        public CompareRequest(string distinguishedName, string attributeName, byte[] value)
+        {
+            DistinguishedName = distinguishedName;
+            Assertion.Name = attributeName;
+            Assertion.Add(value);
+        }
+
+        public CompareRequest(string distinguishedName, string attributeName, string value)
+        {
+            DistinguishedName = distinguishedName;
+            Assertion.Name = attributeName;
+            Assertion.Add(value);
+        }
+
+        public string DistinguishedName { get; set; }
+
+        public DirectoryAttribute Assertion { get; } = new DirectoryAttribute();
     }   
 }
