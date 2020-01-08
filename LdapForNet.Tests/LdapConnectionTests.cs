@@ -33,7 +33,46 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
-        
+
+        [Fact]
+        public void LdapConnection_Search_Return_LdapEntries_With_Concrete_Attributes()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var response = (SearchResponse)connection.SendRequest(new SearchRequest(Config.RootDn, "(&(objectclass=top)(cn=admin))",LdapSearchScope.LDAP_SCOPE_SUBTREE,"cn","objectClass"));
+                var entries = response.Entries;
+                Assert.Single(entries);
+                Assert.Equal(2, entries[0].Attributes.AttributeNames.Count);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"].GetValues<string>().First());
+                Assert.True(entries[0].Attributes["objectClass"].GetValues<string>().Any());
+            }
+        }
+
+        [Fact]
+        public async Task LdapConnection_SearchAsync_Retrieve_Binary_Values()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(new Uri($"LDAP://{Config.LdapHost}:{Config.LdapPort}"));
+                await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var response = (SearchResponse)await connection.SendRequestAsync(new SearchRequest(Config.LdapUserDn, "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE), CancellationToken.None);
+                _testOutputHelper.WriteLine("ResultCode {0}. ErrorMessage: {1}", response.ResultCode, response.ErrorMessage);
+                Assert.Equal(ResultCode.Success, response.ResultCode);
+                Assert.NotEmpty(response.Entries);
+                var directoryAttribute = response.Entries.First().Attributes["cn"];
+                var cnBinary = directoryAttribute.GetValues<byte[]>().First();
+                Assert.NotEmpty(cnBinary);
+                var actual = new ASCIIEncoding().GetString(cnBinary);
+                Assert.Equal("admin", actual);
+
+                var cn = directoryAttribute.GetValues<string>().First();
+                Assert.Equal("admin", cn);
+            }
+        }
+
         [Fact]
         public async Task LdapConnection_SearchAsync_Return_LdapEntries_List()
         {
@@ -333,27 +372,7 @@ namespace LdapForNetTests
             }
         }
 
-        [Fact]
-        public async Task LdapConnection_SearchAsync_Retrieve_Binary_Values()
-        {
-            using (var connection = new LdapConnection())
-            {
-                connection.Connect(new Uri($"LDAP://{Config.LdapHost}:{Config.LdapPort}"));
-                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn,Config.LdapPassword);
-                var response = (SearchResponse)await connection.SendRequestAsync(new SearchRequest(Config.LdapUserDn, "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE), CancellationToken.None);
-                _testOutputHelper.WriteLine("ResultCode {0}. ErrorMessage: {1}",response.ResultCode, response.ErrorMessage);
-                Assert.Equal(ResultCode.Success, response.ResultCode);
-                Assert.NotEmpty(response.Entries);
-                var directoryAttribute = response.Entries.First().Attributes["cn"];
-                var cnBinary= directoryAttribute.GetValues<byte[]>().First();
-                Assert.NotEmpty(cnBinary);
-                var actual = new ASCIIEncoding().GetString(cnBinary);
-                Assert.Equal("admin",actual);
-
-                var cn = directoryAttribute.GetValues<string>().First();
-                Assert.Equal("admin",cn);
-            }
-        }
+        
         
         private void AddLdapEntry()
         {

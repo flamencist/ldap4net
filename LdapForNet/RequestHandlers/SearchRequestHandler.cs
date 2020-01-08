@@ -115,18 +115,15 @@ namespace LdapForNet.RequestHandlers
             }
 
 
-            IntPtr tempPtr;
             searchAttributes = MarshalUtils.AllocHGlobalIntPtrArray(attributeCount + 1);
             int i;
             for (i = 0; i < attributeCount; i++)
             {
-                var controlPtr = Marshal.StringToHGlobalAnsi(searchRequest.Attributes[i]);
-                tempPtr = (IntPtr)((long)searchAttributes + IntPtr.Size * i);
-                Marshal.WriteIntPtr(tempPtr, controlPtr);
+                var controlPtr = Encoder.Instance.StringToPtr(searchRequest.Attributes[i]);
+                Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, controlPtr);
             }
 
-            tempPtr = (IntPtr)((long)searchAttributes + IntPtr.Size * i);
-            Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+            Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, IntPtr.Zero);
 
             return searchAttributes;
         }
