@@ -6,4 +6,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\LdapForNet\LdapForNet.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="LdapExample.Net\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="LdapExample.Net\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="LdapExample.Net\**" />
+  </ItemGroup>
 </Project>

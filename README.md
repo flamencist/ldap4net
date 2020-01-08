@@ -41,6 +41,7 @@ using (var cn = new LdapConnection())
 	* [BindAsync](#bindAsync)
 	* [Search](#search)
 	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
+	* [Search (retrieve concrete list of attributes)](#search-retrieve-concrete-list-of-attributes)
 	* [SearchAsync](#searchAsync)
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
@@ -98,6 +99,25 @@ using (var cn = new LdapConnection())
 
 ```
 
+```cs
+using (var cn = new LdapConnection())
+{
+	// connect with URI
+	cn.Connect(new URI("ldaps://dc.example.com:636"));
+	....
+}
+
+```
+
+```cs
+using (var cn = new LdapConnection())
+{
+	// connect with ldap version 2
+	cn.Connect(new URI("ldaps://dc.example.com:636",LdapForNet.Native.Native.LdapVersion.LDAP_VERSION2));
+	....
+}
+
+```
 
 ### Bind
 
@@ -165,6 +185,19 @@ using (var cn = new LdapConnection())
 ```
 
 ### Search (attributes with binary values)
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	var response = (SearchResponse) connection.SendRequest(new SearchRequest("cn=admin,dc=example,dc=com", "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE));
+	var directoryAttribute = response.Entries.First().Attributes["objectSid"];
+	var objectSid = directoryAttribute.GetValues<byte[]>().First();
+}
+```
+
+### Search (concrete list of attributes)
 
 ```cs
 using (var cn = new LdapConnection())

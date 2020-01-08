@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LdapForNet
 {
@@ -59,11 +61,21 @@ namespace LdapForNet
     public class SearchRequest : DirectoryRequest
     {
 
-        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope)
+        private string _directoryFilter = null;
+        private Native.Native.LdapSearchScope _directoryScope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
+        private int _directorySizeLimit = 0;
+        private TimeSpan _directoryTimeLimit = new TimeSpan(0);
+
+
+        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope, params string[] attributeList)
         {
             DistinguishedName = distinguishedName;
             Scope = searchScope;
             Filter = ldapFilter;
+            if (attributeList != null)
+            {
+                Attributes.AddRange(attributeList);
+            }
         }
 
         public string DistinguishedName { get; set; }
@@ -89,10 +101,47 @@ namespace LdapForNet
             }
         }
 
-        private string _directoryFilter = null;
-        private Native.Native.LdapSearchScope _directoryScope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
+        public List<string> Attributes { get; } = new List<string>();
+
+
+        public int SizeLimit
+        {
+            get => _directorySizeLimit;
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentException(nameof(SizeLimit) + " could not negative number", nameof(value));
+                }
+
+                _directorySizeLimit = value;
+            }
+        }
+
+        public TimeSpan TimeLimit
+        {
+            get => _directoryTimeLimit;
+            set
+            {
+                if (value < TimeSpan.Zero)
+                {
+                    throw new ArgumentException(nameof(TimeLimit) + " could not negative number", nameof(value));
+                }
+
+                // Prevent integer overflow.
+                if (value.TotalSeconds > int.MaxValue)
+                {
+                    throw new ArgumentException("Time span overflow", nameof(value));
+                }
+
+                _directoryTimeLimit = value;
+            }
+        }
+
+        public bool AttributesOnly { get; set; }
+
     }
-    
+
     public class ExtendedRequest : DirectoryRequest
     {
         private byte[] _requestValue = null;
@@ -135,9 +184,36 @@ namespace LdapForNet
     {
         public CompareRequest(LdapEntry ldapEntry)
         {
-            LdapEntry = ldapEntry;
+            if (ldapEntry.Attributes.Count != 1)
+            {
+                throw new ArgumentException("Wrong number of attributes");
+            }
+            var attribute = ldapEntry.Attributes.Single();
+            if (attribute.Value.Count != 1)
+            {
+                throw new ArgumentException("Wrong number of attribute values");
+            }
+            DistinguishedName = ldapEntry.Dn;
+            Assertion.Name = attribute.Key;
+            Assertion.Add(attribute.Value.Single());
         }
-        
-        public LdapEntry LdapEntry { get; set; }
+
+        public CompareRequest(string distinguishedName, string attributeName, byte[] value)
+        {
+            DistinguishedName = distinguishedName;
+            Assertion.Name = attributeName;
+            Assertion.Add(value);
+        }
+
+        public CompareRequest(string distinguishedName, string attributeName, string value)
+        {
+            DistinguishedName = distinguishedName;
+            Assertion.Name = attributeName;
+            Assertion.Add(value);
+        }
+
+        public string DistinguishedName { get; set; }
+
+        public DirectoryAttribute Assertion { get; } = new DirectoryAttribute();
     }   
 }

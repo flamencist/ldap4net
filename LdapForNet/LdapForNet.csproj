@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Library is cross platform. Also supported KERBEROS (passwordless) authentication!.</Description>
@@ -11,15 +11,11 @@
     <PackageLicenseUrl>https://github.com/flamencist/ldap4net/blob/master/license.md</PackageLicenseUrl>
     <Copyright>Copyright (C) 2018 Alexander Chermyanin</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageTags>openldap, .NET, ldap, GSSAPI, Kerberos, linux, osx, active directory</PackageTags>
+    <PackageTags>openldap, .NET, ldap, GSSAPI, Kerberos, linux, osx, ActiveDirectory, AD, DirectoryServices</PackageTags>
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
     <PackageReleaseNotes>
-      - support compare requests
-      - support extended requests
-      - support search attributes with binary values (issue #11)
-      - resolve ldaps issue on linux (issue #10) thanks @mihailsidoroff
-      - fix PInvokeStackImbalance exception on Windows .NET45 (issue #8) thanks @aboldarev
+      - support unicode
     </PackageReleaseNotes>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>

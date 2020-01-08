@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using LdapForNet;
 using LdapForNet.Native;
 using LdapForNet.Utils;
 using Xunit;
@@ -10,49 +11,51 @@ namespace LdapForNetTests.Utils
 {
     public class MarshalUtilsTests
     {
-        [Fact]
-        public void MarshalUtils_PtrToStringArray_Returns_List_Of_String()
+        [Theory]
+        [InlineData("test","test2")]
+        [InlineData("раз", "два", "три")]
+        [InlineData("fünf", "zwölf")]
+        [InlineData("數字", "四")]
+        public void MarshalUtils_PtrToStringArray_Returns_List_Of_String(params string[] data)
         {
-            var data = Marshal.StringToHGlobalAnsi("test");
-            var data2 = Marshal.StringToHGlobalAnsi("test2");
-            
-            var ptr = Marshal.AllocCoTaskMem(3*IntPtr.Size);
-            Marshal.StructureToPtr(data, ptr, true);
-            Marshal.StructureToPtr(data2, new IntPtr(ptr.ToInt64() + IntPtr.Size), true);
-            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + 2*IntPtr.Size), true);
-                
+            var dataPtrs = data.Select(Encoder.Instance.StringToPtr).Union(new []{IntPtr.Zero, }).ToArray();
+            var ptr = Marshal.AllocCoTaskMem(dataPtrs.Length*IntPtr.Size);
+
+            for (var i = 0; i < dataPtrs.Length; i++)
+            {
+                Marshal.WriteIntPtr(ptr, IntPtr.Size * i, dataPtrs[i]);
+            }
+
             var actual = MarshalUtils.PtrToStringArray(ptr);
-            
-            Assert.Equal(2, actual.Count);
-            Assert.Equal("test", actual[0]);
-            Assert.Equal("test2", actual[1]);
-            
+
+            foreach (var dataPtr in dataPtrs)
+            {
+                Marshal.FreeHGlobal(dataPtr);
+            }
             Marshal.FreeCoTaskMem(ptr);
-            Marshal.FreeHGlobal(data);
-            Marshal.FreeHGlobal(data2);
+
+            Assert.Equal(data, actual);
         }
 
-        [Fact]
-        public void MarshalUtils_StringArrayToPtr_Returns_Ptr_To_StringArray()
+        [Theory]
+        [InlineData("test","other","third")]
+        [InlineData("раз", "два", "три")]
+        [InlineData("fünf", "zwölf")]
+        [InlineData("數字", "四")]
+        public void MarshalUtils_StringArrayToPtr_Returns_Ptr_To_StringArray(params string[] data)
         {
-            var data = new List<string> { "test","other","third"};
-            var actual = Marshal.AllocHGlobal(IntPtr.Size*data.Count+1);
+            var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Length+1));
             MarshalUtils.StringArrayToPtr(data, actual);
-            Assert.NotEqual(IntPtr.Zero, actual);
+            Marshal.WriteIntPtr(actual, IntPtr.Size * (data.Length),IntPtr.Zero);
 
-            var ptr1 = Marshal.ReadIntPtr(actual);
-            var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
-            var ptr3 = Marshal.ReadIntPtr(actual,IntPtr.Size*2);
-            
-            var first = Marshal.PtrToStringAnsi(ptr1);
-            var second = Marshal.PtrToStringAnsi(ptr2);
-            var third = Marshal.PtrToStringAnsi(ptr3);
-            
-            Assert.Equal("test",first);
-            Assert.Equal("other",second);
-            Assert.Equal("third",third);
-            
+            var actualData = MarshalUtils.GetPointerArray(actual)
+                .Select(Encoder.Instance.PtrToString)
+                .ToList();
+
             Marshal.FreeHGlobal(actual);
+
+            Assert.Equal(data, actualData);
+            
         }
 
         [Fact]
@@ -87,65 +90,103 @@ namespace LdapForNetTests.Utils
             
             Marshal.FreeHGlobal(actual);
         }
-        
-        [Fact]
-        public void MarshalUtils_StructureArrayToPtr_LDAPMod()
-        {
-            var val = new List<string> { "test","other","third", null};
-            var valPtr = Marshal.AllocHGlobal(IntPtr.Size*val.Count);
-            MarshalUtils.StringArrayToPtr(val,valPtr);
-            var data = new List<Native.LDAPMod>
+
+        public static IEnumerable<object[]> LdapModifyAttributeData =>
+            new List<object[]>
             {
-                new Native.LDAPMod
-                {
-                    mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
-                    mod_type = "test",
-                    mod_vals_u = new Native.LDAPMod.mod_vals
+                new object[] { new LdapModifyAttribute
                     {
-                        modv_strvals  = valPtr
-                    }
-                },
-                new Native.LDAPMod
-                {
-                    mod_op = (int) Native.LdapModOperation.LDAP_MOD_ADD,
-                    mod_type = "test2",
-                    mod_vals_u = new Native.LDAPMod.mod_vals
+                        LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD,
+                        Type = "test",
+                        Values = new List<string> { "test", "other", "third" }
+                    } ,
+                    new LdapModifyAttribute
                     {
-                        modv_strvals  = IntPtr.Zero
+                        LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD,
+                        Type = "test2",
+                        Values = new List<string> ()
+                    }},
+                new object[] { new LdapModifyAttribute
+                    {
+                        LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD,
+                        Type = "rus",
+                        Values = new List<string> { "раз", "два", "три" }
+                    } ,
+                    new LdapModifyAttribute
+                    {
+                        LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD,
+                        Type = "de",
+                        Values = new List<string> { "fünf", "zwölf" }
+                    },
+                    new LdapModifyAttribute
+                    {
+                        LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD,
+                        Type = "ch",
+                        Values = new List<string> { "數字", "四" }
                     }
                 }
             };
-            var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Count+1));
+
+        [Theory]
+        [MemberData(nameof(LdapModifyAttributeData))]
+        public void MarshalUtils_StructureArrayToPtr_LDAPMod(params LdapModifyAttribute[] attributes)
+        {
+            var data = attributes
+                .Select(_ =>
+                {
+                    var values = _.Values.Union(new string[] {null}).ToArray();
+                    var ptr =  Marshal.AllocHGlobal(IntPtr.Size * values.Length);
+                    MarshalUtils.StringArrayToPtr(values, ptr);
+                    return new Native.LDAPMod
+                    {
+                        mod_op = (int) _.LdapModOperation,
+                        mod_type = Encoder.Instance.StringToPtr(_.Type),
+                        mod_vals_u = new Native.LDAPMod.mod_vals
+                        {
+                            modv_strvals = ptr
+                        }
+                    };
+                })
+                .ToArray();
+
+            var actual = Marshal.AllocHGlobal(IntPtr.Size*(data.Length+1));
+
             MarshalUtils.StructureArrayToPtr(data,actual, true);
-            Assert.NotEqual(IntPtr.Zero, actual);
 
-            var ptr1 = Marshal.ReadIntPtr(actual);
-            var ptr2 = Marshal.ReadIntPtr(actual,IntPtr.Size);
-            var ptr3 = Marshal.ReadIntPtr(actual, IntPtr.Size * 2);
-            
-            var first = Marshal.PtrToStructure<Native.LDAPMod>(ptr1);
-            var second = Marshal.PtrToStructure<Native.LDAPMod>(ptr2);
-
-            var valPtr1 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals);
-            var valPtr2 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size);
-            var valPtr3 = Marshal.ReadIntPtr(first.mod_vals_u.modv_strvals,IntPtr.Size*2);
-            
-            var valFirst = Marshal.PtrToStringAnsi(valPtr1);
-            var valSecond = Marshal.PtrToStringAnsi(valPtr2);
-            var valThird = Marshal.PtrToStringAnsi(valPtr3);
-                
-            Assert.Equal(0,first.mod_op);
-            Assert.Equal("test",first.mod_type);
-            Assert.Equal("test",valFirst);
-            Assert.Equal("other",valSecond);
-            Assert.Equal("third",valThird);
-            Assert.Equal(0,second.mod_op);
-            Assert.Equal("test2",second.mod_type);
-            Assert.Equal(IntPtr.Zero,second.mod_vals_u.modv_strvals);
-            Assert.Equal(IntPtr.Zero,ptr3);
-            
+            var actualData = new List<LdapModifyAttribute>();
+            var count = 0;
+            var tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
+            while (tempPtr != IntPtr.Zero)
+            {
+                var mod = Marshal.PtrToStructure<Native.LDAPMod>(tempPtr);
+                var length = 0;
+                var values = new List<string>();
+                var ptr = Marshal.ReadIntPtr(mod.mod_vals_u.modv_strvals, IntPtr.Size*length);
+                while (ptr != IntPtr.Zero)
+                {
+                    values.Add(Encoder.Instance.PtrToString(ptr));
+                    length++;
+                    ptr = Marshal.ReadIntPtr(mod.mod_vals_u.modv_strvals, IntPtr.Size * length);
+                }
+                actualData.Add(new LdapModifyAttribute
+                {
+                    Type = Encoder.Instance.PtrToString(mod.mod_type),
+                    LdapModOperation = (Native.LdapModOperation)mod.mod_op,
+                    Values = values
+                });
+                count++;
+                tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
+            }
+            foreach (var ldapMod in data)
+            {
+                Marshal.FreeHGlobal(ldapMod.mod_vals_u.modv_strvals);
+                Marshal.FreeHGlobal(ldapMod.mod_type);
+            }
             Marshal.FreeHGlobal(actual);
-            Marshal.FreeHGlobal(valPtr);
+
+            Assert.NotEmpty(actualData);
+            Assert.Equal(attributes,actualData,new LambdaEqualityComparer<LdapModifyAttribute>((e, a) => e.LdapModOperation == a.LdapModOperation && e.Type == a.Type &&
+                                                                                                         e.Values.SequenceEqual(a.Values)));
         }
 
 
@@ -168,14 +209,11 @@ namespace LdapForNetTests.Utils
                     bv_val = sourceDataPtrs[i],
                     bv_len = sourceData[i].Length
                 }, berPtr, true);
-                Marshal.StructureToPtr(berPtr, new IntPtr(ptr.ToInt64() + i*IntPtr.Size), true);
+                Marshal.WriteIntPtr(ptr,i*IntPtr.Size,berPtr);
             }
-            Marshal.StructureToPtr(IntPtr.Zero, new IntPtr(ptr.ToInt64() + sourceDataPtrs.Length * IntPtr.Size), true);
+            Marshal.WriteIntPtr(ptr, sourceDataPtrs.Length * IntPtr.Size, IntPtr.Zero);
 
             var actual = MarshalUtils.BerValArrayToByteArrays(ptr);
-
-            Assert.Equal(sourceData.Length, actual.Count);
-            Assert.Equal(sourceData, actual);
 
             for (var i = 0; i < sourceDataPtrs.Length; i++)
             {
@@ -186,6 +224,9 @@ namespace LdapForNetTests.Utils
             }
 
             Marshal.FreeCoTaskMem(ptr);
+
+            Assert.Equal(sourceData.Length, actual.Count);
+            Assert.Equal(sourceData, actual);
         }
 
         [Theory]
@@ -206,5 +247,4 @@ namespace LdapForNetTests.Utils
         public int X;
         public int Y;
     }
-
 }

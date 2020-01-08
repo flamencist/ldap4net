@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
@@ -10,21 +11,25 @@ namespace LdapForNet.RequestHandlers
         {
             if (request is CompareRequest compareRequest)
             {
-                if (compareRequest.LdapEntry.Attributes == null || 
-                    compareRequest.LdapEntry.Attributes?.Count != 1 ||
-                    compareRequest.LdapEntry.Attributes.Single().Value.Count != 1
+                if (string.IsNullOrEmpty(compareRequest.DistinguishedName)||
+                    string.IsNullOrEmpty(compareRequest.Assertion?.Name) ||
+                    compareRequest.Assertion.GetRawValues().Count != 1
                     )
                 {
                     throw new LdapException("Wrong assertion");
                 }
 
-                var assertion = compareRequest.LdapEntry.Attributes.Single();
-                var name = assertion.Key;
-                var value = assertion.Value[0];
-                //TODO implement for bytes assertion
+                var value = compareRequest.Assertion.GetRawValues().Single();
+                var stringValue = value as string;
+                var berValuePtr = IntPtr.Zero;
+                if (value is byte[] binaryValue && binaryValue.Length != 0)
+                {
+                    berValuePtr = MarshalUtils.ByteArrayToBerValue(binaryValue);
+                }
                 
-                return Native.Compare(handle,compareRequest.LdapEntry.Dn,name,value,IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref messageId);
-
+                var result = Native.Compare(handle,compareRequest.DistinguishedName, compareRequest.Assertion.Name, stringValue, berValuePtr, IntPtr.Zero, IntPtr.Zero, ref messageId);
+                MarshalUtils.BerValFree(berValuePtr);
+                return result;
             }
 
             return 0;

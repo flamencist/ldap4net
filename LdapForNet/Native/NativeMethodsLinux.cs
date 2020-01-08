@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -106,7 +107,7 @@ namespace LdapForNet.Native
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
         [DllImport(LIB_LDAP_PATH)]
-        internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, string[] attrs,
+        internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, IntPtr attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, IntPtr timeout, int sizelimit, ref int msgidp);
 
         /// <summary>
@@ -127,7 +128,7 @@ namespace LdapForNet.Native
 
         internal static string LdapError2String(int error)
         {
-            return Marshal.PtrToStringAnsi(ldap_err2string(error));
+            return Encoder.Instance.PtrToString(ldap_err2string(error));
         }
 
 
@@ -135,7 +136,7 @@ namespace LdapForNet.Native
         {
             var ptr = Marshal.AllocHGlobal(IntPtr.Size);
             ldap_get_option(ld,(int)Native.LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE,ref ptr);
-            var info = Marshal.PtrToStringAnsi(ptr);
+            var info = Encoder.Instance.PtrToString(ptr);
             ldap_memfree(ptr);
             return info;
         }

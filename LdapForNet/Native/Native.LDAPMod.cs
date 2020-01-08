@@ -29,8 +29,8 @@ namespace LdapForNet.Native
             
             #define mod_bvalues mod_vals.modv_bvals
          */
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct LDAPMod
+        [StructLayout(LayoutKind.Sequential)]
+        public sealed class LDAPMod
         {
             /// <summary>
             /// Values that you want to add, delete, or replace.
@@ -57,19 +57,18 @@ namespace LdapForNet.Native
             /// <summary>
             /// Pointer to the attribute type that you want to add, delete, or replace.
             /// </summary>
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string mod_type;
+            public IntPtr mod_type;
 
             /// <summary>
             /// A NULL-terminated array of string values for the attribute.
             /// </summary>
             public mod_vals mod_vals_u;
-        
-            public IntPtr mod_next;
 
+            public IntPtr mod_next;
+            
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential)]
         public class berval
         {
             public int bv_len = 0;

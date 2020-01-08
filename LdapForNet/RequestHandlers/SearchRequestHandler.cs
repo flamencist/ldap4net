@@ -12,18 +12,22 @@ namespace LdapForNet.RequestHandlers
         {
             if (request is SearchRequest searchRequest)
             {
-                return Native.ldap_search_ext(
+                var attributes = GetAttributesPtr(searchRequest);
+                var searchTimeLimit = (int)(searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
+                var res = Native.Search(
                     handle,
                     searchRequest.DistinguishedName,
-                    (int) searchRequest.Scope,
+                    (int)searchRequest.Scope,
                     searchRequest.Filter,
-                    null,
-                    (int) LdapForNet.Native.Native.LdapSearchAttributesOnly.False,
+                    attributes,
+                    searchRequest.AttributesOnly ? 1 : 0,
                     IntPtr.Zero,
                     IntPtr.Zero,
-                    IntPtr.Zero,
-                    (int)LdapForNet.Native.Native.LdapSizeLimit.LDAP_NO_LIMIT,
+                    searchTimeLimit,
+                    searchRequest.SizeLimit,
                     ref messageId);
+                FreeAttributes(attributes);
+                return res;
             }
 
             return 0;
@@ -73,7 +77,7 @@ namespace LdapForNet.RequestHandlers
                 var vals = Native.ldap_get_values_len(ld, entry, attr);
                 if (vals != IntPtr.Zero)
                 {
-                    var attrName = Marshal.PtrToStringAnsi(attr);
+                    var attrName = Encoder.Instance.PtrToString(attr);
                     if (attrName != null)    
                     {
                         var directoryAttribute = new DirectoryAttribute
@@ -95,9 +99,42 @@ namespace LdapForNet.RequestHandlers
         private string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = Native.ldap_get_dn(ld, entry);
-            var dn = Marshal.PtrToStringAnsi(ptr);
+            var dn = Encoder.Instance.PtrToString(ptr);
             Native.ldap_memfree(ptr);        
             return dn;
+        }
+
+        private static IntPtr GetAttributesPtr(SearchRequest searchRequest)
+        {
+
+            var attributeCount = searchRequest.Attributes?.Count ?? 0;
+            var searchAttributes = IntPtr.Zero;
+            if (searchRequest.Attributes == null || attributeCount == 0)
+            {
+                return searchAttributes;
+            }
+
+
+            searchAttributes = MarshalUtils.AllocHGlobalIntPtrArray(attributeCount + 1);
+            int i;
+            for (i = 0; i < attributeCount; i++)
+            {
+                var controlPtr = Encoder.Instance.StringToPtr(searchRequest.Attributes[i]);
+                Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, controlPtr);
+            }
+
+            Marshal.WriteIntPtr(searchAttributes, IntPtr.Size * i, IntPtr.Zero);
+
+            return searchAttributes;
+        }
+
+        private static void FreeAttributes(IntPtr attributes)
+        {
+            foreach (var tempPtr in MarshalUtils.GetPointerArray(attributes))
+            {
+                Marshal.FreeHGlobal(tempPtr);
+            }
+            Marshal.FreeHGlobal(attributes);
         }
 
 
