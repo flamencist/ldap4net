@@ -277,7 +277,7 @@ namespace LdapForNet
 
             if (!format.All(LdapNative.Instance.BerScanfSupports))
             {
-                throw new PlatformNotSupportedException($"{nameof(format)} has unsupported format characters");
+                throw new ArgumentException($"{nameof(format)} has unsupported format characters");
             }
             
             var utf8Encoder = new UTF8Encoding(false, true);
@@ -606,29 +606,20 @@ namespace LdapForNet
         {
             int error;
             var valPtr = IntPtr.Zero;
-            Native.Native.SafeBerval managedBerVal = null;
             try
             {
-                managedBerVal = new Native.Native.SafeBerval();
                 if (value == null)
                 {
                     value = new byte[0];
                 }
-                managedBerVal.bv_len = value.Length;
-                managedBerVal.bv_val = Marshal.AllocHGlobal(value.Length);
-                Marshal.Copy(value, 0, managedBerVal.bv_val, value.Length);
-
-                // allocate memory for the unmanaged structure
-                valPtr = Marshal.AllocHGlobal(Marshal.SizeOf(managedBerVal));
-                Marshal.StructureToPtr(managedBerVal, valPtr, false);
-
+                valPtr = MarshalUtils.ByteArrayToBerValue(value);
                 error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), valPtr);
             }
             finally
             {
                 if (valPtr != IntPtr.Zero)
                 {
-                    //LdapNative.Instance.ber_bvfree(valPtr);
+                    MarshalUtils.BerValFree(valPtr);
                 }
             }
             return error;
@@ -636,7 +627,6 @@ namespace LdapForNet
         private static int EncodingMultiByteArrayHelper(BerSafeHandle berElement, byte[][] tempValue, char fmt)
         {
             var stringArray = IntPtr.Zero;
-            var tempPtr = IntPtr.Zero;
             var error = 0;
 
             try
@@ -654,12 +644,10 @@ namespace LdapForNet
                         Marshal.Copy(byteArray, 0, valPtr, byteArray.Length);
                         Marshal.WriteByte(valPtr,byteArray.Length,0);
                         
-                        tempPtr = (IntPtr)((long)stringArray + IntPtr.Size * i);
-                        Marshal.WriteIntPtr(tempPtr, valPtr);
+                        Marshal.WriteIntPtr(stringArray, IntPtr.Size * i, valPtr);
                     }
 
-                    tempPtr = (IntPtr)((long)stringArray + IntPtr.Size * i);
-                    Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+                    Marshal.WriteIntPtr(stringArray, tempValue.Length*IntPtr.Size, IntPtr.Zero);
                 }
 
                 error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), stringArray);
@@ -669,13 +657,9 @@ namespace LdapForNet
             {
                 if (stringArray != IntPtr.Zero)
                 {
-                    for (var i = 0; i < tempValue.Length; i++)
+                    foreach (var ptr in MarshalUtils.GetPointerArray(stringArray))
                     {
-                        var ptr = Marshal.ReadIntPtr(stringArray, IntPtr.Size * i);
-                        if (ptr != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(ptr);
-                        }
+                        //Marshal.FreeHGlobal(ptr);
                     }
                     Marshal.FreeHGlobal(stringArray);
                 }
@@ -740,13 +724,9 @@ namespace LdapForNet
             {
                 if (berValArray != IntPtr.Zero)
                 {
-                    for (var i = 0; i < tempValue.Length; i++)
+                    foreach (var ptr in MarshalUtils.GetPointerArray(berValArray))
                     {
-                        var ptr = Marshal.ReadIntPtr(berValArray, IntPtr.Size * i);
-                        if (ptr != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(ptr);
-                        }
+                        Marshal.FreeHGlobal(ptr);
                     }
                     Marshal.FreeHGlobal(berValArray);
                 }
@@ -814,7 +794,6 @@ namespace LdapForNet
             error = 0;
             var ptrResult = IntPtr.Zero;
             var binaryList = new ArrayList();
-            var tempPtr = IntPtr.Zero;
             byte[][] result = null;
 
             try
@@ -825,12 +804,10 @@ namespace LdapForNet
                 {
                     if (ptrResult != IntPtr.Zero)
                     {
-                        var i = 0;
-                        tempPtr = Marshal.ReadIntPtr(ptrResult);
-                        while (tempPtr != IntPtr.Zero)
+                        foreach (var tempPtr in MarshalUtils.GetPointerArray(ptrResult))
                         {
                             var arr = new List<byte>();
-                            
+
                             var @byte = Marshal.ReadByte(tempPtr);
                             var j = 0;
                             while (@byte != 0)
@@ -841,9 +818,6 @@ namespace LdapForNet
                             }
 
                             binaryList.Add(arr.ToArray());
-                            
-                            i++;
-                            tempPtr = Marshal.ReadIntPtr(ptrResult, i * IntPtr.Size);
                         }
 
                         result = new byte[binaryList.Count][];

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LdapForNet;
 using Xunit;
 using Xunit.Abstractions;
