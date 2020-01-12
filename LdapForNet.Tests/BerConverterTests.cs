@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using LdapForNet;
 using Xunit;
 using Xunit.Abstractions;
@@ -176,27 +177,31 @@ namespace LdapForNetTests
         
         public static IEnumerable<object[]> Encode_Decode_TestData()
         {
-            yield return new object[] { "{bb}", new object[] { true, false } };
-            yield return new object[] { "{ee}", new object[] { 2, 3 } };
-            yield return new object[] { "{ii}", new object[] { 2, 3 } };
-            yield return new object[] { "{BB}", new object[] { new byte[]{1}, new byte[]{2} } };
-            yield return new object[] { "{n}", new object[0] };
-            yield return new object[] { "{oo}", new object[] { new byte[]{3}, new byte[]{4} } };
-            yield return new object[] { "{OO}", new object[] { new byte[]{3}, new byte[]{4} } };
-            yield return new object[] { "{ss}", new object[] { "abc", "dfe" } };
-            yield return new object[] { "{{v}{v}}", new object[] { new []{"82DA", "82AB"}, new []{"81AD"} } }; 
-            yield return new object[] { "{{V}{V}}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }};
-            yield return new object[] { "{W}{W}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }};
+            yield return new object[] { "{bb}", "{bb}", new object[] { true, false } };
+            yield return new object[] { "{ee}", "{ee}", new object[] { 2, 3 } };
+            yield return new object[] { "{ii}", "{ii}", new object[] { 2, 3 } };
+            yield return new object[] { "{BB}", "{BB}", new object[] { new byte[]{1}, new byte[]{2} }, new[] { OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString() } };
+            yield return new object[] { "{n}", "{n}", new object[0] };
+            yield return new object[] { "{oo}", "{OO}", new object[] { new byte[]{3}, new byte[]{4} } };
+            yield return new object[] { "{OO}", "{OO}", new object[] { new byte[]{3}, new byte[]{4} }, new []{OSPlatform.Linux.ToString(),OSPlatform.OSX.ToString()} };
+            yield return new object[] { "{ss}", "{OO}", new object[] { "abc", "dfe" } };
+            yield return new object[] { "{{v}{v}}", "{{v}{v}}", new object[] { new []{"82DA", "82AB"}, new []{"81AD"} } }; 
+            yield return new object[] { "{{V}{V}}", "{{V}{V}}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }};
+            yield return new object[] { "{W}{W}", "{W}{W}", new object[] { new[] { new byte[] { 1, 2, 3,4 } }, new[] { new byte[]{ 5,6,7,8} } }, new[] { OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString() } };
             
         }
         
         [Theory]
         [MemberData(nameof(Encode_Decode_TestData))]
-        public void Encode_Decode_Should_Returns_Expected(string format, object[] values)
+        public void Encode_Decode_Should_Returns_Expected(string printFormat, string scanFormat, object[] values, string[] platforms = null)
         {
-            var encoded = BerConverter.Encode(format, values);
+            if (platforms != null && !platforms.Any(_=>RuntimeInformation.IsOSPlatform(OSPlatform.Create(_))))
+            {
+                return;
+            }
+            var encoded = BerConverter.Encode(printFormat, values);
             _testOutputHelper.WriteLine($"encoded: [{string.Join(',',encoded)}]");
-            var decoded = BerConverter.Decode(format, encoded);
+            var decoded = BerConverter.Decode(scanFormat, encoded);
             Assert.Equal(values,decoded);
         }
     }

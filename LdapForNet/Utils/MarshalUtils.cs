@@ -135,7 +135,18 @@ namespace LdapForNet.Utils
                     tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
                 }
             }
+        }
 
+        internal static IEnumerable<byte> GetBytes(IntPtr ptr)
+        {
+            var @byte = Marshal.ReadByte(ptr);
+            var i = 0;
+            while (@byte != 0)
+            {
+                yield return @byte;
+                i++;
+                @byte = Marshal.ReadByte(ptr, i);
+            }
         }
     }
 }
