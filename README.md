@@ -197,16 +197,15 @@ using (var cn = new LdapConnection())
 }
 ```
 
-### Search (concrete list of attributes)
+### Search (retrieve concrete list of attributes)
 
 ```cs
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
 	cn.Bind();
-	var response = (SearchResponse) connection.SendRequest(new SearchRequest("cn=admin,dc=example,dc=com", "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE));
-	var directoryAttribute = response.Entries.First().Attributes["objectSid"];
-	var objectSid = directoryAttribute.GetValues<byte[]>().First();
+	var response = (SearchResponse)connection.SendRequest(new SearchRequest(Config.RootDn, "(&(objectclass=top)(cn=admin))",LdapSearchScope.LDAP_SCOPE_SUBTREE,"cn","objectClass"));
+	var count = entries[0].Attributes.AttributeNames.Count; // 2
 }
 ```
 
