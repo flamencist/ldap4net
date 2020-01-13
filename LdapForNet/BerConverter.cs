@@ -13,83 +13,101 @@ namespace LdapForNet
     internal delegate TResult Func<in T, in T2, T3, out TResult>(T obj, T2 obj2, out T3 obj3);
     internal class BerEncodeAction
     {
-        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action) :this(action,true)
+        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action, char format) : this(action, true, format)
         {
         }
-        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action, bool next)
+        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action, bool next) : this(action, next, char.MinValue)
+        {
+        }
+        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action) : this(action, true, char.MinValue)
+        {
+        }
+        public BerEncodeAction(Func<BerSafeHandle, char, object[], int, int> action, bool next, char format)
         {
             Action = action;
             Next = next;
+            UseFormat = format;
         }
         public bool Next { get; }
-        public Func<BerSafeHandle, char, object[], int, int> Action { get;  }
+        public Func<BerSafeHandle, char, object[], int, int> Action { get; }
+        public char UseFormat { get; } 
     }
 
     internal class BerDecodeAction
     {
-        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action) : this(action, false)
+        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action) : this(action, false, Char.MinValue)
         {
         }
-        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action, bool empty)
+        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action, char format) : this(action, false, format)
+        {
+        }
+        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action, bool empty) : this(action, empty, Char.MinValue)
+        {
+        }
+        public BerDecodeAction(Func<BerSafeHandle, char, object, int> action, bool empty, char format)
         {
             Action = action;
             Empty = empty;
+            UseFormat = format;
         }
         public bool Empty { get; }
         public Func<BerSafeHandle, char, object, int> Action { get; }
+        public char UseFormat { get; }
     }
 
     /// <summary>
     /// supported formats
     /// ber_printf
-    /// win	(wldap.h)	t b e i n o s v V { } [ ] X 
+    /// win	(winber.h)	t b e i n o s v V { } [ ] X 
     /// unix (lber.h)  	t b e i n o s v V { } [ ] B O W	
     /// 
     /// ber_scanf
-    /// win	(wldap.h)	a O b e i B n t v V x { } [ ]
+    /// win	(winber.h)	a O b e i B n t v V x { } [ ]
     /// unix (lber.h)	a O b e i B n t v V x { } [ ] A s o m W M l T 
     /// </summary>
     public static class BerConverter
     {
         private static readonly IDictionary<char, BerEncodeAction> EncodeActions = new Dictionary<char, BerEncodeAction>
         {
-            ['{']=new BerEncodeAction(BerPrintfEmptyArg,false),
-            ['}']=new BerEncodeAction(BerPrintfEmptyArg,false),
-            ['[']=new BerEncodeAction(BerPrintfEmptyArg,false),
-            [']']=new BerEncodeAction(BerPrintfEmptyArg,false),
-            ['n']=new BerEncodeAction(BerPrintfEmptyArg,false),
-            ['t']=new BerEncodeAction(BerPrintInt),
-            ['i']=new BerEncodeAction(BerPrintInt),
-            ['e']=new BerEncodeAction(BerPrintInt),
-            ['b']=new BerEncodeAction(BerPrintBool),
-            ['s']=new BerEncodeAction(BerPrintOctetString),
-            ['o']=new BerEncodeAction(BerPrintOctetStringFromBytes),
-            ['X']=new BerEncodeAction(BerPrintOctetStringFromBytes),
-            ['B']=new BerEncodeAction(BerPrintOctetStringFromBytes),
-            ['O']=new BerEncodeAction(BerPrintBerValOctetString),
-            ['v']=new BerEncodeAction(BerPrintMultiByteStrings),
-            ['V'] =new BerEncodeAction(BerPrintBerValMultiBytes),
+
+            ['t'] = new BerEncodeAction(BerPrintInt),
+            ['b'] = new BerEncodeAction(BerPrintBool),
+            ['e'] = new BerEncodeAction(BerPrintInt),
+            ['i'] = new BerEncodeAction(BerPrintInt),
+            ['n'] = new BerEncodeAction(BerPrintEmptyArg, false),
+            ['o'] = new BerEncodeAction(BerPrintOctetStringFromBytes),
+            ['s'] = new BerEncodeAction(BerPrintOctetString),
+            ['v'] = new BerEncodeAction(BerPrintMultiByteStrings),
+            ['V'] = new BerEncodeAction(BerPrintBerValMultiBytes),
+            ['{'] = new BerEncodeAction(BerPrintEmptyArg, false),
+            ['}'] = new BerEncodeAction(BerPrintEmptyArg, false),
+            ['['] = new BerEncodeAction(BerPrintEmptyArg, false),
+            [']'] = new BerEncodeAction(BerPrintEmptyArg, false),
+            ['X'] = new BerEncodeAction(BerPrintOctetStringFromBytes),
+            ['B'] = new BerEncodeAction(BerPrintOctetStringFromBytes, 'X'),
+            ['O'] = new BerEncodeAction(BerPrintBerValOctetString),
+
         };
 
         private static readonly IDictionary<char, BerDecodeAction> DecodeActions = new Dictionary<char, BerDecodeAction>
         {
+            ['a'] = new BerDecodeAction(BerScanfStringFromByteArray),
+            ['O'] = new BerDecodeAction(BerScanfByteArray),
+            ['b'] = new BerDecodeAction(BerScanfInt),
+            ['e'] = new BerDecodeAction(BerScanfInt),
+            ['i'] = new BerDecodeAction(BerScanfInt),
+            ['B'] = new BerDecodeAction(BerScanfBitString),
+            ['n'] = new BerDecodeAction(BerScanfEmptyTag, true),
+            ['t'] = new BerDecodeAction(BerScanfEmptyTag, true),
+            ['v'] = new BerDecodeAction(BerScanfStringArray),
+            ['V'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
+            ['x'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['{'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['}'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['['] = new BerDecodeAction(BerScanfEmptyTag, true),
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['n'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['x'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['t'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['i'] = new BerDecodeAction(BerScanfInt),
-            ['e'] = new BerDecodeAction(BerScanfInt),
-            ['b'] = new BerDecodeAction(BerScanfInt),
-            ['a'] = new BerDecodeAction(BerScanfStringFromByteArray),
-            ['O'] = new BerDecodeAction(BerScanfByteArray),
-            ['o'] = new BerDecodeAction(BerScanfBerValOstring),
             ['s'] = new BerDecodeAction(BerScanfString),
-            ['B'] = new BerDecodeAction(BerScanfBitString),
-            ['v'] = new BerDecodeAction(BerScanfStringArray),
-            ['V'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
+            ['o'] = new BerDecodeAction(BerScanfBerValOstring),
         };
 
         private static readonly UTF8Encoding Utf8Encoder = new UTF8Encoding();
@@ -108,15 +126,15 @@ namespace LdapForNet
                 value = Array.Empty<object>();
             }
 
-            Debug.WriteLine("Begin encoding\n");
+            Debug.WriteLine("Begin encoding");
 
             // allocate the berelement
             var berElement = new BerSafeHandle();
 
             var valueCount = 0;
-            for (var index = 0; index < format.Length; index++)
+            for (var i = 0; i < format.Length; i++)
             {
-                var fmt = format[index];
+                var fmt = format[i];
                 if (!EncodeActions.TryGetValue(fmt, out var encodeAction))
                 {
                     throw new ArgumentException("Format string contains undefined character: " + new string(fmt, 1));
@@ -125,7 +143,7 @@ namespace LdapForNet
                 if (encodeAction.Action(berElement, fmt, value, valueCount) == -1)
                 {
                     Debug.WriteLine("ber_printf failed\n");
-                    throw new LdapException($"ber_printf failed. Format: {format}. Current char: {fmt} with index {index}");
+                    throw new LdapException($"ber_printf failed. Format: {format}. Current char: {fmt} with index {i}");
                 }
 
                 if (encodeAction.Next)
@@ -136,22 +154,22 @@ namespace LdapForNet
 
             // get the binary value back
             var binaryValue = new Native.Native.berval();
-            var flattenptr = IntPtr.Zero;
+            var flattenPtr = IntPtr.Zero;
 
             try
             {
                 // can't use SafeBerval here as CLR creates a SafeBerval which points to a different memory location, but when doing memory
                 // deallocation, wldap has special check. So have to use IntPtr directly here.
-                var error = LdapNative.Instance.ber_flatten(berElement, ref flattenptr);
+                var rc = LdapNative.Instance.ber_flatten(berElement, ref flattenPtr);
 
-                if (error == -1)
+                if (rc == -1)
                 {
-                    throw new LdapException("ber_flatten failed\n");
+                    throw new LdapException("ber_flatten failed");
                 }
 
-                if (flattenptr != IntPtr.Zero)
+                if (flattenPtr != IntPtr.Zero)
                 {
-                    Marshal.PtrToStructure(flattenptr, binaryValue);
+                    Marshal.PtrToStructure(flattenPtr, binaryValue);
                 }
 
                 if (binaryValue.bv_len == 0)
@@ -167,9 +185,9 @@ namespace LdapForNet
             }
             finally
             {
-                if (flattenptr != IntPtr.Zero)
+                if (flattenPtr != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_bvfree(flattenptr);
+                    LdapNative.Instance.ber_bvfree(flattenPtr);
                 }
             }
 
@@ -250,148 +268,128 @@ namespace LdapForNet
             return resultList.ToArray();
         }
 
-        private static int BerPrintBerValMultiBytes(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintBerValMultiBytes(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
             // we need to have one arguments
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
-            if (value[valueCount] != null && !(value[valueCount] is byte[][]))
+            if (value[valueIndex] != null && !(value[valueIndex] is byte[][]))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be byte[][], but receiving value has type of " +
-                                            value[valueCount].GetType());
+                                            value[valueIndex].GetType());
             }
 
-            var tempValue = (byte[][]) value[valueCount];
-
-            return EncodingBerValMultiByteArrayHelper(berElement, fmt, tempValue);
+            return EncodingBerValMultiByteArrayHelper(berElement, fmt, (byte[][])value[valueIndex]);
         }
 
-        private static int BerPrintfEmptyArg(BerSafeHandle berElement, char format, object[] value, int index) => LdapNative.Instance.ber_printf_emptyarg(berElement, new string(format, 1));
+        private static int BerPrintEmptyArg(BerSafeHandle berElement, char format, object[] value, int index) => LdapNative.Instance.ber_printf_emptyarg(berElement, new string(format, 1));
 
-
-        private static int BerPrintMultiByteStrings(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintMultiByteStrings(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
-            int error;
             // we need to have one arguments
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
             }
 
-            if (value[valueCount] != null && !(value[valueCount] is string[]))
+            if (value[valueIndex] != null && !(value[valueIndex] is string[]))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be string[], but receiving value has type of " +
-                                            value[valueCount].GetType());
+                                            value[valueIndex].GetType());
             }
 
-            var stringValues = (string[]) value[valueCount];
-            byte[][] tempValues = null;
-            if (stringValues != null)
-            {
-                tempValues = new byte[stringValues.Length][];
-                for (var i = 0; i < stringValues.Length; i++)
-                {
-                    var s = stringValues[i];
-                    if (s == null)
-                        tempValues[i] = null;
-                    else
-                    {
-                        tempValues[i] = Utf8Encoder.GetBytes(s);
-                    }
-                }
-            }
+            var stringValues = (string[])value[valueIndex];
+            var values = stringValues?.Select(_ => _ == null ? null : Utf8Encoder.GetBytes(_))
+                .ToArray();
 
-            error = EncodingMultiByteArrayHelper(berElement, tempValues, fmt);
-            return error;
+            return EncodingMultiByteArrayHelper(berElement, values, fmt);
         }
 
-        private static int BerPrintBerValOctetString(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintBerValOctetString(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
-            int error;
             // we need to have one arguments
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
             }
 
-            if (value[valueCount] != null && !(value[valueCount] is byte[]))
+            if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be byte[], but receiving value has type of " +
-                                            value[valueCount].GetType());
+                                            value[valueIndex].GetType());
             }
 
-            var tempValue = (byte[]) value[valueCount] ?? new byte[0];
-            error = EncodingBerValHelper(berElement, tempValue, fmt);
-            return error;
+            var tempValue = (byte[])value[valueIndex] ?? new byte[0];
+            return EncodingBerValHelper(berElement, tempValue, fmt);
         }
 
-        private static int BerPrintOctetStringFromBytes(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintOctetStringFromBytes(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
             // we need to have one arguments
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
             }
 
-            if (value[valueCount] != null && !(value[valueCount] is byte[]))
+            if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be byte[], but receiving value has type of " +
-                                            value[valueCount].GetType());
+                                            value[valueIndex].GetType());
             }
 
-            var tempValue = (byte[]) value[valueCount] ?? new byte[0];
-            return EncodingByteArrayHelper(berElement, tempValue, fmt);
+            var byteArray = (byte[])value[valueIndex] ?? new byte[0];
+            return EncodingByteArrayHelper(berElement, byteArray, fmt);
         }
 
-        private static int BerPrintOctetString(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintOctetString(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
             }
 
-            if (value[valueCount] != null && !(value[valueCount] is string))
+            if (value[valueIndex] != null && !(value[valueIndex] is string))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be string, but receiving value has type of " +
-                                            value[valueCount].GetType());
+                                            value[valueIndex].GetType());
             }
 
             // one string argument       
             // value[valueCount] = value[valueCount] ?? string.Empty;
-            var tempValue = Utf8Encoder.GetBytes((string) value[valueCount] ?? string.Empty);
+            var tempValue = Utf8Encoder.GetBytes((string)value[valueIndex] ?? string.Empty);
 
             return EncodingByteArrayHelper(berElement, tempValue, 'o');
         }
 
-        private static int BerPrintBool(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
+        private static int BerPrintBool(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
-            if (valueCount >= value.Length)
+            if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
                 throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
-            if (!(value[valueCount] is bool))
+            if (!(value[valueIndex] is bool))
             {
                 // argument is wrong
                 throw new ArgumentException("type should be boolean\n");
             }
 
             // one int argument                    
-            return LdapNative.Instance.ber_printf_int(berElement, new string(fmt, 1), (bool) value[valueCount] ? 1 : 0);
+            return LdapNative.Instance.ber_printf_int(berElement, new string(fmt, 1), (bool)value[valueIndex] ? 1 : 0);
         }
 
         private static int BerPrintInt(BerSafeHandle berElement, char fmt, object[] value, int valueCount)
@@ -410,10 +408,10 @@ namespace LdapForNet
             }
 
             // one int argument
-            return LdapNative.Instance.ber_printf_int(berElement, new string(fmt, 1), (int) value[valueCount]);
+            return LdapNative.Instance.ber_printf_int(berElement, new string(fmt, 1), (int)value[valueCount]);
         }
 
-       
+
 
         private static int BerScanfBerValMultiByteArray(BerSafeHandle berElement, char fmt, out object result)
         {
@@ -424,28 +422,14 @@ namespace LdapForNet
 
         private static int BerScanfStringArray(BerSafeHandle berElement, char fmt, out object result)
         {
-            int error;
             //null terminate strings
             string[] stringArray = null;
 
-            error = DecodingMultiByteArrayHelper(berElement, fmt, out var byteArrayResult);
-            if (error != -1)
+            var error = DecodingMultiByteArrayHelper(berElement, fmt, out var byteArrayResult);
+            if (error != -1 && byteArrayResult != null)
             {
-                if (byteArrayResult != null)
-                {
-                    stringArray = new string[byteArrayResult.Length];
-                    for (var i = 0; i < byteArrayResult.Length; i++)
-                    {
-                        if (byteArrayResult[i] == null)
-                        {
-                            stringArray[i] = null;
-                        }
-                        else
-                        {
-                            stringArray[i] = Utf8EncoderWithChecks.GetString(byteArrayResult[i]);
-                        }
-                    }
-                }
+                stringArray = byteArrayResult.Select(_ => _ == null ? null : Utf8EncoderWithChecks.GetString(_))
+                    .ToArray();
             }
 
             result = stringArray;
@@ -455,30 +439,35 @@ namespace LdapForNet
 
         private static int BerScanfBitString(BerSafeHandle berElement, char fmt, out object result)
         {
-            int error;
             // return a bitstring and its length
             var ptrResult = IntPtr.Zero;
             var length = 0;
             result = null;
-            error = LdapNative.Instance.ber_scanf_bitstring(berElement, new string(fmt, 1), ref ptrResult, ref length);
+            var rc = LdapNative.Instance.ber_scanf_bitstring(berElement, new string(fmt, 1), ref ptrResult, ref length);
 
-            if (error != -1)
-            {
-                byte[] byteArray = null;
-                if (ptrResult != IntPtr.Zero)
+            // try
+            // {
+                if (rc != -1)
                 {
-                    byteArray = new byte[length];
-                    Marshal.Copy(ptrResult, byteArray, 0, length);
+                    byte[] byteArray = null;
+                    if (ptrResult != IntPtr.Zero)
+                    {
+                        byteArray = new byte[length];
+                        Marshal.Copy(ptrResult, byteArray, 0, length);
+                    }
+
+                    result = byteArray;
                 }
+            // }
+            // finally
+            // {
+            //     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && ptrResult != IntPtr.Zero)
+            //     {
+            //         LdapNative.Instance.ber_memfree(ptrResult);
+            //     }
+            // }
 
-                result = byteArray;
-            }
-            else
-            {
-                Debug.WriteLine("ber_scanf for format character 'B' failed");
-            }
-
-            return error;
+            return rc;
         }
 
         private static int BerScanfBerValOstring(BerSafeHandle berElement, char fmt, out object result)
@@ -491,18 +480,15 @@ namespace LdapForNet
         private static int BerScanfStringFromByteArray(BerSafeHandle berElement, char fmt, out object result)
         {
             result = null;
-            var error = BerScanfByteArray(berElement, fmt, out var byteArray);
-            if (error != -1)
+            var error = BerScanfaString(berElement, fmt, out var byteArray);
+            if (error != -1 && byteArray != null)
             {
-                if (byteArray != null)
-                {
-                    result = Utf8EncoderWithChecks.GetString((byte[]) byteArray);
-                }
-
+                result = Utf8EncoderWithChecks.GetString((byte[])byteArray);
             }
 
             return error;
         }
+
 
         private static int BerScanfByteArray(BerSafeHandle berElement, char fmt, out object result)
         {
@@ -511,25 +497,44 @@ namespace LdapForNet
             return rc;
         }
 
+        private static int BerScanfaString(BerSafeHandle berElement, char fmt, out object byteArray)
+        {
+            var result = IntPtr.Zero;
+            byteArray = null;
+
+            var rc = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref result);
+
+            try
+            {
+                if (rc != -1 && result != IntPtr.Zero)
+                {
+                    byteArray = MarshalUtils.GetBytes(result).ToArray();
+                }
+            }
+            finally
+            {
+                if (result != IntPtr.Zero)
+                {
+                    LdapNative.Instance.ber_memfree(result);
+                }
+            }
+
+            return rc;
+        }
         private static int BerScanfString(BerSafeHandle berElement, char fmt, out object result)
         {
-            int error;
+            int rc;
             var ptr = Marshal.AllocHGlobal(IntPtr.Size);
             var length = -1;
             result = null;
             try
             {
-                error = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ptr, ref length);
-                if (error != -1)
+                rc = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ptr, ref length);
+                if (rc != -1)
                 {
                     var byteArray = new byte[length];
                     Marshal.Copy(ptr, byteArray, 0, length);
-                    var s = Utf8EncoderWithChecks.GetString(byteArray);
-                    result = s;
-                }
-                else
-                {
-                    Debug.WriteLine("ber_scanf for format character 's' failed");
+                    result = Utf8EncoderWithChecks.GetString(byteArray);
                 }
             }
             finally
@@ -540,45 +545,41 @@ namespace LdapForNet
                 }
             }
 
-            return error;
+            return rc;
         }
 
         private static int BerScanfInt(BerSafeHandle berElement, char fmt, out object result)
         {
             var intResult = 0;
             result = 0;
-            var error = LdapNative.Instance.ber_scanf_int(berElement, new string(fmt, 1), ref intResult);
+            var rc = LdapNative.Instance.ber_scanf_int(berElement, new string(fmt, 1), ref intResult);
 
-            if (error != -1)
+            if (rc != -1)
             {
-                result = fmt == 'b' ? (object) (intResult != 0) : intResult;
-            }
-            else
-            {
-                Debug.WriteLine("ber_scanf for format character 'i', 'e' or 'b' failed");
+                result = fmt == 'b' ? (object)(intResult != 0) : intResult;
             }
 
-            return error;
+            return rc;
         }
 
         private static int BerScanfEmptyTag(BerSafeHandle berElement, char fmt, out object result)
         {
             result = null;
-            return LdapNative.Instance.ber_scanf(berElement, new string (fmt, 1));
+            return LdapNative.Instance.ber_scanf(berElement, new string(fmt, 1));
         }
 
-        private static int EncodingByteArrayHelper(BerSafeHandle berElement, byte[] tempValue, char fmt)
+        private static int EncodingByteArrayHelper(BerSafeHandle berElement, byte[] value, char fmt)
         {
             int tag;
 
             // one byte array, one int arguments
-            if (tempValue != null)
+            if (value != null)
             {
-                var tmp = Marshal.AllocHGlobal(tempValue.Length);
-                Marshal.Copy(tempValue, 0, tmp, tempValue.Length);
+                var tmp = Marshal.AllocHGlobal(value.Length);
+                Marshal.Copy(value, 0, tmp, value.Length);
                 var memHandle = new HGlobalMemHandle(tmp);
 
-                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), memHandle, tempValue.Length);
+                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), memHandle, value.Length);
             }
             else
             {
@@ -587,7 +588,7 @@ namespace LdapForNet
 
             return tag;
         }
-        
+
         private static int DecodingBerValOstringHelper(BerSafeHandle berElement, char fmt, out byte[] byteArray)
         {
             var result = Marshal.AllocHGlobal(IntPtr.Size);
@@ -598,18 +599,13 @@ namespace LdapForNet
 
             try
             {
-                if (error != -1)
+                if (error != -1 && result != IntPtr.Zero)
                 {
-                    if (result != IntPtr.Zero)
-                    {
-                        Marshal.PtrToStructure(result, binaryValue);
+                    Marshal.PtrToStructure(result, binaryValue);
 
-                        byteArray = new byte[binaryValue.bv_len];
-                        Marshal.Copy(binaryValue.bv_val, byteArray, 0, binaryValue.bv_len);
-                    }
+                    byteArray = new byte[binaryValue.bv_len];
+                    Marshal.Copy(binaryValue.bv_val, byteArray, 0, binaryValue.bv_len);
                 }
-                else
-                    Debug.WriteLine("ber_scanf for format character 'O' failed");
             }
             finally
             {
@@ -634,27 +630,22 @@ namespace LdapForNet
 
             try
             {
-                if (rc != -1)
+                if (rc != -1 && result != IntPtr.Zero)
                 {
-                    if (result != IntPtr.Zero)
-                    {
-                        Marshal.PtrToStructure(result, binaryValue);
+                    Marshal.PtrToStructure(result, binaryValue);
 
-                        byteArray = new byte[binaryValue.bv_len];
-                        if (binaryValue.bv_val != IntPtr.Zero)
-                        {
-                            Marshal.Copy(binaryValue.bv_val, byteArray, 0, binaryValue.bv_len);
-                        }
+                    byteArray = new byte[binaryValue.bv_len];
+                    if (binaryValue.bv_val != IntPtr.Zero)
+                    {
+                        Marshal.Copy(binaryValue.bv_val, byteArray, 0, binaryValue.bv_len);
                     }
                 }
-                else
-                    Debug.WriteLine("ber_scanf for format character 'O' failed");
             }
             finally
             {
                 if (result != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_memfree(result);
+                    LdapNative.Instance.ber_bvfree(result);
                 }
             }
 
@@ -663,7 +654,7 @@ namespace LdapForNet
 
         private static int EncodingBerValHelper(BerSafeHandle berElement, byte[] value, char fmt)
         {
-            int error;
+            int rc;
             var valPtr = IntPtr.Zero;
             try
             {
@@ -672,7 +663,7 @@ namespace LdapForNet
                     value = new byte[0];
                 }
                 valPtr = MarshalUtils.ByteArrayToBerValue(value);
-                error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), valPtr);
+                rc = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), valPtr);
             }
             finally
             {
@@ -681,58 +672,46 @@ namespace LdapForNet
                     MarshalUtils.BerValFree(valPtr);
                 }
             }
-            return error;
+            return rc;
         }
-        private static int EncodingMultiByteArrayHelper(BerSafeHandle berElement, byte[][] tempValue, char fmt)
+        private static int EncodingMultiByteArrayHelper(BerSafeHandle berElement, byte[][] value, char fmt)
         {
             var stringArray = IntPtr.Zero;
-            int error;
+            int rc;
 
             try
             {
-                if (tempValue != null)
+                if (value != null)
                 {
-                    int i;
-                    stringArray = MarshalUtils.AllocHGlobalIntPtrArray(tempValue.Length + 1);
-
-                    for (i = 0; i < tempValue.Length; i++)
+                    var intPtrArray = value.Select(_ =>
                     {
-                        var byteArray = tempValue[i] ?? new byte[0];
-
-                        var valPtr = Marshal.AllocHGlobal(byteArray.Length+1);
+                        var byteArray = _ ?? new byte[0];
+                        var valPtr = Marshal.AllocHGlobal(byteArray.Length + 1);
                         Marshal.Copy(byteArray, 0, valPtr, byteArray.Length);
-                        Marshal.WriteByte(valPtr,byteArray.Length,0);
-                        
-                        Marshal.WriteIntPtr(stringArray, IntPtr.Size * i, valPtr);
-                    }
+                        Marshal.WriteByte(valPtr, byteArray.Length, 0);
+                        return valPtr;
+                    }).Concat(new[] { IntPtr.Zero }).ToArray();
 
-                    Marshal.WriteIntPtr(stringArray, tempValue.Length*IntPtr.Size, IntPtr.Zero);
+                    stringArray = MarshalUtils.WriteIntPtrArray(intPtrArray);
                 }
 
-                error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), stringArray);
+                rc = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), stringArray);
 
             }
             finally
             {
-                if (stringArray != IntPtr.Zero)
-                {
-                    foreach (var ptr in MarshalUtils.GetPointerArray(stringArray))
-                    {
-                        Marshal.FreeHGlobal(ptr);
-                    }
-                    Marshal.FreeHGlobal(stringArray);
-                }
+                MarshalUtils.FreeIntPtrArray(stringArray);
             }
 
-            return error;
+            return rc;
         }
 
-        
+
         private static int EncodingBerValMultiByteArrayHelper(BerSafeHandle berElement, char fmt, byte[][] value)
         {
             var berValArray = IntPtr.Zero;
             Native.Native.SafeBerval[] managedBerVal = null;
-            int error;
+            int rc;
 
             try
             {
@@ -774,7 +753,7 @@ namespace LdapForNet
                     Marshal.WriteIntPtr(berValArray, IntPtr.Size * value.Length, IntPtr.Zero);
                 }
 
-                error = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), berValArray);
+                rc = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), berValArray);
 
                 GC.KeepAlive(managedBerVal);
             }
@@ -790,20 +769,20 @@ namespace LdapForNet
                 }
             }
 
-            return error;
+            return rc;
         }
 
         private static int DecodingBerValMultiByteArrayHelper(BerSafeHandle berElement, char fmt, out byte[][] result)
         {
-            int error;
+            int rc;
             var ptrResult = IntPtr.Zero;
             result = null;
 
             try
             {
-                error = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
+                rc = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
 
-                if (error != -1 && ptrResult != IntPtr.Zero)
+                if (rc != -1 && ptrResult != IntPtr.Zero)
                 {
                     result = MarshalUtils.BerValArrayToByteArrays(ptrResult).ToArray();
                 }
@@ -816,27 +795,25 @@ namespace LdapForNet
                 }
             }
 
-            return error;
+            return rc;
         }
-        
+
         private static int DecodingMultiByteArrayHelper(BerSafeHandle berElement, char fmt, out byte[][] result)
         {
-            int error;
+            int rc;
             var ptrResult = IntPtr.Zero;
             result = null;
 
             try
             {
-                error = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
+                rc = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
 
-                if (error != -1)
+                if (rc != -1 && ptrResult != IntPtr.Zero)
                 {
-                    if (ptrResult != IntPtr.Zero)
-                    {
-                        result =  MarshalUtils.GetPointerArray(ptrResult)
-                            .Select(ptr => MarshalUtils.GetBytes(ptr).ToArray())
-                            .ToArray();
-                    }
+                    result = MarshalUtils.GetPointerArray(ptrResult)
+                        .Select(MarshalUtils.GetBytes)
+                        .Select(_ => _.ToArray())
+                        .ToArray();
                 }
 
             }
@@ -848,7 +825,7 @@ namespace LdapForNet
                 }
             }
 
-            return error;
+            return rc;
         }
     }
 }

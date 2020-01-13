@@ -148,5 +148,28 @@ namespace LdapForNet.Utils
                 @byte = Marshal.ReadByte(ptr, i);
             }
         }
+
+        internal static IntPtr WriteIntPtrArray(IntPtr[] array)
+        {
+            var destination = MarshalUtils.AllocHGlobalIntPtrArray(array.Length + 1);
+            for (var i =0; i<array.Length;i++)
+            {
+                Marshal.WriteIntPtr(destination, IntPtr.Size * i, array[i]);
+            }
+
+            return destination;
+        }
+
+        internal static void FreeIntPtrArray(IntPtr array)
+        {
+            if (array != IntPtr.Zero)
+            {
+                foreach (var ptr in GetPointerArray(array))
+                {
+                    Marshal.FreeHGlobal(ptr);
+                }
+                Marshal.FreeHGlobal(array);
+            }
+        }
     }
 }

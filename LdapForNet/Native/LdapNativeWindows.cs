@@ -250,7 +250,7 @@ namespace LdapForNet.Native
             => NativeMethodsWindows.ber_free(berelem, option);
 
         internal override void ber_memfree(IntPtr value)
-            => NativeMethodsWindows.ber_bvfree(value);
+            => NativeMethodsWindows.ldap_memfree(value);
 
         internal override bool BerScanfSupports(char fmt) => 
             _supportedFormats.Contains(fmt);
