@@ -4,7 +4,7 @@
     <AssemblyName>LdapForNet.Tests</AssemblyName>
     <RootNamespace>LdapForNetTests</RootNamespace>
     <LangVersion>7.1</LangVersion>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
