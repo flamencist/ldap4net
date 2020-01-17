@@ -83,8 +83,8 @@ namespace LdapForNet
             ['}'] = new BerEncodeAction(BerPrintEmptyArg, false),
             ['['] = new BerEncodeAction(BerPrintEmptyArg, false),
             [']'] = new BerEncodeAction(BerPrintEmptyArg, false),
-            ['X'] = new BerEncodeAction(BerPrintOctetStringFromBytes),
-            ['B'] = new BerEncodeAction(BerPrintOctetStringFromBytes, 'X'),
+            ['X'] = new BerEncodeAction(BerPrintBitStringFromBytes),
+            ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes, 'X'),
             ['O'] = new BerEncodeAction(BerPrintBerValOctetString),
 
         };
@@ -332,6 +332,27 @@ namespace LdapForNet
             return EncodingBerValHelper(berElement, tempValue, fmt);
         }
 
+        private static int BerPrintBitStringFromBytes(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
+        {
+            // we need to have one arguments
+            if (valueIndex >= value.Length)
+            {
+                // we don't have enough argument for the format string
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+            }
+
+            if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
+            {
+                // argument is wrong
+                throw new ArgumentException("type should be byte[], but receiving value has type of " +
+                                            value[valueIndex].GetType());
+            }
+
+            var byteArray = (byte[])value[valueIndex] ?? new byte[0];
+            var bitArray = new BitArray(byteArray.Select(_ => _ > 0).ToArray());
+            return EncodingBitArrayHelper(berElement, bitArray, fmt);
+        }
+
         private static int BerPrintOctetStringFromBytes(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
         {
             // we need to have one arguments
@@ -443,20 +464,31 @@ namespace LdapForNet
             var ptrResult = IntPtr.Zero;
             var length = 0;
             result = null;
+            byte[] byteArray = null;
             var rc = LdapNative.Instance.ber_scanf_bitstring(berElement, new string(fmt, 1), ref ptrResult, ref length);
 
             // try
             // {
                 if (rc != -1)
                 {
-                    byte[] byteArray = null;
                     if (ptrResult != IntPtr.Zero)
                     {
-                        byteArray = new byte[length];
-                        Marshal.Copy(ptrResult, byteArray, 0, length);
+                        var bytesLength = length / 8 + 1;
+                        var bytes = new byte[bytesLength];
+                        for (var i = 0; i < bytes.Length; i++)
+                        {
+                            bytes[i] = Marshal.ReadByte(ptrResult, i);
+                        }
+                        var bitArray = new BitArray(bytes);
+                        bitArray.Length = length;
+                        bool[] boolArray = new bool[length];
+                        bitArray.CopyTo(boolArray,0);
+                        byteArray = boolArray.Select(_ => _ ? (byte) 1 : (byte)0).ToArray();
                     }
 
-                    result = byteArray;
+
+
+                result = byteArray;
                 }
             // }
             // finally
@@ -566,6 +598,29 @@ namespace LdapForNet
         {
             result = null;
             return LdapNative.Instance.ber_scanf(berElement, new string(fmt, 1));
+        }
+
+        private static int EncodingBitArrayHelper(BerSafeHandle berElement, BitArray value, char fmt)
+        {
+            int tag;
+
+            // one byte array, one int arguments
+            if (value != null)
+            {
+                var arr = new byte[value.Length/8 + 1];
+                value.CopyTo(arr,0);
+                var tmp = Marshal.AllocHGlobal(arr.Length);
+                Marshal.Copy(arr, 0, tmp, arr.Length);
+                var memHandle = new HGlobalMemHandle(tmp);
+
+                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), memHandle, value.Length);
+            }
+            else
+            {
+                tag = LdapNative.Instance.ber_printf_bytearray(berElement, new string(fmt, 1), new HGlobalMemHandle(IntPtr.Zero), 0);
+            }
+
+            return tag;
         }
 
         private static int EncodingByteArrayHelper(BerSafeHandle berElement, byte[] value, char fmt)
