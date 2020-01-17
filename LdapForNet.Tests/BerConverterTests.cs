@@ -232,10 +232,10 @@ namespace LdapForNetTests
                 new[] {OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString()}
             };
             yield return new object[] {"{ss}", "{OO}", new object[] {"abc", "dfe"}};
-            yield return new object[] {"{{v}{v}}", "{{v}{v}}", new object[] {new[] {"82DA", "82AB"}, new[] {"81AD"}}};
+            yield return new object[] {"{{v}{v}}", "{vv}", new object[] {new[] {"82DA", "82AB"}, new[] {"81AD"}}};
             yield return new object[]
             {
-                "{{V}{V}}", "{{V}{V}}", new object[] {new[] {new byte[] {1, 2, 3, 4}}, new[] {new byte[] {5, 6, 7, 8}}}
+                "{{V}{V}}", "{VV}", new object[] {new[] {new byte[] {1, 2, 3, 4}}, new[] {new byte[] {5, 6, 7, 8}}}
             };
             yield return new object[]
             {
