@@ -85,6 +85,7 @@ namespace LdapForNet
             [']'] = new BerEncodeAction(BerPrintEmptyArg, false),
             ['X'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes, 'X'),
+            // ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['O'] = new BerEncodeAction(BerPrintBerValOctetString),
 
         };
