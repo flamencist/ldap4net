@@ -173,7 +173,7 @@ namespace LdapForNetTests
                 {"{VV}", new byte[] {48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0}, new object[] {null, null}};
             yield return new object[]
             {
-                "{VV}", new byte[] {48, 132, 0, 0, 0, 12, 4, 4, 1, 2, 3, 4, 4, 4, 5, 6, 7, 8},
+                "{VV}", new byte[] {48,16,48,6,4,4,1,2,3,4,48,6,4,4,5,6,7,8},
                 new object[] {new[] {new byte[] {1, 2, 3, 4}}, new[] {new byte[] {5, 6, 7, 8}}}
             };
         }
