@@ -98,7 +98,12 @@ namespace LdapForNet.Native
                     Marshal.FreeHGlobal(bv_val);
                 }
             }
-            }
+        }
+
+        internal enum BerElementOption
+        {
+            LBER_USE_DER = 0x01
+        }
     }
     
     

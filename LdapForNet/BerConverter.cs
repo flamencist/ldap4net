@@ -141,6 +141,7 @@ namespace LdapForNet
                     throw new ArgumentException("Format string contains undefined character: " + new string(fmt, 1));
                 }
 
+                fmt = encodeAction.UseFormat == char.MinValue ? fmt : encodeAction.UseFormat;
                 if (encodeAction.Action(berElement, fmt, value, valueCount) == -1)
                 {
                     Debug.WriteLine("ber_printf failed\n");
@@ -154,7 +155,7 @@ namespace LdapForNet
             }
 
             // get the binary value back
-            var binaryValue = new Native.Native.berval();
+            var berVal = new Native.Native.berval();
             var flattenPtr = IntPtr.Zero;
 
             try
@@ -170,18 +171,18 @@ namespace LdapForNet
 
                 if (flattenPtr != IntPtr.Zero)
                 {
-                    Marshal.PtrToStructure(flattenPtr, binaryValue);
+                    Marshal.PtrToStructure(flattenPtr, berVal);
                 }
 
-                if (binaryValue.bv_len == 0)
+                if (berVal.bv_len == 0)
                 {
                     encodingResult = Array.Empty<byte>();
                 }
                 else
                 {
-                    encodingResult = new byte[binaryValue.bv_len];
+                    encodingResult = new byte[berVal.bv_len];
 
-                    Marshal.Copy(binaryValue.bv_val, encodingResult, 0, binaryValue.bv_len);
+                    Marshal.Copy(berVal.bv_val, encodingResult, 0, berVal.bv_len);
                 }
             }
             finally

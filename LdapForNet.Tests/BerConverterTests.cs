@@ -1,7 +1,3 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -161,6 +157,11 @@ namespace LdapForNetTests
                 new object[] {new byte[] {0, 1, 0, 1, 0, 1}, new byte[] {1, 0, 1, 0, 1, 0, 1, 0}}
             };
             yield return new object[]
+                {
+                    "{BB}", new byte[] {48,132,0,0,0,18,3,6,42,0,37,0,112,0,3,8,85,0,10,10,10,0,0,0},
+                    new object[] {new byte[] {0, 1, 0, 1, 0, 1}, new byte[] {1, 0, 1, 0, 1, 0, 1, 0}}
+                };
+            yield return new object[]
             {
                 "{BB}", new byte[] {48,10,3,3,7,1,1,3,3,7,15,1},
                 new object[] {new byte[] {1, 0, 0, 0, 0, 0, 0, 0, 1}, new byte[] {1, 1, 1, 1, 0, 0, 0, 0, 1}}
@@ -231,7 +232,7 @@ namespace LdapForNetTests
                 "{OO}", "{OO}", new object[] {new byte[] {3}, new byte[] {4}},
                 new[] {OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString()}
             };
-            yield return new object[] {"{ss}", "{OO}", new object[] {"abc", "dfe"}};
+            yield return new object[] {"{ss}", "{ss}", new object[] {"abc", "dfe"}, new[] { OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString() } };
             yield return new object[] {"{{v}{v}}", "{vv}", new object[] {new[] {"82DA", "82AB"}, new[] {"81AD"}}};
             yield return new object[]
             {
