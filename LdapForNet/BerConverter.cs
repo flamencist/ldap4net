@@ -87,6 +87,7 @@ namespace LdapForNet
             ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes, 'X'),
             // ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['O'] = new BerEncodeAction(BerPrintBerValOctetString),
+            ['W'] = new BerEncodeAction(BerPrintBerValMultiBytesW),
 
         };
 
@@ -287,6 +288,26 @@ namespace LdapForNet
             }
 
             return EncodingBerValMultiByteArrayHelper(berElement, fmt, (byte[][])value[valueIndex]);
+        }
+
+        private static int BerPrintBerValMultiBytesW(BerSafeHandle berElement, char fmt, object[] value, int valueIndex)
+        {
+            // we need to have one arguments
+            if (valueIndex >= value.Length)
+            {
+                // we don't have enough argument for the format string
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
+            }
+
+            if (value[valueIndex] != null && !(value[valueIndex] is byte[][]))
+            {
+                // argument is wrong
+                throw new ArgumentException("type should be byte[][], but receiving value has type of " +
+                                            value[valueIndex].GetType());
+            }
+
+            var byteArray = ((byte[][])value[valueIndex]).Concat(new byte[][] {null}).ToArray();
+            return EncodingBerValMultiByteArrayHelper(berElement, fmt, byteArray);
         }
 
         private static int BerPrintEmptyArg(BerSafeHandle berElement, char format, object[] value, int index) => LdapNative.Instance.ber_printf_emptyarg(berElement, new string(format, 1));
