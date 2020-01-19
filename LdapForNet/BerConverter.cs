@@ -110,6 +110,7 @@ namespace LdapForNet
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['s'] = new BerDecodeAction(BerScanfString),
             ['o'] = new BerDecodeAction(BerScanfBerValOstring),
+            ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
         };
 
         private static readonly UTF8Encoding Utf8Encoder = new UTF8Encoding();
