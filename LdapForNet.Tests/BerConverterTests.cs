@@ -241,7 +241,7 @@ namespace LdapForNetTests
             yield return new object[]
             {
                 "{W}{W}", "{W}{W}", new object[] {new[] {new byte[] {1, 2, 3, 4}}, new[] {new byte[] {5, 6, 7, 8}}},
-                new[] {OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString()}
+//                new[] {OSPlatform.Linux.ToString(), OSPlatform.OSX.ToString()}
             };
         }
 

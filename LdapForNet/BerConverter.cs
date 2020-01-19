@@ -110,7 +110,7 @@ namespace LdapForNet
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['s'] = new BerDecodeAction(BerScanfString),
             ['o'] = new BerDecodeAction(BerScanfBerValOstring),
-            ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
+            ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArrayW),
         };
 
         private static readonly UTF8Encoding Utf8Encoder = new UTF8Encoding();
@@ -307,8 +307,7 @@ namespace LdapForNet
                                             value[valueIndex].GetType());
             }
 
-            var byteArray = ((byte[][])value[valueIndex]).Concat(new byte[][] {null}).ToArray();
-            return EncodingBerValMultiByteArrayHelper(berElement, fmt, byteArray);
+            return EncodingBerValMultiByteArrayHelperW(berElement, fmt, (byte[][])value[valueIndex]);
         }
 
         private static int BerPrintEmptyArg(BerSafeHandle berElement, char format, object[] value, int index) => LdapNative.Instance.ber_printf_emptyarg(berElement, new string(format, 1));
@@ -461,6 +460,13 @@ namespace LdapForNet
         private static int BerScanfBerValMultiByteArray(BerSafeHandle berElement, char fmt, out object result)
         {
             var error = DecodingBerValMultiByteArrayHelper(berElement, fmt, out var array);
+            result = array;
+            return error;
+        }
+        
+        private static int BerScanfBerValMultiByteArrayW(BerSafeHandle berElement, char fmt, out object result)
+        {
+            var error = DecodingBerValMultiByteArrayHelperW(berElement, fmt, out var array);
             result = array;
             return error;
         }
@@ -851,6 +857,65 @@ namespace LdapForNet
             return rc;
         }
 
+        private static int EncodingBerValMultiByteArrayHelperW(BerSafeHandle berElement, char fmt, byte[][] value)
+        {
+            var berValArray = IntPtr.Zero;
+            Native.Native.SafeBerval[] managedBerVal = null;
+            int rc;
+
+            try
+            {
+                if (value != null)
+                {
+                    var structSize = Marshal.SizeOf(typeof(Native.Native.SafeBerval));
+
+                    berValArray = Marshal.AllocHGlobal((value.Length + 1) * structSize);
+                    managedBerVal = new Native.Native.SafeBerval[value.Length];
+
+                    for (var i = 0; i < value.Length; i++)
+                    {
+                        var byteArray = value[i];
+
+                        // construct the managed berval
+                        managedBerVal[i] = new Native.Native.SafeBerval();
+
+                        if (byteArray == null)
+                        {
+                            managedBerVal[i].bv_len = 0;
+                            managedBerVal[i].bv_val = IntPtr.Zero;
+                        }
+                        else
+                        {
+                            managedBerVal[i].bv_len = byteArray.Length;
+                            managedBerVal[i].bv_val = Marshal.AllocHGlobal(byteArray.Length);
+                            if (managedBerVal[i].bv_val != IntPtr.Zero)
+                            {
+                                Marshal.Copy(byteArray, 0, managedBerVal[i].bv_val, byteArray.Length);
+                            }
+                        }
+
+                        var valPtr = new IntPtr((long)berValArray+i*structSize);
+                        Marshal.StructureToPtr(managedBerVal[i], valPtr, false);
+                    }
+
+                    Marshal.StructureToPtr(new Native.Native.SafeBerval{ bv_len = 0, bv_val = IntPtr.Zero}, new IntPtr((long)berValArray+value.Length*structSize), false);
+                }
+
+                rc = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), berValArray);
+
+                GC.KeepAlive(managedBerVal);
+            }
+            finally
+            {
+                if (berValArray != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(berValArray);
+                }
+            }
+
+            return rc;
+        }
+
         private static int DecodingBerValMultiByteArrayHelper(BerSafeHandle berElement, char fmt, out byte[][] result)
         {
             int rc;
@@ -871,6 +936,48 @@ namespace LdapForNet
                 if (ptrResult != IntPtr.Zero)
                 {
                     LdapNative.Instance.ber_bvecfree(ptrResult);
+                }
+            }
+
+            return rc;
+        }
+        
+        private static int DecodingBerValMultiByteArrayHelperW(BerSafeHandle berElement, char fmt, out byte[][] result)
+        {
+            int rc;
+            var ptrResult = IntPtr.Zero;
+            result = null;
+
+            try
+            {
+                rc = LdapNative.Instance.ber_scanf_ptr(berElement, new string(fmt, 1), ref ptrResult);
+
+                if (rc != -1 && ptrResult != IntPtr.Zero)
+                {
+                    var count = 0;
+                    var size = Marshal.SizeOf<Native.Native.berval>();
+                    var bytes  = new List<byte[]>();
+                    var bervalue = Marshal.PtrToStructure<Native.Native.berval>(ptrResult);
+                    while (bervalue.bv_val != IntPtr.Zero)
+                    {
+                        if (bervalue.bv_len > 0 && bervalue.bv_val != IntPtr.Zero)
+                        {
+                            var byteArray = new byte[bervalue.bv_len];
+                            Marshal.Copy(bervalue.bv_val, byteArray, 0, bervalue.bv_len);
+                            bytes.Add(byteArray);
+                        }
+                        count++;
+                        var tempPtr = new IntPtr((long)ptrResult + size*count);
+                        bervalue = Marshal.PtrToStructure<Native.Native.berval>(tempPtr);
+                    }
+                    result = bytes.ToArray();
+                }
+            }
+            finally
+            {
+                if (ptrResult != IntPtr.Zero)
+                {
+                    //LdapNative.Instance.ber_bvarrayfree(ptrResult);
                 }
             }
 
