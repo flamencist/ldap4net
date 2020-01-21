@@ -100,7 +100,7 @@ namespace LdapForNet
             ['i'] = new BerDecodeAction(BerScanfInt),
             ['B'] = new BerDecodeAction(BerScanfBitString),
             ['n'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['t'] = new BerDecodeAction(BerScanfEmptyTag, true),
+            ['t'] = new BerDecodeAction(BerScanfInt),
             ['v'] = new BerDecodeAction(BerScanfStringArray),
             ['V'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
             ['x'] = new BerDecodeAction(BerScanfEmptyTag, true),
