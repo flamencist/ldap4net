@@ -94,6 +94,7 @@ namespace LdapForNet
         private static readonly IDictionary<char, BerDecodeAction> DecodeActions = new Dictionary<char, BerDecodeAction>
         {
             ['a'] = new BerDecodeAction(BerScanfStringFromByteArray),
+            ['A'] = new BerDecodeAction(BerScanfStringFromByteArray,false,'a'),
             ['O'] = new BerDecodeAction(BerScanfByteArray),
             ['b'] = new BerDecodeAction(BerScanfInt),
             ['e'] = new BerDecodeAction(BerScanfInt),
@@ -110,6 +111,7 @@ namespace LdapForNet
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['s'] = new BerDecodeAction(BerScanfStringFromByteArray, false,'a'),
             ['o'] = new BerDecodeAction(BerScanfByteArray, false, 'O'),
+            ['m'] = new BerDecodeAction(BerScanfByteArray, false, 'O'),
             ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArrayW),
         };
 
