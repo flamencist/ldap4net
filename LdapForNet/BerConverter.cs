@@ -86,7 +86,7 @@ namespace LdapForNet
             ['X'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes, 'X'),
             // ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes),
-            ['O'] = new BerEncodeAction(BerPrintBerValOctetString),
+            ['O'] = new BerEncodeAction(BerPrintOctetStringFromBytes, true, 'o'),
             ['W'] = new BerEncodeAction(BerPrintBerValMultiBytesW),
 
         };
@@ -343,14 +343,14 @@ namespace LdapForNet
             if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
-                throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
             if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
             {
                 // argument is wrong
-                throw new ArgumentException("type should be byte[], but receiving value has type of " +
-                                            value[valueIndex].GetType());
+                throw new ArgumentException(
+                    $"type should be byte[], but receiving value has type of {value[valueIndex].GetType()}");
             }
 
             var tempValue = (byte[])value[valueIndex] ?? new byte[0];
@@ -363,14 +363,14 @@ namespace LdapForNet
             if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
-                throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
             if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
             {
                 // argument is wrong
-                throw new ArgumentException("type should be byte[], but receiving value has type of " +
-                                            value[valueIndex].GetType());
+                throw new ArgumentException(
+                    $"type should be byte[], but receiving value has type of {value[valueIndex].GetType()}");
             }
 
             var byteArray = (byte[])value[valueIndex] ?? new byte[0];
@@ -384,14 +384,14 @@ namespace LdapForNet
             if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
-                throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
             if (value[valueIndex] != null && !(value[valueIndex] is byte[]))
             {
                 // argument is wrong
-                throw new ArgumentException("type should be byte[], but receiving value has type of " +
-                                            value[valueIndex].GetType());
+                throw new ArgumentException(
+                    $"type should be byte[], but receiving value has type of {value[valueIndex].GetType()}");
             }
 
             var byteArray = (byte[])value[valueIndex] ?? new byte[0];
@@ -403,14 +403,14 @@ namespace LdapForNet
             if (valueIndex >= value.Length)
             {
                 // we don't have enough argument for the format string
-                throw new ArgumentException("value argument is not valid, valueCount >= value.Length\n");
+                throw new ArgumentException("value argument is not valid, valueCount >= value.Length");
             }
 
             if (value[valueIndex] != null && !(value[valueIndex] is string))
             {
                 // argument is wrong
-                throw new ArgumentException("type should be string, but receiving value has type of " +
-                                            value[valueIndex].GetType());
+                throw new ArgumentException(
+                    $"type should be string, but receiving value has type of {value[valueIndex].GetType()}");
             }
 
             // one string argument       
