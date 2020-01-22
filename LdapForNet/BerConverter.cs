@@ -109,7 +109,7 @@ namespace LdapForNet
             ['['] = new BerDecodeAction(BerScanfEmptyTag, true),
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['s'] = new BerDecodeAction(BerScanfStringFromByteArray, false,'a'),
-            ['o'] = new BerDecodeAction(BerScanfBerValOstring),
+            ['o'] = new BerDecodeAction(BerScanfByteArray, false, 'O'),
             ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArrayW),
         };
 

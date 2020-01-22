@@ -25,7 +25,7 @@ namespace LdapForNet.Native
             return Init(ref ld, uri.Host, port);
         }
 
-        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's'};
+        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o' };
         internal override int Init(ref IntPtr ld, string hostname, int port)
         {
             ld =  NativeMethodsWindows.ldap_init(hostname, port);
