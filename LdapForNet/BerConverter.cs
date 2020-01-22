@@ -100,7 +100,7 @@ namespace LdapForNet
             ['i'] = new BerDecodeAction(BerScanfInt),
             ['B'] = new BerDecodeAction(BerScanfBitString),
             ['n'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['t'] = new BerDecodeAction(BerScanfInt),
+            ['t'] = new BerDecodeAction(BerScanfTag),
             ['v'] = new BerDecodeAction(BerScanfStringArray),
             ['V'] = new BerDecodeAction(BerScanfBerValMultiByteArray),
             ['x'] = new BerDecodeAction(BerScanfEmptyTag, true),
@@ -608,6 +608,13 @@ namespace LdapForNet
             }
 
             return rc;
+        }
+
+        private static int BerScanfTag(BerSafeHandle berElement, char fmt, out object result)
+        {
+            var length = 0;
+            result = LdapNative.Instance.ber_peek_tag(berElement, ref length);
+            return 0;
         }
 
         private static int BerScanfInt(BerSafeHandle berElement, char fmt, out object result)

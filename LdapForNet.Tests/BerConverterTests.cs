@@ -245,7 +245,7 @@ namespace LdapForNetTests
             };
             yield return new object[]
             {
-                "{iit{ii}}", "{iit{ii}}", new object[] { 0, 1, 8, 129, 1}
+                "{iit{ii}}", "{iit{ii}}", new object[] { 0, 1, 4, 129, 1}
             };
         }
 

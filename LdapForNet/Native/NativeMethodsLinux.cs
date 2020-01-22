@@ -306,7 +306,9 @@ namespace LdapForNet.Native
         internal static extern IntPtr ber_free(IntPtr berelement, int option);
         [DllImport(LIB_LBER_PATH)]
         internal static extern void ber_memfree(IntPtr value);
-        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]
+        [DllImport(LIB_LBER_PATH, EntryPoint = "ber_scanf")]
         internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
     }
 }

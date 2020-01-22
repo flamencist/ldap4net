@@ -340,5 +340,7 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
         internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -226,6 +225,8 @@ namespace LdapForNet.Native
 
         internal override int ber_scanf_int(SafeHandle berElement, string format, ref int value)
             => NativeMethodsWindows.ber_scanf_int(berElement, format, ref value);
+
+        internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsWindows.ber_peek_tag(berElement, ref length);
 
         internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
             => NativeMethodsWindows.ber_scanf_ptr(berElement, format, ref value);

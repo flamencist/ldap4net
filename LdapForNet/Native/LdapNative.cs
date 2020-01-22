@@ -88,6 +88,7 @@ namespace LdapForNet.Native
         internal abstract int ber_scanf(SafeHandle berElement, string format);
 
         internal abstract int ber_scanf_int(SafeHandle berElement, string format, ref int value);
+        internal abstract int ber_peek_tag(SafeHandle berElement, ref int length);
 
         internal abstract int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
         internal abstract int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);

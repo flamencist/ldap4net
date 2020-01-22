@@ -388,7 +388,7 @@ namespace LdapForNet.Native
         internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
             => NativeMethodsLinux.ber_scanf_string(berElement, format, value, ref  length);
 
-        
+        internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsLinux.ber_peek_tag(berElement, ref length);
         internal override int ber_bvfree(IntPtr value)
             => NativeMethodsLinux.ber_bvfree(value);
 

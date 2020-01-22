@@ -385,7 +385,7 @@ namespace LdapForNet.Native
 
         internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
             => NativeMethodsOsx.ber_scanf_bitstring(berElement, format, ref value, ref length);
-
+        internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsOsx.ber_peek_tag(berElement, ref length);
         internal override int ber_bvfree(IntPtr value)
             => NativeMethodsOsx.ber_bvfree(value);
 
