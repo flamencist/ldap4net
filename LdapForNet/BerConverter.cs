@@ -108,7 +108,7 @@ namespace LdapForNet
             ['}'] = new BerDecodeAction(BerScanfEmptyTag, true),
             ['['] = new BerDecodeAction(BerScanfEmptyTag, true),
             [']'] = new BerDecodeAction(BerScanfEmptyTag, true),
-            ['s'] = new BerDecodeAction(BerScanfString),
+            ['s'] = new BerDecodeAction(BerScanfStringFromByteArray, false,'a'),
             ['o'] = new BerDecodeAction(BerScanfBerValOstring),
             ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArrayW),
         };
@@ -255,7 +255,9 @@ namespace LdapForNet
                     throw new ArgumentException($"Format string contains unrecognized format character {fmt}");
                 }
 
-                if (decodeAction.Action(berElement, fmt, out var result) == -1)
+                var decodeFormat = decodeAction.UseFormat == char.MinValue ? fmt : decodeAction.UseFormat;
+
+                if (decodeAction.Action(berElement, decodeFormat, out var result) == -1)
                 {
                     Debug.WriteLine($"ber_scanf for {fmt} failed");
 
