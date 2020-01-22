@@ -908,7 +908,7 @@ namespace LdapForNet
                     Marshal.StructureToPtr(new Native.Native.SafeBerval{ bv_len = 0, bv_val = IntPtr.Zero}, new IntPtr((long)berValArray+value.Length*structSize), false);
                 }
 
-                rc = LdapNative.Instance.ber_printf_berarray(berElement, new string(fmt, 1), berValArray);
+                rc = LdapNative.Instance.ber_printf_berarray(berElement, $"{{{fmt}}}", berValArray);
 
                 GC.KeepAlive(managedBerVal);
             }
@@ -967,7 +967,7 @@ namespace LdapForNet
                     var bervalue = Marshal.PtrToStructure<Native.Native.berval>(ptrResult);
                     while (bervalue.bv_val != IntPtr.Zero)
                     {
-                        if (bervalue.bv_len > 0 && bervalue.bv_val != IntPtr.Zero)
+                        if (bervalue.bv_len > 0)
                         {
                             var byteArray = new byte[bervalue.bv_len];
                             Marshal.Copy(bervalue.bv_val, byteArray, 0, bervalue.bv_len);
