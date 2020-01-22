@@ -614,7 +614,7 @@ namespace LdapForNet
         {
             var length = 0;
             result = LdapNative.Instance.ber_peek_tag(berElement, ref length);
-            return 0;
+            return (int)result;
         }
 
         private static int BerScanfInt(BerSafeHandle berElement, char fmt, out object result)
