@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using LdapForNet.Native;
 using LdapForNet.Utils;
+using Encoder = LdapForNet.Utils.Encoder;
 
 namespace LdapForNet
 {
@@ -41,13 +43,19 @@ namespace LdapForNet
         PhantomRoot = 2
     }
 
+    [StructLayout(LayoutKind.Sequential)]
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class SortKeyNative
+    {
+        internal IntPtr AttributeName { get; set; }
+        internal IntPtr MatchingRule { get; set; }
+        internal bool ReverseOrder { get; set; }
+
+    }
+
     public class SortKey
     {
         private string _name;
-        private string _rule;
-        private bool _order = false;
 
         public SortKey()
         {
@@ -56,8 +64,8 @@ namespace LdapForNet
         public SortKey(string attributeName, string matchingRule, bool reverseOrder)
         {
             AttributeName = attributeName;
-            _rule = matchingRule;
-            _order = reverseOrder;
+            MatchingRule = matchingRule;
+            ReverseOrder = reverseOrder;
         }
 
         public string AttributeName
@@ -66,16 +74,18 @@ namespace LdapForNet
             set => _name = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        public string MatchingRule
-        {
-            get => _rule;
-            set => _rule = value;
-        }
+        public string MatchingRule { get; set; }
 
-        public bool ReverseOrder
+        public bool ReverseOrder { get; set; } = false;
+
+        internal SortKeyNative ToNative()
         {
-            get => _order;
-            set => _order = value;
+            return new SortKeyNative
+            {
+                AttributeName = Encoder.Instance.StringToPtr(_name),
+                MatchingRule = string.IsNullOrEmpty(MatchingRule) ? IntPtr.Zero : Encoder.Instance.StringToPtr(MatchingRule),
+                ReverseOrder = ReverseOrder
+            };
         }
     }
 
@@ -683,8 +693,9 @@ namespace LdapForNet
         public override byte[] GetValue()
         {
             var control = IntPtr.Zero;
-            var structSize = Marshal.SizeOf(typeof(SortKey));
-            var keyCount = _keys.Length;
+            var structSize = Marshal.SizeOf(typeof(SortKeyNative));
+            var nativeKeys = _keys.Select(_ => _.ToNative()).ToArray();
+            var keyCount = nativeKeys.Length;
             var memHandle = MarshalUtils.AllocHGlobalIntPtrArray(keyCount + 1);
 
             try
@@ -695,7 +706,7 @@ namespace LdapForNet
                 for (i = 0; i < keyCount; i++)
                 {
                     sortPtr = Marshal.AllocHGlobal(structSize);
-                    Marshal.StructureToPtr(_keys[i], sortPtr, false);
+                    Marshal.StructureToPtr(nativeKeys[i], sortPtr, false);
                     tempPtr = (IntPtr)((long)memHandle + IntPtr.Size * i);
                     Marshal.WriteIntPtr(tempPtr, sortPtr);
                 }

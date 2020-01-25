@@ -35,7 +35,8 @@ namespace LdapForNetTests
             }
         }
         
-        [Fact(Skip = "Example of controls with gssapi enabled")]
+        //[Fact(Skip = "Example of controls with gssapi enabled")]
+        [Fact()]
         public void LdapConnection_With_Directory_Control_Search_Return_LdapEntries_List()
         {
             using (var connection = new LdapConnection())
