@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
+using LdapForNet.Utils;
 using Xunit;
 using Xunit.Abstractions;
 using static LdapForNet.Native.Native;
@@ -28,6 +29,27 @@ namespace LdapForNetTests
                 connection.Bind(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=admin))");
                 Assert.True(entries.Count == 1);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact(Skip = "Example of controls with gssapi enabled")]
+        public void LdapConnection_With_Directory_Control_Search_Return_LdapEntries_List()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect();
+                connection.BindAsync().Wait();
+                var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "(objectclass=top)",
+                    LdapSearchScope.LDAP_SCOPE_SUB);
+                directoryRequest.Controls.Add(new ShowDeletedControl());
+                directoryRequest.Controls.Add(new TreeDeleteControl());
+                directoryRequest.Controls.Add(new SortRequestControl("whenCreated",false));
+                var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                var entries = response.Entries.Select(_=>_.ToLdapEntry()).ToList();
+                Assert.Single(entries);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
                 Assert.True(entries[0].Attributes["objectClass"].Any());

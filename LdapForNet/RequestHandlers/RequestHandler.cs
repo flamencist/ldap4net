@@ -187,7 +187,7 @@ namespace LdapForNet.RequestHandlers
                         managedControls[i] = new Native.Native.LdapControl()
                         {
                             // Get the control type.
-                            ldctl_oid = Marshal.StringToHGlobalUni(((DirectoryControl)controlList[i]).Type),
+                            ldctl_oid = Encoder.Instance.StringToPtr(((DirectoryControl)controlList[i]).Type),
 
                             // Get the control cricality.
                             ldctl_iscritical = ((DirectoryControl)controlList[i]).IsCritical

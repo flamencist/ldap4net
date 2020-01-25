@@ -42,7 +42,7 @@ namespace LdapForNet
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public class SortKey
     {
         private string _name;
@@ -90,10 +90,7 @@ namespace LdapForNet
             if (value != null)
             {
                 _directoryControlValue = new byte[value.Length];
-                for (var i = 0; i < value.Length; i++)
-                {
-                    _directoryControlValue[i] = value[i];
-                }
+                Array.Copy(value,_directoryControlValue,value.Length);
             }
             IsCritical = isCritical;
             ServerSide = serverSide;
@@ -107,10 +104,7 @@ namespace LdapForNet
             }
 
             var tempValue = new byte[_directoryControlValue.Length];
-            for (var i = 0; i < _directoryControlValue.Length; i++)
-            {
-                tempValue[i] = _directoryControlValue[i];
-            }
+            Array.Copy(_directoryControlValue,tempValue,_directoryControlValue.Length);
             return tempValue;
         }
 
@@ -273,10 +267,7 @@ namespace LdapForNet
 
                 // Allocate large enough space for the '\0' character.
                 _directoryControlValue = new byte[bytes.Length + 2];
-                for (var i = 0; i < bytes.Length; i++)
-                {
-                    _directoryControlValue[i] = bytes[i];
-                }
+                Array.Copy(bytes,_directoryControlValue,bytes.Length);
             }
             return base.GetValue();
         }
@@ -463,10 +454,8 @@ namespace LdapForNet
                 }
                 
                 var tempCookie = new byte[_dirsyncCookie.Length];
-                for (var i = 0; i < tempCookie.Length; i++)
-                {
-                    tempCookie[i] = _dirsyncCookie[i];
-                }
+                Array.Copy(_dirsyncCookie,tempCookie,_dirsyncCookie.Length);
+
 
                 return tempCookie;
             }
@@ -520,10 +509,8 @@ namespace LdapForNet
                 }
 
                 var tempCookie = new byte[_dirsyncCookie.Length];
-                for (var i = 0; i < tempCookie.Length; i++)
-                {
-                    tempCookie[i] = _dirsyncCookie[i];
-                }
+                Array.Copy(_dirsyncCookie,tempCookie,_dirsyncCookie.Length);
+
 
                 return tempCookie;
             }
@@ -575,10 +562,8 @@ namespace LdapForNet
                 }
 
                 var tempCookie = new byte[_pageCookie.Length];
-                for (var i = 0; i < _pageCookie.Length; i++)
-                {
-                    tempCookie[i] = _pageCookie[i];
-                }
+                Array.Copy(_pageCookie,tempCookie,_pageCookie.Length);
+
 
                 return tempCookie;
             }
@@ -613,10 +598,7 @@ namespace LdapForNet
                 }
 
                 var tempCookie = new byte[_pageCookie.Length];
-                for (var i = 0; i < _pageCookie.Length; i++)
-                {
-                    tempCookie[i] = _pageCookie[i];
-                }
+                Array.Copy(_pageCookie,tempCookie,_pageCookie.Length);
                 return tempCookie;
             }
         }
@@ -1006,20 +988,20 @@ namespace LdapForNet
         public Native.Native.ResultCode Result { get; }
     }
 
-    /*public class QuotaControl : DirectoryControl
+    public class QuotaControl : DirectoryControl
     {
         private byte[] _sid;
 
         public QuotaControl() : base("1.2.840.113556.1.4.1852", null, true, true) { }
 
-        public QuotaControl(SecurityIdentifier querySid) : this()
+        public QuotaControl(byte[] querySid) : this()
         {
             QuerySid = querySid;
         }
 
-        public SecurityIdentifier QuerySid
+        public byte[] QuerySid
         {
-            get => _sid == null ? null : new SecurityIdentifier(_sid, 0);
+            get => _sid;
             set
             {
                 if (value == null)
@@ -1028,8 +1010,7 @@ namespace LdapForNet
                 }
                 else
                 {
-                    _sid = new byte[value.BinaryLength];
-                    value.GetBinaryForm(_sid, 0);
+                    _sid = value;
                 }
             }
         }
@@ -1039,7 +1020,7 @@ namespace LdapForNet
             _directoryControlValue = BerConverter.Encode("{o}", _sid);
             return base.GetValue();
         }
-    }*/
+    }
 
     /*public class DirectoryControlCollection : CollectionBase
     {
