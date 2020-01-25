@@ -700,18 +700,14 @@ namespace LdapForNet
 
             try
             {
-                var tempPtr = IntPtr.Zero;
                 var sortPtr = IntPtr.Zero;
-                var i = 0;
-                for (i = 0; i < keyCount; i++)
+                for (var i = 0; i < keyCount; i++)
                 {
                     sortPtr = Marshal.AllocHGlobal(structSize);
                     Marshal.StructureToPtr(nativeKeys[i], sortPtr, false);
-                    tempPtr = (IntPtr)((long)memHandle + IntPtr.Size * i);
-                    Marshal.WriteIntPtr(tempPtr, sortPtr);
+                    Marshal.WriteIntPtr(memHandle, IntPtr.Size * i, sortPtr);
                 }
-                tempPtr = (IntPtr)((long)memHandle + IntPtr.Size * i);
-                Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+                Marshal.WriteIntPtr(memHandle, IntPtr.Size * keyCount, IntPtr.Zero);
 
                 var critical = IsCritical;
                 var ld = IntPtr.Zero;
@@ -743,27 +739,24 @@ namespace LdapForNet
                 if (memHandle != IntPtr.Zero)
                 {
                     //release the memory from the heap
-                    for (var i = 0; i < keyCount; i++)
+                    foreach (var tempPtr in MarshalUtils.GetPointerArray(memHandle))
                     {
-                        var tempPtr = Marshal.ReadIntPtr(memHandle, IntPtr.Size * i);
-                        if (tempPtr != IntPtr.Zero)
+                        // free the marshalled name
+                        var ptr = Marshal.ReadIntPtr(tempPtr);
+                        if (ptr != IntPtr.Zero)
                         {
-                            // free the marshalled name
-                            var ptr = Marshal.ReadIntPtr(tempPtr);
-                            if (ptr != IntPtr.Zero)
-                            {
-                                Marshal.FreeHGlobal(ptr);
-                            }
-                            // free the marshalled rule
-                            ptr = Marshal.ReadIntPtr(tempPtr, IntPtr.Size);
-                            if (ptr != IntPtr.Zero)
-                            {
-                                Marshal.FreeHGlobal(ptr);
-                            }
-
-                            Marshal.FreeHGlobal(tempPtr);
+                            Marshal.FreeHGlobal(ptr);
                         }
+                        // free the marshalled rule
+                        ptr = Marshal.ReadIntPtr(tempPtr, IntPtr.Size);
+                        if (ptr != IntPtr.Zero)
+                        {
+                            Marshal.FreeHGlobal(ptr);
+                        }
+
+                        Marshal.FreeHGlobal(tempPtr);
                     }
+                    
                     Marshal.FreeHGlobal(memHandle);
                 }
             }
@@ -1032,89 +1025,4 @@ namespace LdapForNet
             return base.GetValue();
         }
     }
-
-    /*public class DirectoryControlCollection : CollectionBase
-    {
-        public DirectoryControlCollection()
-        {
-        }
-
-        public DirectoryControl this[int index]
-        {
-            get => (DirectoryControl)List[index];
-            set => List[index] = value ?? throw new ArgumentNullException(nameof(value));
-        }
-
-        public int Add(DirectoryControl control)
-        {
-            if (control == null)
-            {
-                throw new ArgumentNullException(nameof(control));
-            }
-
-            return List.Add(control);
-        }
-
-        public void AddRange(DirectoryControl[] controls)
-        {
-            if (controls == null)
-            {
-                throw new ArgumentNullException(nameof(controls));
-            }
-
-            foreach (DirectoryControl control in controls)
-            {
-                if (control == null)
-                {
-                    throw new ArgumentException("Null control" + nameof(controls));
-                }
-            }
-
-            InnerList.AddRange(controls);
-        }
-
-        public void AddRange(DirectoryControlCollection controlCollection)
-        {
-            if (controlCollection == null)
-            {
-                throw new ArgumentNullException(nameof(controlCollection));
-            }
-
-            int currentCount = controlCollection.Count;
-            for (int i = 0; i < currentCount; i = ((i) + (1)))
-            {
-                Add(controlCollection[i]);
-            }
-        }
-
-        public bool Contains(DirectoryControl value) => List.Contains(value);
-
-        public void CopyTo(DirectoryControl[] array, int index) => List.CopyTo(array, index);
-
-        public int IndexOf(DirectoryControl value) => List.IndexOf(value);
-
-        public void Insert(int index, DirectoryControl value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            List.Insert(index, value);
-        }
-
-        public void Remove(DirectoryControl value) => List.Remove(value);
-
-        protected override void OnValidate(object value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-            if (!(value is DirectoryControl))
-            {
-                throw new ArgumentException("Invalid value type. Is not " + nameof(DirectoryControl));
-            }
-        }
-    }*/
 }
