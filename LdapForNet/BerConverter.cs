@@ -85,7 +85,6 @@ namespace LdapForNet
             [']'] = new BerEncodeAction(BerPrintEmptyArg, false),
             ['X'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes, 'X'),
-            // ['B'] = new BerEncodeAction(BerPrintBitStringFromBytes),
             ['O'] = new BerEncodeAction(BerPrintOctetStringFromBytes, true, 'o'),
             ['W'] = new BerEncodeAction(BerPrintBerValMultiBytesW),
 
@@ -113,6 +112,8 @@ namespace LdapForNet
             ['o'] = new BerDecodeAction(BerScanfByteArray,  'O'),
             ['m'] = new BerDecodeAction(BerScanfByteArray,  'O'),
             ['W'] = new BerDecodeAction(BerScanfBerValMultiByteArrayW),
+            ['l'] = new BerDecodeAction(BerScanfInt),
+            ['T'] = new BerDecodeAction(BerScanfInt),
         };
 
         private static readonly UTF8Encoding Utf8Encoder = new UTF8Encoding();
