@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Castle.Core.Internal;
 using LdapForNet;
 using LdapForNet.Utils;
 using Xunit;
@@ -35,8 +36,8 @@ namespace LdapForNetTests
             }
         }
         
-        //[Fact(Skip = "Example of controls with gssapi enabled")]
-        [Fact()]
+        [Fact(Skip = "Example of controls with gssapi enabled")]
+        //[Fact()]
         public void LdapConnection_With_Directory_Control_Search_Return_LdapEntries_List()
         {
             using (var connection = new LdapConnection())
@@ -47,8 +48,25 @@ namespace LdapForNetTests
                     LdapSearchScope.LDAP_SCOPE_SUB);
                 directoryRequest.Controls.Add(new ShowDeletedControl());
                 directoryRequest.Controls.Add(new TreeDeleteControl());
-                directoryRequest.Controls.Add(new SortRequestControl("whenCreated",false));
+                directoryRequest.Controls.Add(new PageResultRequestControl(1));
+                //directoryRequest.Controls.Add(new SortRequestControl("whenCreated",false));
+                //directoryRequest.Controls.Add(new VlvRequestControl(0,2,1));
                 var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                DirectoryControl.TransformControls(response.Controls);
+                var pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
+                while (pageResultResponseControl != null)
+                {
+                    var pageResultRequestControl =
+                        (PageResultRequestControl)directoryRequest.Controls.Single(_ => _ is PageResultRequestControl);
+                    pageResultRequestControl.Cookie = pageResultResponseControl.Cookie;
+                    response = (SearchResponse)connection.SendRequest(directoryRequest);
+                    if (response.ResultCode == ResultCode.UnavailableCriticalExtension)
+                    {
+                        break;
+                    }
+                    DirectoryControl.TransformControls(response.Controls);
+                    pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
+                }
                 var entries = response.Entries.Select(_=>_.ToLdapEntry()).ToList();
                 Assert.Single(entries);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);

@@ -359,7 +359,7 @@ namespace LdapForNet
             var control = new Native.Native.LdapControl();
             Marshal.PtrToStructure(controlPtr, control);
 
-            var controlType = Marshal.PtrToStringAnsi(control.ldctl_oid);
+            var controlType = Encoder.Instance.PtrToString(control.ldctl_oid);
 
             var bytes = new byte[control.ldctl_value.bv_len];
             Marshal.Copy(control.ldctl_value.bv_val, bytes, 0, control.ldctl_value.bv_len);

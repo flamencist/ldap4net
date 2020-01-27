@@ -76,7 +76,7 @@ namespace LdapForNet
 
         public string MatchingRule { get; set; }
 
-        public bool ReverseOrder { get; set; } = false;
+        public bool ReverseOrder { get; set; }
 
         internal SortKeyNative ToNative()
         {
@@ -113,9 +113,7 @@ namespace LdapForNet
                 return Array.Empty<byte>();
             }
 
-            var tempValue = new byte[_directoryControlValue.Length];
-            Array.Copy(_directoryControlValue,tempValue,_directoryControlValue.Length);
-            return tempValue;
+            return _directoryControlValue.Copy();
         }
 
         public string Type { get; }
@@ -276,8 +274,7 @@ namespace LdapForNet
                 var bytes = encoder.GetBytes(TargetDomainController);
 
                 // Allocate large enough space for the '\0' character.
-                _directoryControlValue = new byte[bytes.Length + 2];
-                Array.Copy(bytes,_directoryControlValue,bytes.Length);
+                _directoryControlValue = bytes.Copy(bytes.Length + 2);
             }
             return base.GetValue();
         }
@@ -462,12 +459,8 @@ namespace LdapForNet
                 {
                     return Array.Empty<byte>();
                 }
-                
-                var tempCookie = new byte[_dirsyncCookie.Length];
-                Array.Copy(_dirsyncCookie,tempCookie,_dirsyncCookie.Length);
 
-
-                return tempCookie;
+                return _dirsyncCookie.Copy();
             }
             set => _dirsyncCookie = value;
         }
@@ -518,11 +511,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempCookie = new byte[_dirsyncCookie.Length];
-                Array.Copy(_dirsyncCookie,tempCookie,_dirsyncCookie.Length);
-
-
-                return tempCookie;
+                return _dirsyncCookie.Copy();
             }
         }
 
@@ -571,11 +560,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempCookie = new byte[_pageCookie.Length];
-                Array.Copy(_pageCookie,tempCookie,_pageCookie.Length);
-
-
-                return tempCookie;
+                return _pageCookie.Copy();
             }
             set => _pageCookie = value;
         }
@@ -607,9 +592,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempCookie = new byte[_pageCookie.Length];
-                Array.Copy(_pageCookie,tempCookie,_pageCookie.Length);
-                return tempCookie;
+                return _pageCookie.Copy();
             }
         }
 
@@ -626,12 +609,9 @@ namespace LdapForNet
                 throw new ArgumentNullException(nameof(sortKeys));
             }
 
-            for (var i = 0; i < sortKeys.Length; i++)
+            if (sortKeys.Any(_ => _ == null))
             {
-                if (sortKeys[i] == null)
-                {
-                    throw new ArgumentException("Found null in array", nameof(sortKeys));
-                }
+                throw new ArgumentException("Found null in array", nameof(sortKeys));
             }
 
             _keys = new SortKey[sortKeys.Length];
@@ -648,7 +628,7 @@ namespace LdapForNet
         public SortRequestControl(string attributeName, string matchingRule, bool reverseOrder) : base("1.2.840.113556.1.4.473", null, true, true)
         {
             var key = new SortKey(attributeName, matchingRule, reverseOrder);
-            _keys = new SortKey[] { key };
+            _keys = new[] { key };
         }
 
         public SortKey[] SortKeys
@@ -674,12 +654,9 @@ namespace LdapForNet
                     throw new ArgumentNullException(nameof(value));
                 }
 
-                for (var i = 0; i < value.Length; i++)
+                if (value.Any(_ => _ == null))
                 {
-                    if (value[i] == null)
-                    {
-                        throw new ArgumentException("Found null value in array", nameof(value));
-                    }
+                    throw new ArgumentException("Found null value in array", nameof(value));
                 }
 
                 _keys = new SortKey[value.Length];
@@ -802,8 +779,7 @@ namespace LdapForNet
             AfterCount = afterCount;
             if (target != null)
             {
-                var encoder = new UTF8Encoding();
-                _target = encoder.GetBytes(target);
+                _target = Encoder.Instance.GetBytes(target);
             }
         }
 
@@ -879,12 +855,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempContext = new byte[_target.Length];
-                for (var i = 0; i < tempContext.Length; i++)
-                {
-                    tempContext[i] = _target[i];
-                }
-                return tempContext;
+                return _target.Copy();
             }
             set => _target = value;
         }
@@ -980,12 +951,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempContext = new byte[_context.Length];
-                for (var i = 0; i < tempContext.Length; i++)
-                {
-                    tempContext[i] = _context[i];
-                }
-                return tempContext;
+                return _context.Copy();
             }
         }
 
@@ -994,8 +960,6 @@ namespace LdapForNet
 
     public class QuotaControl : DirectoryControl
     {
-        private byte[] _sid;
-
         public QuotaControl() : base("1.2.840.113556.1.4.1852", null, true, true) { }
 
         public QuotaControl(byte[] querySid) : this()
@@ -1003,26 +967,23 @@ namespace LdapForNet
             QuerySid = querySid;
         }
 
-        public byte[] QuerySid
-        {
-            get => _sid;
-            set
-            {
-                if (value == null)
-                {
-                    _sid = null;
-                }
-                else
-                {
-                    _sid = value;
-                }
-            }
-        }
+        public byte[] QuerySid { get; set; }
 
         public override byte[] GetValue()
         {
-            _directoryControlValue = BerConverter.Encode("{o}", _sid);
+            _directoryControlValue = BerConverter.Encode("{o}", QuerySid);
             return base.GetValue();
+        }
+    }
+
+    internal static class ArrayExtensions
+    {
+        public static T[] Copy<T>(this T[] array, int length = 0)
+        {
+            length = length > 0 ? length : array.Length;
+            var res = new T[length];
+            Array.Copy(array,res,array.Length);
+            return res;
         }
     }
 }
