@@ -42,30 +42,36 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
+
                 connection.Connect();
                 connection.BindAsync().Wait();
+                //var dse = connection.GetRootDse();
                 var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "(objectclass=top)",
-                    LdapSearchScope.LDAP_SCOPE_SUB);
-                directoryRequest.Controls.Add(new ShowDeletedControl());
-                directoryRequest.Controls.Add(new TreeDeleteControl());
-                directoryRequest.Controls.Add(new PageResultRequestControl(1));
+                    LdapSearchScope.LDAP_SCOPE_SUB){SizeLimit = 1, Attributes = { "cn"}};
+                var resultRequestControl = new PageResultRequestControl(1);
+                directoryRequest.Controls.Add(resultRequestControl);
+
+                var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                //directoryRequest.Controls.Add(new ShowDeletedControl());
+                //directoryRequest.Controls.Add(new TreeDeleteControl());
                 //directoryRequest.Controls.Add(new SortRequestControl("whenCreated",false));
                 //directoryRequest.Controls.Add(new VlvRequestControl(0,2,1));
-                var response = (SearchResponse)connection.SendRequest(directoryRequest);
-                DirectoryControl.TransformControls(response.Controls);
-                var pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
-                while (pageResultResponseControl != null)
+                response = (SearchResponse)connection.SendRequest(directoryRequest);
+                //DirectoryControl.TransformControls(response.Controls);
+                PageResultResponseControl pageResultResponseControl;
+                while (true)
                 {
-                    var pageResultRequestControl =
-                        (PageResultRequestControl)directoryRequest.Controls.Single(_ => _ is PageResultRequestControl);
-                    pageResultRequestControl.Cookie = pageResultResponseControl.Cookie;
+                    pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
+                    if (pageResultResponseControl == null || pageResultResponseControl.Cookie.Length == 0)
+                    {
+                        break;
+                    }
+                    resultRequestControl.Cookie = pageResultResponseControl.Cookie;
                     response = (SearchResponse)connection.SendRequest(directoryRequest);
                     if (response.ResultCode == ResultCode.UnavailableCriticalExtension)
                     {
                         break;
                     }
-                    DirectoryControl.TransformControls(response.Controls);
-                    pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
                 }
                 var entries = response.Entries.Select(_=>_.ToLdapEntry()).ToList();
                 Assert.Single(entries);

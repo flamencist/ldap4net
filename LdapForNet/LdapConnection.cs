@@ -334,21 +334,9 @@ namespace LdapForNet
             
             if (serverctrls != IntPtr.Zero)
             {
-                var i = 0;
-                var tempControlPtr = serverctrls;
-                var singleControl = Marshal.ReadIntPtr(tempControlPtr, 0);
-                var controlList = new ArrayList();
-                while (singleControl != IntPtr.Zero)
-                {
-                    var directoryControl = ConstructControl(singleControl);
-                    controlList.Add(directoryControl);
-
-                    i++;
-                    singleControl = Marshal.ReadIntPtr(tempControlPtr, i * IntPtr.Size);
-                }
-
-                responseControl = new DirectoryControl[controlList.Count];
-                controlList.CopyTo(responseControl);
+                responseControl = MarshalUtils.GetPointerArray(serverctrls)
+                    .Select(ConstructControl)
+                    .ToArray();
             }
             
             return rc;
