@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LdapExample": {
+      "commandName": "Project",
+      "commandLineArgs": "--auth=GSSAPI --host=dev3.os33.net --base=\"dc=dev3,dc=os33,dc=net\" --filter=\"(&(objectclass=top)(cn=Adam Bäck))\" --port=389"
+    }
+  }
+}
