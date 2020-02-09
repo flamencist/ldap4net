@@ -31,10 +31,20 @@ namespace LdapForNet
 
         internal BerSafeHandle(Native.Native.berval value) : base(true)
         {
-            SetHandle(LdapNative.Instance.ber_init(value));
-            if (handle == IntPtr.Zero)
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf<Native.Native.berval>());
+
+            try
             {
-                throw new LdapException("Could not initialized ber value");
+                Marshal.StructureToPtr(value,ptr,false);
+                SetHandle(LdapNative.Instance.ber_init(ptr));
+                if (handle == IntPtr.Zero)
+                {
+                    throw new LdapException("Could not initialized ber value");
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
             }
         }
 

@@ -75,7 +75,7 @@ namespace LdapForNet.Native
             public IntPtr bv_val = IntPtr.Zero;
         }
         
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        [StructLayout(LayoutKind.Sequential)]
         internal sealed class LdapControl
         {
             public IntPtr ldctl_oid = IntPtr.Zero;

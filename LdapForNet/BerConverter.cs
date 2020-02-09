@@ -397,7 +397,7 @@ namespace LdapForNet
                     $"type should be byte[], but receiving value has type of {value[valueIndex].GetType()}");
             }
 
-            var byteArray = (byte[])value[valueIndex] ?? new byte[0];
+            var byteArray = (byte[])value[valueIndex];// ?? new byte[0];
             return EncodingByteArrayHelper(berElement, byteArray, fmt);
         }
 

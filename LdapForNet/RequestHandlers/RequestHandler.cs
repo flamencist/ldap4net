@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet.Native;
 using LdapForNet.Utils;
@@ -20,14 +20,16 @@ namespace LdapForNet.RequestHandlers
 
         public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
-            AllocControls(request, out var serverControlArray, out var managedServerControls, out var clientControlArray, out var managedClientControls);
+            var serverControlArray = AllocControls(request.Controls, true);
+            var clientControlArray = AllocControls(request.Controls, false);
             try
             {
                 return SendRequest(handle, request, serverControlArray, clientControlArray, ref messageId);
             }
             finally
             {
-                FreeControls(serverControlArray,managedServerControls,clientControlArray,managedClientControls);
+                FreeControls(serverControlArray);
+                FreeControls(clientControlArray);
             }
         }
         
@@ -37,189 +39,93 @@ namespace LdapForNet.RequestHandlers
             out DirectoryResponse response);
         
         
-        private static void AllocControls(DirectoryRequest request,
-            out IntPtr serverControlArray, out Native.Native.LdapControl[] managedServerControls,
-            out IntPtr clientControlArray, out Native.Native.LdapControl[] managedClientControls)
+        private static IntPtr AllocControls(IReadOnlyCollection<DirectoryControl> controls, bool isServerControl)
         {
-            serverControlArray = IntPtr.Zero;
-            managedServerControls = null;
-            clientControlArray = IntPtr.Zero;
-            managedClientControls = null;
-            var tempPtr = IntPtr.Zero;
+            var result = IntPtr.Zero;
 
-            // Build server control.
-            managedServerControls = BuildControlArray(request.Controls, true);
-            var structSize = Marshal.SizeOf(typeof(Native.Native.LdapControl));
-
+            var managedServerControls = BuildControlArray(controls, isServerControl);
             if (managedServerControls != null)
             {
-                serverControlArray = MarshalUtils.AllocHGlobalIntPtrArray(managedServerControls.Length + 1);
-                for (var i = 0; i < managedServerControls.Length; i++)
-                {
-                    var controlPtr = Marshal.AllocHGlobal(structSize);
-                    Marshal.StructureToPtr(managedServerControls[i], controlPtr, false);
-                    tempPtr = (IntPtr)((long)serverControlArray + IntPtr.Size * i);
-                    Marshal.WriteIntPtr(tempPtr, controlPtr);
-                }
-
-                tempPtr = (IntPtr)((long)serverControlArray + IntPtr.Size * managedServerControls.Length);
-                Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
+                result = MarshalUtils.StructureArrayToPtr(managedServerControls);
             }
 
-            // build client control
-            managedClientControls = BuildControlArray(request.Controls, false);
-            if (managedClientControls != null)
-            {
-                clientControlArray = MarshalUtils.AllocHGlobalIntPtrArray(managedClientControls.Length + 1);
-                for (var i = 0; i < managedClientControls.Length; i++)
-                {
-                    var controlPtr = Marshal.AllocHGlobal(structSize);
-                    Marshal.StructureToPtr(managedClientControls[i], controlPtr, false);
-                    tempPtr = (IntPtr)((long)clientControlArray + IntPtr.Size * i);
-                    Marshal.WriteIntPtr(tempPtr, controlPtr);
-                }
-
-                tempPtr = (IntPtr)((long)clientControlArray + IntPtr.Size * managedClientControls.Length);
-                Marshal.WriteIntPtr(tempPtr, IntPtr.Zero);
-            }
+            return result;
         }
 
-        private static void FreeControls(IntPtr serverControlArray, IList<Native.Native.LdapControl> managedServerControls, IntPtr clientControlArray, IList<Native.Native.LdapControl> managedClientControls)
+        private static void FreeControls(IntPtr controlArray)
         {
-            if (serverControlArray != IntPtr.Zero)
+
+            foreach (var ptr in MarshalUtils.GetPointerArray(controlArray))
             {
-                // Release the memory from the heap.
-                for (int i = 0; i < managedServerControls.Count; i++)
-                {
-                    IntPtr tempPtr = Marshal.ReadIntPtr(serverControlArray, IntPtr.Size * i);
-                    if (tempPtr != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(tempPtr);
-                    }
-                }
-                Marshal.FreeHGlobal(serverControlArray);
+                var ctrl = Marshal.PtrToStructure<Native.Native.LdapControl>(ptr);
+                FreeManagedControl(ctrl);
             }
 
-            if (managedServerControls != null)
-            {
-                for (int i = 0; i < managedServerControls.Count; i++)
-                {
-                    if (managedServerControls[i].ldctl_oid != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(managedServerControls[i].ldctl_oid);
-                    }
-
-                    if (managedServerControls[i].ldctl_value != null)
-                    {
-                        if (managedServerControls[i].ldctl_value.bv_val != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(managedServerControls[i].ldctl_value.bv_val);
-                        }
-                    }
-                }
-            }
-
-            if (clientControlArray != IntPtr.Zero)
-            {
-                // Release the memory from the heap.
-                for (int i = 0; i < managedClientControls.Count; i++)
-                {
-                    IntPtr tempPtr = Marshal.ReadIntPtr(clientControlArray, IntPtr.Size * i);
-                    if (tempPtr != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(tempPtr);
-                    }
-                }
-
-                Marshal.FreeHGlobal(clientControlArray);
-            }
-
-            if (managedClientControls != null)
-            {
-                for (int i = 0; i < managedClientControls.Count; i++)
-                {
-                    if (managedClientControls[i].ldctl_oid != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(managedClientControls[i].ldctl_oid);
-                    }
-
-                    if (managedClientControls[i].ldctl_value != null)
-                    {
-                        if (managedClientControls[i].ldctl_value.bv_val != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(managedClientControls[i].ldctl_value.bv_val);
-                        }
-                    }
-                }
-            }
+            MarshalUtils.FreeIntPtrArray(controlArray);
         }
-        
-        
-        private static Native.Native.LdapControl[] BuildControlArray(List<DirectoryControl> controls, bool serverControl)
+
+        private static void FreeManagedControl(Native.Native.LdapControl ctrl)
         {
-            Native.Native.LdapControl[] managedControls = null;
-
-            if (controls != null && controls.Count != 0)
+            if (ctrl.ldctl_oid != IntPtr.Zero)
             {
-                var controlList = new ArrayList();
-                foreach (DirectoryControl col in controls)
-                {
-                    if (serverControl)
-                    {
-                        if (col.ServerSide)
-                        {
-                            controlList.Add(col);
-                        }
-                    }
-                    else if (!col.ServerSide)
-                    {
-                        controlList.Add(col);
-                    }
-                }
-
-                if (controlList.Count != 0)
-                {
-                    int count = controlList.Count;
-                    managedControls = new Native.Native.LdapControl[count];
-
-                    for (int i = 0; i < count; i++)
-                    {
-                        managedControls[i] = new Native.Native.LdapControl()
-                        {
-                            // Get the control type.
-                            ldctl_oid = Encoder.Instance.StringToPtr(((DirectoryControl)controlList[i]).Type),
-
-                            // Get the control cricality.
-                            ldctl_iscritical = ((DirectoryControl)controlList[i]).IsCritical
-                        };
-
-                        // Get the control value.
-                        DirectoryControl tempControl = (DirectoryControl)controlList[i];
-                        byte[] byteControlValue = tempControl.GetValue();
-                        if (byteControlValue == null || byteControlValue.Length == 0)
-                        {
-                            // Treat the control value as null.
-                            managedControls[i].ldctl_value = new Native.Native.berval
-                            {
-                                bv_len = 0,
-                                bv_val = IntPtr.Zero
-                            };
-                        }
-                        else
-                        {
-                            managedControls[i].ldctl_value = new Native.Native.berval
-                            {
-                                bv_len = byteControlValue.Length,
-                                bv_val = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(byte)) * byteControlValue.Length)
-                            };
-                            Marshal.Copy(byteControlValue, 0, managedControls[i].ldctl_value.bv_val, managedControls[i].ldctl_value.bv_len);
-                        }
-                    }
-                }
+                Marshal.FreeHGlobal(ctrl.ldctl_oid);
             }
 
-            return managedControls;
+            if (ctrl.ldctl_value != null && ctrl.ldctl_value.bv_val != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ctrl.ldctl_value.bv_val);
+            }
         }
 
+
+        private static Native.Native.LdapControl[] BuildControlArray(IReadOnlyCollection<DirectoryControl> controls, bool isServerControl)
+        {
+            if (controls == null)
+            {
+                return null;
+            }
+
+            var serverSideControls = controls.Where(_ => _.ServerSide);
+            var clientSideControls = controls.Where(_ => !_.ServerSide);
+            var selectedControls = isServerControl? serverSideControls : clientSideControls;
+            var ldapControls = selectedControls.Select(ToLdapControl).ToArray();
+
+            return ldapControls.Any() ? ldapControls : null;
+        }
+
+        private static Native.Native.LdapControl ToLdapControl(DirectoryControl sourceCtrl)
+        {
+            var ctrl = new Native.Native.LdapControl
+            {
+                // Get the control type.
+                ldctl_oid = Encoder.Instance.StringToPtr(sourceCtrl.Type),
+
+                // Get the control cricality.
+                ldctl_iscritical = sourceCtrl.IsCritical
+            };
+
+            // Get the control value.
+            var byteControlValue = sourceCtrl.GetValue();
+            if (byteControlValue == null || byteControlValue.Length == 0)
+            {
+                // Treat the control value as null.
+                ctrl.ldctl_value = new Native.Native.berval
+                {
+                    bv_len = 0,
+                    bv_val = IntPtr.Zero
+                };
+            }
+            else
+            {
+                ctrl.ldctl_value = new Native.Native.berval
+                {
+                    bv_len = byteControlValue.Length,
+                    bv_val = Marshal.AllocHGlobal(byteControlValue.Length)
+                };
+                Marshal.Copy(byteControlValue, 0, ctrl.ldctl_value.bv_val, ctrl.ldctl_value.bv_len);
+            }
+            return ctrl;
+
+        }
     }
 }

@@ -121,7 +121,7 @@ namespace LdapForNet.Native
         /// <param name="sizelimit">int sizelimit</param>
         /// <param name="msgidp">int *msgidp</param>
         /// <returns>result code</returns>
-        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_search_extW",CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_search_extW",CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_search_ext(SafeHandle ld, string @base, int scope, string filter, IntPtr attrs,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp);
 
@@ -306,7 +306,7 @@ namespace LdapForNet.Native
         internal static extern int ber_flatten(SafeHandle berElement, ref IntPtr value);
 
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_init", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr ber_init(Native.berval value);
+        internal static extern IntPtr ber_init(IntPtr value);
 
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
         internal static extern int ber_scanf(SafeHandle berElement, string format);

@@ -288,7 +288,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_flatten(SafeHandle berElement, ref IntPtr value);
         [DllImport(LIB_LBER_PATH)]
-        internal static extern IntPtr ber_init(Native.berval value);
+        internal static extern IntPtr ber_init(IntPtr value);
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_scanf(SafeHandle berElement, string format);
         [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]

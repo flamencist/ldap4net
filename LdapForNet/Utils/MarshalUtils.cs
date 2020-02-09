@@ -81,7 +81,14 @@ namespace LdapForNet.Utils
             var ptrArray = array.Select(Encoder.Instance.StringToPtr).ToArray();
             Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
         }
-        
+
+        internal static IntPtr StructureArrayToPtr<T>(T[] array)
+        {
+            var ptr = AllocHGlobalIntPtrArray(array.Length + 1);
+            StructureArrayToPtr(array, ptr, true);
+            return ptr;
+        }
+
         internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) 
         {
             var ptrArray = array.Select(structure =>
@@ -151,12 +158,8 @@ namespace LdapForNet.Utils
 
         internal static IntPtr WriteIntPtrArray(IntPtr[] array)
         {
-            var destination = MarshalUtils.AllocHGlobalIntPtrArray(array.Length + 1);
-            for (var i =0; i<array.Length;i++)
-            {
-                Marshal.WriteIntPtr(destination, IntPtr.Size * i, array[i]);
-            }
-
+            var destination = AllocHGlobalIntPtrArray(array.Length + 1);
+            Marshal.Copy(array, 0, destination, array.Length);
             return destination;
         }
 

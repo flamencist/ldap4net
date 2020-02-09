@@ -83,7 +83,7 @@ namespace LdapForNet.Native
 
         internal abstract int ber_flatten(SafeHandle berElement, ref IntPtr value);
 
-        internal abstract IntPtr ber_init(Native.berval value);
+        internal abstract IntPtr ber_init(IntPtr berVal);
 
         internal abstract int ber_scanf(SafeHandle berElement, string format);
 

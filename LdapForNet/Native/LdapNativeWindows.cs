@@ -217,7 +217,7 @@ namespace LdapForNet.Native
         internal override int ber_flatten(SafeHandle berElement, ref IntPtr value)
             => NativeMethodsWindows.ber_flatten(berElement, ref value);
 
-        internal override IntPtr ber_init(Native.berval value)
+        internal override IntPtr ber_init(IntPtr value)
             => NativeMethodsWindows.ber_init(value);
 
         internal override int ber_scanf(SafeHandle berElement, string format)

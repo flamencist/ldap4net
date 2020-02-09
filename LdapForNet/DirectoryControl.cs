@@ -567,8 +567,9 @@ namespace LdapForNet
 
         public override byte[] GetValue()
         {
-            var o = new object[] { PageSize, _pageCookie };
-            _directoryControlValue = BerConverter.Encode("{io}", o);
+            //var o = new object[] { PageSize, _pageCookie };
+            _directoryControlValue = BerConverter.Encode("{io}", PageSize,_pageCookie);
+            //_directoryControlValue = new byte[]{48,5,2,1,3,4,0};
             return base.GetValue();
         }
     }
