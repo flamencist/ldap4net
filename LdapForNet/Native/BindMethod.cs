@@ -2,6 +2,7 @@
 {
     public enum BindMethod : uint
     {
+        LDAP_AUTH_SIMPLE = 0x80,
         LDAP_AUTH_OTHERKIND = 0x86,
         LDAP_AUTH_SICILY = LDAP_AUTH_OTHERKIND | 0x0200,
         LDAP_AUTH_MSN = LDAP_AUTH_OTHERKIND | 0x0800,

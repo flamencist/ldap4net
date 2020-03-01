@@ -79,7 +79,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
             LdapConnect(ld);
-            return NativeMethodsWindows.ldap_simple_bind_s(ld, who, password);
+            return NativeMethodsWindows.ldap_bind_s(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
         }
 
         internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password)
@@ -88,19 +88,23 @@ namespace LdapForNet.Native
             return await Task.Factory.StartNew(() =>
             {
                 var result = IntPtr.Zero;
-                var msgidp = NativeMethodsWindows.ldap_simple_bind(ld, who, password);
+                var msgidp = NativeMethodsWindows.ldap_bind(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
   
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_simple_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_simple_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_bind), 1);
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_simple_bind));
+                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_bind));
                 }
+
+                var ldapVersion = 3;
+                ldap_set_option(ld, (int) LdapForNet.Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION,
+                    ref ldapVersion);
 
                 return result;
             }).ConfigureAwait(false);

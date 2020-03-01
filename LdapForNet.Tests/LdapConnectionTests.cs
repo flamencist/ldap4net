@@ -37,27 +37,23 @@ namespace LdapForNetTests
         }
         
         [Fact(Skip = "Example of controls with gssapi enabled")]
-        //[Fact()]
         public void LdapConnection_With_Directory_Control_Search_Return_LdapEntries_List()
         {
             using (var connection = new LdapConnection())
             {
-
-                connection.Connect();
+                var results = new List<DirectoryEntry>();
+                connection.Connect("");
                 connection.BindAsync().Wait();
-                //var dse = connection.GetRootDse();
-                var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "(objectclass=top)",
-                    LdapSearchScope.LDAP_SCOPE_SUB){SizeLimit = 1, Attributes = { "cn"}};
-                var resultRequestControl = new PageResultRequestControl(1);
+                var dse = connection.GetRootDse();
+                //var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "(&(objectclass=top)(cn=Adam Bäck))",
+                var directoryRequest = new SearchRequest("OU=Servers," + LdapUtils.GetDnFromHostname(), "(objectclass=top)",
+                    LdapSearchScope.LDAP_SCOPE_SUB){ Attributes = { "cn"}, SizeLimit =  1001};
+                var resultRequestControl = new PageResultRequestControl(3);
                 directoryRequest.Controls.Add(resultRequestControl);
 
                 var response = (SearchResponse)connection.SendRequest(directoryRequest);
-                //directoryRequest.Controls.Add(new ShowDeletedControl());
-                //directoryRequest.Controls.Add(new TreeDeleteControl());
-                //directoryRequest.Controls.Add(new SortRequestControl("whenCreated",false));
-                //directoryRequest.Controls.Add(new VlvRequestControl(0,2,1));
-                response = (SearchResponse)connection.SendRequest(directoryRequest);
-                //DirectoryControl.TransformControls(response.Controls);
+                results.AddRange(response.Entries);
+
                 PageResultResponseControl pageResultResponseControl;
                 while (true)
                 {
@@ -66,14 +62,19 @@ namespace LdapForNetTests
                     {
                         break;
                     }
-                    resultRequestControl.Cookie = pageResultResponseControl.Cookie;
+                    directoryRequest = new SearchRequest("OU=Servers,"+LdapUtils.GetDnFromHostname(), "(objectclass=top)",
+                            LdapSearchScope.LDAP_SCOPE_SUB)
+                        { Attributes = { "cn" }, SizeLimit = 1001 };
+                    resultRequestControl = new PageResultRequestControl(pageResultResponseControl.Cookie){PageSize = 3};
+                    directoryRequest.Controls.Add(resultRequestControl);
                     response = (SearchResponse)connection.SendRequest(directoryRequest);
+                    results.AddRange(response.Entries);
                     if (response.ResultCode == ResultCode.UnavailableCriticalExtension)
                     {
                         break;
                     }
                 }
-                var entries = response.Entries.Select(_=>_.ToLdapEntry()).ToList();
+                var entries = results.Select(_=>_.ToLdapEntry()).ToList();
                 Assert.Single(entries);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
