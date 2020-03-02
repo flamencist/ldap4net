@@ -36,7 +36,8 @@ namespace LdapForNetTests
             }
         }
         
-        [Fact(Skip = "Example of controls with gssapi enabled")]
+        //[Fact(Skip = "Example of controls with gssapi enabled")]
+        [Fact]
         public void LdapConnection_With_Directory_Control_Search_Return_LdapEntries_List()
         {
             using (var connection = new LdapConnection())
@@ -44,7 +45,6 @@ namespace LdapForNetTests
                 var results = new List<DirectoryEntry>();
                 connection.Connect("");
                 connection.BindAsync().Wait();
-                var dse = connection.GetRootDse();
                 //var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "(&(objectclass=top)(cn=Adam Bäck))",
                 var directoryRequest = new SearchRequest("OU=Servers," + LdapUtils.GetDnFromHostname(), "(objectclass=top)",
                     LdapSearchScope.LDAP_SCOPE_SUB){ Attributes = { "cn"}, SizeLimit =  1001};
