@@ -101,11 +101,7 @@ namespace LdapForNet.Native
                 {
                     ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_bind));
                 }
-
-                var ldapVersion = 3;
-                ldap_set_option(ld, (int) LdapForNet.Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION,
-                    ref ldapVersion);
-
+                
                 return result;
             }).ConfigureAwait(false);
         }

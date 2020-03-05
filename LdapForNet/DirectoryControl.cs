@@ -432,13 +432,13 @@ namespace LdapForNet
 
     public class DirSyncRequestControl : DirectoryControl
     {
-        private byte[] _dirsyncCookie;
+        private byte[] _dirSyncCookie;
         private int _count = 1048576;
 
         public DirSyncRequestControl() : base("1.2.840.113556.1.4.841", null, true, true) { }
         public DirSyncRequestControl(byte[] cookie) : this()
         {
-            _dirsyncCookie = cookie;
+            _dirSyncCookie = cookie;
         }
 
         public DirSyncRequestControl(byte[] cookie, DirectorySynchronizationOptions option) : this(cookie)
@@ -455,14 +455,14 @@ namespace LdapForNet
         {
             get
             {
-                if (_dirsyncCookie == null)
+                if (_dirSyncCookie == null)
                 {
                     return Array.Empty<byte>();
                 }
 
-                return _dirsyncCookie.Copy();
+                return _dirSyncCookie.Copy();
             }
-            set => _dirsyncCookie = value;
+            set => _dirSyncCookie = value;
         }
 
         // We don't do validation to the dirsync flag here as underneath API does not check for it and we don't want to put
@@ -485,7 +485,7 @@ namespace LdapForNet
 
         public override byte[] GetValue()
         {
-            var o = new object[] { (int)Option, AttributeCount, _dirsyncCookie };
+            var o = new object[] { (int)Option, AttributeCount, _dirSyncCookie };
             _directoryControlValue = BerConverter.Encode("{iio}", o);
             return base.GetValue();
         }
@@ -493,11 +493,11 @@ namespace LdapForNet
 
     public class DirSyncResponseControl : DirectoryControl
     {
-        private byte[] _dirsyncCookie;
+        private readonly byte[] _dirSyncCookie;
 
         internal DirSyncResponseControl(byte[] cookie, bool moreData, int resultSize, bool criticality, byte[] controlValue) : base("1.2.840.113556.1.4.841", controlValue, criticality, true)
         {
-            _dirsyncCookie = cookie;
+            _dirSyncCookie = cookie;
             MoreData = moreData;
             ResultSize = resultSize;
         }
@@ -506,12 +506,12 @@ namespace LdapForNet
         {
             get
             {
-                if (_dirsyncCookie == null)
+                if (_dirSyncCookie == null)
                 {
                     return Array.Empty<byte>();
                 }
 
-                return _dirsyncCookie.Copy();
+                return _dirSyncCookie.Copy();
             }
         }
 
@@ -567,9 +567,7 @@ namespace LdapForNet
 
         public override byte[] GetValue()
         {
-            //var o = new object[] { PageSize, _pageCookie };
-            _directoryControlValue = BerConverter.Encode("{io}", PageSize,_pageCookie);
-            //_directoryControlValue = new byte[]{48,5,2,1,3,4,0};
+            _directoryControlValue = BerConverter.Encode("{io}", PageSize, _pageCookie);
             return base.GetValue();
         }
     }
@@ -672,33 +670,33 @@ namespace LdapForNet
         {
             var control = IntPtr.Zero;
             var structSize = Marshal.SizeOf(typeof(SortKeyNative));
-            var nativeKeys = _keys.Select(_ => _.ToNative()).ToArray();
-            var keyCount = nativeKeys.Length;
-            var memHandle = MarshalUtils.AllocHGlobalIntPtrArray(keyCount + 1);
+            var nativeKeys = _keys
+                .Select(_ => _.ToNative())
+                .Select(key =>
+            {
+                var res = Marshal.AllocHGlobal(structSize);
+                Marshal.StructureToPtr(key, res, false);
+                return res;
+            });
+
+            var memHandle = IntPtr.Zero;
 
             try
             {
-                var sortPtr = IntPtr.Zero;
-                for (var i = 0; i < keyCount; i++)
-                {
-                    sortPtr = Marshal.AllocHGlobal(structSize);
-                    Marshal.StructureToPtr(nativeKeys[i], sortPtr, false);
-                    Marshal.WriteIntPtr(memHandle, IntPtr.Size * i, sortPtr);
-                }
-                Marshal.WriteIntPtr(memHandle, IntPtr.Size * keyCount, IntPtr.Zero);
+                memHandle = MarshalUtils.WriteIntPtrArray(nativeKeys.ToArray());
 
                 var critical = IsCritical;
                 var ld = IntPtr.Zero;
                 LdapNative.Instance.Init(ref ld, null, 389);
                 var ldaphandle = new LdapHandle(ld);
                 var error = LdapNative.Instance.ldap_create_sort_control(ldaphandle, memHandle, critical ? (byte)1 : (byte)0, ref control);
-
                 
                 LdapNative.Instance.ThrowIfError(error,nameof(LdapNative.Instance.ldap_create_sort_control));
 
                 var managedControl = new Native.Native.LdapControl();
                 Marshal.PtrToStructure(control, managedControl);
                 var value = managedControl.ldctl_value;
+
                 // reinitialize the value
                 _directoryControlValue = null;
                 if (value != null)
@@ -870,12 +868,7 @@ namespace LdapForNet
                     return Array.Empty<byte>();
                 }
 
-                var tempContext = new byte[_context.Length];
-                for (var i = 0; i < tempContext.Length; i++)
-                {
-                    tempContext[i] = _context[i];
-                }
-                return tempContext;
+                return _context.Copy();
             }
             set => _context = value;
         }

@@ -50,6 +50,7 @@ namespace LdapForNetTests
                     LdapSearchScope.LDAP_SCOPE_SUB){ Attributes = { "cn"}, SizeLimit =  1001};
                 var resultRequestControl = new PageResultRequestControl(3);
                 directoryRequest.Controls.Add(resultRequestControl);
+                directoryRequest.Controls.Add(new SortRequestControl("cn", true));
 
                 var response = (SearchResponse)connection.SendRequest(directoryRequest);
                 results.AddRange(response.Entries);
@@ -62,11 +63,8 @@ namespace LdapForNetTests
                     {
                         break;
                     }
-                    directoryRequest = new SearchRequest("OU=Servers,"+LdapUtils.GetDnFromHostname(), "(objectclass=top)",
-                            LdapSearchScope.LDAP_SCOPE_SUB)
-                        { Attributes = { "cn" }, SizeLimit = 1001 };
-                    resultRequestControl = new PageResultRequestControl(pageResultResponseControl.Cookie){PageSize = 3};
-                    directoryRequest.Controls.Add(resultRequestControl);
+
+                    resultRequestControl.Cookie = pageResultResponseControl.Cookie;
                     response = (SearchResponse)connection.SendRequest(directoryRequest);
                     results.AddRange(response.Entries);
                     if (response.ResultCode == ResultCode.UnavailableCriticalExtension)
@@ -75,6 +73,53 @@ namespace LdapForNetTests
                     }
                 }
                 var entries = results.Select(_=>_.ToLdapEntry()).ToList();
+                Assert.Single(entries);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+
+
+        [Fact]
+        public void LdapConnection_With_DirSync_Control_Search_Return_LdapEntries_List()
+        {
+            using (var connection = new LdapConnection())
+            {
+                var results = new List<DirectoryEntry>();
+                connection.Connect();
+                connection.BindAsync().Wait();
+                var directoryRequest = new SearchRequest( LdapUtils.GetDnFromHostname(), "(&(objectclass=top)(cn=Adam Bäck))", LdapSearchScope.LDAP_SCOPE_SUB);
+                var dirSyncRequestControl = new DirSyncRequestControl
+                {
+                    Cookie = new byte[0],
+                    Option = DirectorySynchronizationOptions.IncrementalValues,
+                    AttributeCount = int.MaxValue
+                };
+                directoryRequest.Controls.Add(dirSyncRequestControl);
+
+                //var dse = connection.GetRootDse();
+
+                var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                results.AddRange(response.Entries);
+
+                while (true)
+                {
+                    var responseControl = (DirSyncResponseControl)response.Controls.FirstOrDefault(_ => _ is DirSyncResponseControl);
+                    if (responseControl == null || responseControl.Cookie.Length == 0)
+                    {
+                        break;
+                    }
+
+                    dirSyncRequestControl.Cookie = responseControl.Cookie;
+                    response = (SearchResponse)connection.SendRequest(directoryRequest);
+                    results.AddRange(response.Entries);
+                    if (response.ResultCode == ResultCode.UnavailableCriticalExtension)
+                    {
+                        break;
+                    }
+                }
+                var entries = results.Select(_ => _.ToLdapEntry()).ToList();
                 Assert.Single(entries);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
