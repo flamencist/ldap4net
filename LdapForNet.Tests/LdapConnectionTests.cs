@@ -35,34 +35,6 @@ namespace LdapForNetTests
         }
 
         [Fact]
-        public void LdapConnection_Search_Return_LdapEntries_List2()
-        {
-            using (var connection = new LdapConnection())
-            {
-                connection.Connect();
-                connection.Bind();
-                var entries = connection.Search("dc=dev3,dc=os33,dc=net", "(&(objectclass=top)(cn=Adam Bäck))");
-                connection.Modify(new LdapModifyEntry
-                {
-                    Dn = entries.First().Dn,
-                    Attributes = new List<LdapModifyAttribute>
-                    {
-                        new LdapModifyAttribute
-                        {
-                            LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
-                            Type = "description",
-                            Values = new List<string> { "Bäck" }
-                        }
-                    }
-                });
-                Assert.True(entries.Count == 1);
-                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
-                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
-                Assert.True(entries[0].Attributes["objectClass"].Any());
-            }
-        }
-
-        [Fact]
         public void LdapConnection_Search_Return_LdapEntries_With_Concrete_Attributes()
         {
             using (var connection = new LdapConnection())
