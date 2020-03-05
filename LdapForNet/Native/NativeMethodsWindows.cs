@@ -83,10 +83,10 @@ namespace LdapForNet.Native
             [MarshalAs(UnmanagedType.FunctionPtr)] LDAP_SASL_INTERACT_PROC proc, IntPtr defaults, IntPtr result, ref IntPtr rmech, ref int msgid);
         
 
-        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_get_optionW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_set_optionW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_set_option(SafeHandle ld, int option, [In] ref int invalue);
 
-        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_get_optionW",CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_set_optionW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_set_option(SafeHandle ld, int option, [In] ref string invalue);
 
         [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_set_optionW",CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
