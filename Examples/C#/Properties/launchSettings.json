@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LdapExample": {
+      "commandName": "Project",
+      "commandLineArgs": "--auth=GSSAPI  --filter=\"(&(objectclass=top)(cn=Adam Bäck))\" --port=389"
+    }
+  }
+}
