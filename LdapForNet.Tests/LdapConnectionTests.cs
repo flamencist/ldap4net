@@ -98,8 +98,6 @@ namespace LdapForNetTests
                 };
                 directoryRequest.Controls.Add(dirSyncRequestControl);
 
-                //var dse = connection.GetRootDse();
-
                 var response = (SearchResponse)connection.SendRequest(directoryRequest);
                 results.AddRange(response.Entries);
 
@@ -119,6 +117,29 @@ namespace LdapForNetTests
                         break;
                     }
                 }
+                var entries = results.Select(_ => _.ToLdapEntry()).ToList();
+                Assert.Single(entries);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+
+        [Fact]
+        public void LdapConnection_With_Asq_Control_Search_Return_LdapEntries_List()
+        {
+            using (var connection = new LdapConnection())
+            {
+                var results = new List<DirectoryEntry>();
+                connection.Connect();
+                connection.BindAsync().Wait();
+                var directoryRequest = new SearchRequest("CN=Domain Admins,CN=Users," + LdapUtils.GetDnFromHostname(), "(objectClass=user)", LdapSearchScope.LDAP_SCOPE_BASE);
+                var dirSyncRequestControl = new AsqRequestControl("member");
+                directoryRequest.Controls.Add(dirSyncRequestControl);
+
+                var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                results.AddRange(response.Entries);
+
                 var entries = results.Select(_ => _.ToLdapEntry()).ToList();
                 Assert.Single(entries);
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);

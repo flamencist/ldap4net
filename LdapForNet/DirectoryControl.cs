@@ -223,6 +223,10 @@ namespace LdapForNet
         }
     }
 
+    /// <summary>
+    /// Attribute scoped query control (Stateless)
+    /// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/77d880bf-aadd-4f6f-bb78-076af8e22cd8
+    /// </summary>
     public class AsqRequestControl : DirectoryControl
     {
         public AsqRequestControl() : base("1.2.840.113556.1.4.1504", null, true, true)
