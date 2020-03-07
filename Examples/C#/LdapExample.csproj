@@ -1,18 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFrameworks>netcoreapp3.0;net48</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\LdapForNet\LdapForNet.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Remove="LdapExample.Net\**" />
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Remove="packages\**" />
     <EmbeddedResource Remove="LdapExample.Net\**" />
+    <EmbeddedResource Remove="packages\**" />
+    <None Remove="LdapExample.Net\**" />
+    <None Remove="packages\**" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="LdapExample.Net\**" />
+    <PackageReference Include="LdapForNet" Version="2.2.0" />
   </ItemGroup>
 </Project>

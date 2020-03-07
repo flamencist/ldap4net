@@ -55,7 +55,7 @@ namespace LdapExample
         private static Dictionary<string, string> ParseCommandLine(string[] args)
         {
             var pattern = "^--([^=\"]*)=\"?(.*)\"?$";
-            return args.Select(_ => Regex.Matches(_, pattern, RegexOptions.IgnoreCase).FirstOrDefault()?.Groups)
+            return args.Select(_ => Regex.Matches(_, pattern, RegexOptions.IgnoreCase).Cast<Match>().FirstOrDefault()?.Groups)
                 .Where(_ => _ != null)
                 .ToDictionary(_ => _[1].Value, _ => _[2].Value);
         }
