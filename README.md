@@ -594,7 +594,7 @@ using (var connection = new LdapConnection())
 {
     connection.Connect();
     connection.BindAsync().Wait();
-    var directoryRequest = new SearchRequest("CN=Domain Admins,CN=Users," + LdapUtils.GetDnFromHostname(), "(objectClass=user)", LdapSearchScope.LDAP_SCOPE_BASE);
+    var directoryRequest = new SearchRequest("CN=Domain Admins,CN=Users,dc=example,dc=com", "(objectClass=user)", LdapSearchScope.LDAP_SCOPE_BASE);
     directoryRequest.Controls.Add(new AsqRequestControl("member"));
 
     var response = (SearchResponse)connection.SendRequest(directoryRequest);
