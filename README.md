@@ -531,6 +531,7 @@ using (var cn = new LdapConnection())
 ```
 
 #### DirSyncRequestControl\DirSyncResponseControl [(1.2.840.113556.1.4.841)](https://ldapwiki.com/wiki/Directory%20Synchronization%20Control)
+Ldap user should have ``DS-Replication-Get-Changes`` extended right (https://docs.microsoft.com/en-us/windows/win32/ad/polling-for-changes-using-the-dirsync-control)
 ```cs
 
 using (var cn = new LdapConnection())
