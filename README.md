@@ -500,84 +500,87 @@ Inspired by .NET Framework LdapConnection.SendRequest
 ### Ldap V3 Controls
 #### PageResultRequestControl\PageResultResponseControl [(1.2.840.113556.1.4.319)](https://ldapwiki.com/wiki/Simple%20Paged%20Results%20Control)
 ```cs
-	using (var cn = new LdapConnection())
+
+using (var cn = new LdapConnection())
+{
+    var results = new List<DirectoryEntry>();
+    cn.Connect();
+    cn.Bind();
+    var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
+    var resultRequestControl = new PageResultRequestControl(3);
+    directoryRequest.Controls.Add(resultRequestControl);
+
+    var response = (SearchResponse)cn.SendRequest(directoryRequest);
+    results.AddRange(response.Entries);
+
+    PageResultResponseControl pageResultResponseControl;
+    while (true)
     {
-        var results = new List<DirectoryEntry>();
-        cn.Connect();
-        cn.Bind();
-        var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
-        var resultRequestControl = new PageResultRequestControl(3);
-        directoryRequest.Controls.Add(resultRequestControl);
-
-        var response = (SearchResponse)cn.SendRequest(directoryRequest);
-        results.AddRange(response.Entries);
-
-        PageResultResponseControl pageResultResponseControl;
-        while (true)
+        pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
+        if (pageResultResponseControl == null || pageResultResponseControl.Cookie.Length == 0)
         {
-            pageResultResponseControl = (PageResultResponseControl)response.Controls.FirstOrDefault(_ => _ is PageResultResponseControl);
-            if (pageResultResponseControl == null || pageResultResponseControl.Cookie.Length == 0)
-            {
-                break;
-            }
-
-            resultRequestControl.Cookie = pageResultResponseControl.Cookie;
-            response = (SearchResponse)connection.SendRequest(directoryRequest);
-            results.AddRange(response.Entries);
+            break;
         }
-        var entries = results.Select(_=>_.ToLdapEntry()).ToList();
+
+        resultRequestControl.Cookie = pageResultResponseControl.Cookie;
+        response = (SearchResponse)connection.SendRequest(directoryRequest);
+        results.AddRange(response.Entries);
     }
+    var entries = results.Select(_=>_.ToLdapEntry()).ToList();
+}
 ```
 
 #### DirSyncRequestControl\DirSyncResponseControl [(1.2.840.113556.1.4.841)](https://ldapwiki.com/wiki/Directory%20Synchronization%20Control)
 ```cs
-	using (var cn = new LdapConnection())
+
+using (var cn = new LdapConnection())
+{
+    cn.Connect();
+    cn.Bind();
+    var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
+    var dirSyncRequestControl = new DirSyncRequestControl
     {
-        cn.Connect();
-        cn.Bind();
-        var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
-        var dirSyncRequestControl = new DirSyncRequestControl
-        {
-            Cookie = new byte[0],
-            Option = DirectorySynchronizationOptions.IncrementalValues,
-            AttributeCount = int.MaxValue
-        };
-        directoryRequest.Controls.Add(dirSyncRequestControl);
+        Cookie = new byte[0],
+        Option = DirectorySynchronizationOptions.IncrementalValues,
+        AttributeCount = int.MaxValue
+    };
+    directoryRequest.Controls.Add(dirSyncRequestControl);
 
-        var response = (SearchResponse)cn.SendRequest(directoryRequest);
+    var response = (SearchResponse)cn.SendRequest(directoryRequest);
         
-        while (true)
+    while (true)
+    {
+        var responseControl = (DirSyncResponseControl)response.Controls.FirstOrDefault(_ => _ is DirSyncResponseControl);
+        if (responseControl == null || responseControl.Cookie.Length == 0)
         {
-            var responseControl = (DirSyncResponseControl)response.Controls.FirstOrDefault(_ => _ is DirSyncResponseControl);
-            if (responseControl == null || responseControl.Cookie.Length == 0)
-            {
-                break;
-            }
+            break;
+        }
 
-            dirSyncRequestControl.Cookie = responseControl.Cookie;
+        dirSyncRequestControl.Cookie = responseControl.Cookie;
 
-			Thread.Sleep(60*1000);
-            response = (SearchResponse)connection.SendRequest(directoryRequest);
+		Thread.Sleep(60*1000);
+        response = (SearchResponse)connection.SendRequest(directoryRequest);
             
-            if (response.Entries.Any())
-            {
-                //handle changes
-            }
+        if (response.Entries.Any())
+        {
+            //handle changes
         }
     }
+}
 ```
 #### SortRequestControl\SortResponseControl [(1.2.840.113556.1.4.473\1.2.840.113556.1.4.474)](https://ldapwiki.com/wiki/Server%20Side%20Sort%20Control)
 ```cs
-	using (var cn = new LdapConnection())
-    {
-        cn.Connect();
-        cn.Bind();
-        var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
 
-        directoryRequest.Controls.Add(new SortRequestControl("cn", true));
+using (var cn = new LdapConnection())
+{
+    cn.Connect();
+    cn.Bind();
+    var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectclass=top)", LdapSearchScope.LDAP_SCOPE_SUB);
 
-        var response = (SearchResponse)cn.SendRequest(directoryRequest);
-    }
+    directoryRequest.Controls.Add(new SortRequestControl("cn", true));
+
+    var response = (SearchResponse)cn.SendRequest(directoryRequest);
+}
 ```
 
 ### GetNativeLdapPtr
