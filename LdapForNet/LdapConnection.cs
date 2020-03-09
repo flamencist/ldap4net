@@ -283,7 +283,7 @@ namespace LdapForNet
             switch (resType)
             {
                 case Native.Native.LdapResultType.LDAP_ERROR:
-                    _native.ThrowIfError(_native.LdapGetLastError(), directoryRequest.GetType().Name);
+                    _native.ThrowIfError(_native.LdapGetLastError(_ld), directoryRequest.GetType().Name);
                     break;
                 case Native.Native.LdapResultType.LDAP_TIMEOUT:
                     throw new LdapException("Timeout exceeded", nameof(_native.ldap_result), 1);
