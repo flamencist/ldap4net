@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
@@ -15,7 +14,7 @@ namespace LdapForNet.Native
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
-        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
+        internal override int BindKerberos(SafeHandle ld)
         {
             var saslDefaults = GetSaslDefaults(ld);
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
@@ -218,6 +217,8 @@ namespace LdapForNet.Native
             }).ConfigureAwait(false);
         }
 
+        internal override int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsOsx.ldap_abandon_ext(ld, msgId, serverctrls, clientctrls);
+
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsOsx.ldap_set_option(ld, option, ref invalue);
 
@@ -277,6 +278,12 @@ namespace LdapForNet.Native
         internal override string LdapError2String(int error) => NativeMethodsOsx.LdapError2String(error);
 
         internal override string GetAdditionalErrorInfo(SafeHandle ld) => NativeMethodsOsx.GetAdditionalErrorInfo(ld);
+        internal override int LdapGetLastError(SafeHandle ld)
+        {
+            int err = -1;
+            NativeMethodsOsx.ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_RESULT_CODE, ref err);
+            return err;
+        }
 
         internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsOsx.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
 
@@ -342,5 +349,59 @@ namespace LdapForNet.Native
             NativeMethodsOsx.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
         
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsOsx.ldap_controls_free(ctrls);
+        internal override int ldap_control_free(IntPtr control) => NativeMethodsOsx.ldap_control_free(control);
+
+        internal override int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
+            ref IntPtr control)
+            => NativeMethodsOsx.ldap_create_sort_control(handle, keys, critical, ref control);
+
+        internal override IntPtr ber_alloc_t(int option) => NativeMethodsOsx.ber_alloc_t(option);
+
+        internal override int ber_printf_emptyarg(SafeHandle berElement, string format)
+            => NativeMethodsOsx.ber_printf_emptyarg(berElement, format);
+
+        internal override int ber_printf_int(SafeHandle berElement, string format, int value)
+            => NativeMethodsOsx.ber_printf_int(berElement, format, value);
+        internal override int ber_printf_bytearray(SafeHandle berElement, string format, HGlobalMemHandle value, int length)
+            => NativeMethodsOsx.ber_printf_bytearray(berElement, format, value, length);
+
+        internal override int ber_printf_berarray(SafeHandle berElement, string format, IntPtr value)
+            => NativeMethodsOsx.ber_printf_berarray(berElement, format, value);
+
+        internal override int ber_flatten(SafeHandle berElement, ref IntPtr value)
+            => NativeMethodsOsx.ber_flatten(berElement, ref value);
+
+        internal override IntPtr ber_init(IntPtr value)
+            => NativeMethodsOsx.ber_init(value);
+
+        internal override int ber_scanf(SafeHandle berElement, string format)
+            => NativeMethodsOsx.ber_scanf(berElement,format);
+
+        internal override int ber_scanf_int(SafeHandle berElement, string format, ref int value)
+            => NativeMethodsOsx.ber_scanf_int(berElement, format, ref value);
+
+        internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
+            => NativeMethodsOsx.ber_scanf_ptr(berElement, format, ref value);
+
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value) => 
+            NativeMethodsOsx.ber_scanf_ostring(berElement, format, value);
+
+        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
+            => NativeMethodsOsx.ber_scanf_string(berElement, format, value, ref  length);
+
+        internal override void ber_memfree(IntPtr value) => NativeMethodsOsx.ber_memfree(value);
+
+        internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
+            => NativeMethodsOsx.ber_scanf_bitstring(berElement, format, ref value, ref length);
+        internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsOsx.ber_peek_tag(berElement, ref length);
+        internal override int ber_bvfree(IntPtr value)
+            => NativeMethodsOsx.ber_bvfree(value);
+
+        internal override int ber_bvecfree(IntPtr value)
+            => NativeMethodsOsx.ber_bvecfree(value);
+
+        internal override IntPtr ber_free(IntPtr berelem, int option)
+            => NativeMethodsOsx.ber_free(berelem, option);
+        internal override bool BerScanfSupports(char fmt) => true;
     }
 }
