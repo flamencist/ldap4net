@@ -106,6 +106,8 @@ namespace LdapForNet.Native
             }).ConfigureAwait(false);
         }
 
+        internal override int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_abandon(ld, msgId);
+
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
 
@@ -140,6 +142,7 @@ namespace LdapForNet.Native
         internal override string LdapError2String(int error) => NativeMethodsWindows.LdapError2String(error);
 
         internal override string GetAdditionalErrorInfo(SafeHandle ld) => NativeMethodsWindows.GetAdditionalErrorInfo(ld);
+        internal override int LdapGetLastError() => NativeMethodsWindows.LdapGetLastError();
 
         internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
 

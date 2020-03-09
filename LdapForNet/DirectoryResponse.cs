@@ -52,6 +52,8 @@ namespace LdapForNet
         }
         
         public virtual string MatchedDN { get; internal set; }
+
+        public int MessageId { get; internal set; }
     }
     
     public class SearchResponse : DirectoryResponse

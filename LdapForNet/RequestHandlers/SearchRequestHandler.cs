@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -10,10 +9,12 @@ namespace LdapForNet.RequestHandlers
     internal class SearchRequestHandler : RequestHandler
     {
         private readonly SearchResponse _response = new SearchResponse();
+        private SearchRequest _request;
         protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is SearchRequest searchRequest)
             {
+                _request = searchRequest;
                 var attributes = GetAttributesPtr(searchRequest);
                 var searchTimeLimit = (int)(searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
                 var res = Native.Search(
@@ -28,6 +29,9 @@ namespace LdapForNet.RequestHandlers
                     searchTimeLimit,
                     searchRequest.SizeLimit,
                     ref messageId);
+
+                _response.MessageId = messageId;
+
                 FreeAttributes(attributes);
                 return res;
             }
@@ -37,30 +41,66 @@ namespace LdapForNet.RequestHandlers
 
         public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
         {
-            response = default;
+            response = _response;
+            LdapResultCompleteStatus resultStatus;
             switch (resType)
             {
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_ENTRY:
                     var ber = Marshal.AllocHGlobal(IntPtr.Size);
-                    _response.Entries.AddRange(GetLdapEntries(handle, msg, ber));
-                    Marshal.FreeHGlobal(ber);
-                    Native.ldap_msgfree(msg);
-                    return LdapResultCompleteStatus.Partial;
+                    try
+                    {
+                        var directoryEntries = GetLdapEntries(handle, msg, ber).ToList();
+                        _response.Entries.AddRange(directoryEntries);
+
+                        OnPartialResult(_response.MessageId, directoryEntries);
+                    }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(ber);
+                        Native.ldap_msgfree(msg);
+                    }
+
+                    resultStatus =  LdapResultCompleteStatus.Partial;
+                    break;
+
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_REFERENCE:
                     var reference = GetLdapReference(handle, msg);
                     if (reference != null)
                     {
                         _response.References.Add(reference);
                     }
-                    return LdapResultCompleteStatus.Partial;
+                    resultStatus = LdapResultCompleteStatus.Partial;
+                    break;
+
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_RESULT:
-                    response = _response;
-                    return LdapResultCompleteStatus.Complete;
+                    resultStatus = LdapResultCompleteStatus.Complete;
+                    break;
+
                 default:
-                    return LdapResultCompleteStatus.Unknown;
+                    resultStatus = LdapResultCompleteStatus.Unknown;
+                    break;
             }
+
+            return resultStatus;
         }
-        
+
+        private void OnPartialResult(int messageId, List<DirectoryEntry> directoryEntries)
+        {
+            try
+            {
+                _request?.OnPartialResult?.Invoke(new SearchResponse
+                {
+                    Entries = directoryEntries,
+                    MessageId = messageId
+                });
+            }
+            catch
+            {
+                //no catch
+            }
+
+        }
+
         private IEnumerable<DirectoryEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
             for (var entry = Native.ldap_first_entry(ld, msg); entry != IntPtr.Zero;

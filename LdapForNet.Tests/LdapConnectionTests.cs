@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using LdapForNet;
 using LdapForNet.Utils;
 using Xunit;
@@ -138,6 +137,38 @@ namespace LdapForNetTests
                 directoryRequest.Controls.Add(dirSyncRequestControl);
 
                 var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                results.AddRange(response.Entries);
+
+                var entries = results.Select(_ => _.ToLdapEntry()).ToList();
+                Assert.Single(entries);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+
+        [Fact]
+        public void LdapConnection_With_DirectoryNotification_Control_Search_Return_LdapEntries_List()
+        {
+            var cts = new CancellationTokenSource();
+            using (var connection = new LdapConnection())
+            {
+                var results = new List<DirectoryEntry>();
+                connection.Connect();
+                connection.BindAsync().Wait();
+                var directoryRequest = new SearchRequest("CN=Domain Admins,CN=Users," + LdapUtils.GetDnFromHostname(), "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_BASE,"mail")
+                {
+                    OnPartialResult = searchResponse =>
+                    {
+                        results.AddRange(searchResponse.Entries);
+                        cts.Cancel();
+                    }
+                };
+                var directoryNotificationControl = new DirectoryNotificationControl();
+                directoryRequest.Controls.Add(directoryNotificationControl);
+
+                var response = (SearchResponse) connection.SendRequestAsync(directoryRequest,cts.Token).Result;
+
                 results.AddRange(response.Entries);
 
                 var entries = results.Select(_ => _.ToLdapEntry()).ToList();

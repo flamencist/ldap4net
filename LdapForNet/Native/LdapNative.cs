@@ -35,6 +35,7 @@ namespace LdapForNet.Native
         internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld);
         internal abstract int BindSimple(SafeHandle ld, string who,string password);
         internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who,string password);
+        internal abstract int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
         internal abstract int ldap_set_option(SafeHandle ld, int option, ref int invalue);
         internal abstract int ldap_set_option(SafeHandle ld, int option, ref string invalue);
         internal abstract int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
@@ -47,6 +48,7 @@ namespace LdapForNet.Native
         internal abstract int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
         internal abstract string LdapError2String(int error);
         internal abstract string GetAdditionalErrorInfo(SafeHandle ld);
+        internal abstract int LdapGetLastError();
         internal abstract int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit);
         internal abstract IntPtr ldap_first_entry(SafeHandle ld, IntPtr message);
         internal abstract IntPtr ldap_next_entry(SafeHandle ld, IntPtr message);

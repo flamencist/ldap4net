@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -117,21 +116,21 @@ namespace LdapForNet
 
         public void SetOption(Native.Native.LdapOption option, int value)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, string value)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
         }
 
@@ -220,6 +219,12 @@ namespace LdapForNet
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
             ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
+        public void Abandon(AbandonRequest abandonRequest)
+        {
+            ThrowIfNotInitialized();
+            SendRequest(abandonRequest, out _);
+        }
+
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
 
@@ -231,6 +236,9 @@ namespace LdapForNet
             var status = LdapResultCompleteStatus.Unknown;
             var msg = Marshal.AllocHGlobal(IntPtr.Size);
 
+            directoryRequest.MessageId = messageId;
+            token.Register(() => Abandon(new AbandonRequest(messageId)));
+
             DirectoryResponse response = default;
             while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
@@ -238,6 +246,7 @@ namespace LdapForNet
                 ThrowIfResultError(directoryRequest, resType);
 
                 status = requestHandler.Handle(_ld, resType, msg, out response);
+                response.MessageId = messageId;
 
                 if (status == LdapResultCompleteStatus.Unknown)
                 {
@@ -274,7 +283,7 @@ namespace LdapForNet
             switch (resType)
             {
                 case Native.Native.LdapResultType.LDAP_ERROR:
-                    _native.ThrowIfError(1, directoryRequest.GetType().Name);
+                    _native.ThrowIfError(_native.LdapGetLastError(), directoryRequest.GetType().Name);
                     break;
                 case Native.Native.LdapResultType.LDAP_TIMEOUT:
                     throw new LdapException("Timeout exceeded", nameof(_native.ldap_result), 1);
@@ -299,8 +308,10 @@ namespace LdapForNet
                     return new CompareRequestHandler();
                 case ExtendedRequest _:
                     return new ExtendedRequestHandler();
+                case AbandonRequest _:
+                    return new AbandonRequestHandler();
                 default:
-                    throw new LdapException("Not supported operation of request: " + request.GetType());
+                    throw new LdapException("Not supported operation of request: " + request?.GetType());
             }
         }
 

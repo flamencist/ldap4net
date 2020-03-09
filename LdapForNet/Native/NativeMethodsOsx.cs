@@ -311,6 +311,11 @@ namespace LdapForNet.Native
         internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_errno();
+
     }
 
 }

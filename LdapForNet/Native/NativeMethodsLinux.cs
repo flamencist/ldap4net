@@ -122,8 +122,10 @@ namespace LdapForNet.Native
         /// <returns>result type </returns>
         [DllImport(LIB_LDAP_PATH)]
         internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
-        
-        
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_errno();
+
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);
 
@@ -310,5 +312,8 @@ namespace LdapForNet.Native
         internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
         [DllImport(LIB_LBER_PATH)]
         internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
+
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
     }
 }

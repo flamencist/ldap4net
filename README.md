@@ -61,6 +61,7 @@ using (var cn = new LdapConnection())
 		* [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
 		* [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
 		* [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
+		* [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
 	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
 	* [License](#license)
 	* [Authors](#authors)
@@ -598,6 +599,33 @@ using (var connection = new LdapConnection())
     directoryRequest.Controls.Add(new AsqRequestControl("member"));
 
     var response = (SearchResponse)connection.SendRequest(directoryRequest);
+}
+```
+
+#### DirectoryNotificationControl [(1.2.840.113556.1.4.528)](https://ldapwiki.com/wiki/LDAP_SERVER_NOTIFICATION_OID)
+```cs
+
+//get single notification from ldap server
+var cts = new CancellationTokenSource();
+using (var connection = new LdapConnection())
+{
+    var results = new List<DirectoryEntry>();
+    connection.Connect();
+    connection.BindAsync().Wait();
+    var directoryRequest = new SearchRequest("CN=Administrator,CN=Users,dc=example,dc=com", "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_BASE, "mail")
+    {
+        OnPartialResult = searchResponse =>
+        {
+            results.AddRange(searchResponse.Entries);
+            cts.Cancel();
+        }
+    };
+    var directoryNotificationControl = new DirectoryNotificationControl();
+    directoryRequest.Controls.Add(directoryNotificationControl);
+
+
+    var response = (SearchResponse) connection.SendRequestAsync(directoryRequest,cts.Token).Result;
+                
 }
 ```
 
