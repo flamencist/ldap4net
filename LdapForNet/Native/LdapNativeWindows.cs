@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -45,7 +46,7 @@ namespace LdapForNet.Native
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
-        internal override int BindKerberos(SafeHandle ld)
+        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
         {
             LdapConnect(ld);
             var cred = new SEC_WINNT_AUTH_IDENTITY_EX
