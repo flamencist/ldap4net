@@ -49,7 +49,7 @@ namespace LdapForNet.Native
         internal abstract int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp, ref IntPtr referralsp,ref IntPtr serverctrlsp, int freeit);
         internal abstract string LdapError2String(int error);
         internal abstract string GetAdditionalErrorInfo(SafeHandle ld);
-        internal abstract int LdapGetLastError();
+        internal abstract int LdapGetLastError(SafeHandle ld);
         internal abstract int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit);
         internal abstract IntPtr ldap_first_entry(SafeHandle ld, IntPtr message);
         internal abstract IntPtr ldap_next_entry(SafeHandle ld, IntPtr message);
