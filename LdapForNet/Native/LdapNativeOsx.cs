@@ -17,13 +17,11 @@ namespace LdapForNet.Native
 
         internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
         {
-            var saslDefaults = GetSaslDefaults(ld);
-            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-            Marshal.StructureToPtr(saslDefaults, ptr, false);
+            var cred = GetCredentials(ld, networkCredential);
 
             var rc = NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, ptr);
-            Marshal.FreeHGlobal(ptr);
+                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, cred);
+            Marshal.FreeHGlobal(cred);
             return rc;
         }
         
@@ -36,8 +34,20 @@ namespace LdapForNet.Native
             return defaults;
         }
 
+        private IntPtr GetCredentials(SafeHandle ld, NetworkCredential networkCredential)
+        {
+            var saslDefaults = GetSaslDefaults(ld);
+            if (!string.IsNullOrWhiteSpace(networkCredential?.UserName))
+            {
+                saslDefaults.authzid = networkCredential.UserName;
+            }
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld)
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
+            Marshal.StructureToPtr(saslDefaults, ptr, false);
+            return ptr;
+        }
+
+        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential)
         {
             var task = Task.Factory.StartNew(() =>
             {
@@ -45,14 +55,14 @@ namespace LdapForNet.Native
                 var msgid = 0;
                 var result = IntPtr.Zero;
                 var rmech = IntPtr.Zero;
-                var saslDefaults = GetSaslDefaults(ld);
-                var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-                Marshal.StructureToPtr(saslDefaults, ptr, false);
+                var cred = GetCredentials(ld, networkCredential);
+                var saslDefaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(cred);
+                Marshal.StructureToPtr(saslDefaults, cred, false);
                 do
                 {
                     rc = NativeMethodsOsx.ldap_sasl_interactive_bind(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
                         (uint) Native.LdapInteractionFlags.LDAP_SASL_QUIET,
-                        SaslInteractProc , ptr, result, ref rmech,
+                        SaslInteractProc , cred, result, ref rmech,
                         ref msgid);
                     if (rc != (int) Native.ResultCode.SaslBindInProgress)
                     {
@@ -72,7 +82,7 @@ namespace LdapForNet.Native
                     
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
 
-                Marshal.FreeHGlobal(ptr);
+                Marshal.FreeHGlobal(cred);
                 ThrowIfError(ld,rc, nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
                     [nameof(saslDefaults)] = saslDefaults.ToString()

@@ -97,7 +97,7 @@ namespace LdapForNet
             }
             else if (authType == Native.Native.LdapAuthType.GssApi || authType == Native.Native.LdapAuthType.Negotiate)
             {
-                result = await _native.BindKerberosAsync(_ld);
+                result = await _native.BindKerberosAsync(_ld, networkCredential);
             }
             else
             {

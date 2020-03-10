@@ -33,7 +33,7 @@ namespace LdapForNet.Native
         internal abstract int Init(ref IntPtr ld, Uri uri);
         internal abstract int Init(ref IntPtr ld, string hostname, int port);
         internal abstract int BindKerberos(SafeHandle ld, NetworkCredential networkCredential);
-        internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld);
+        internal abstract Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential);
         internal abstract int BindSimple(SafeHandle ld, string who,string password);
         internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who,string password);
         internal abstract int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
