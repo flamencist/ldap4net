@@ -49,24 +49,16 @@ namespace LdapForNet.Native
         internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
         {
             LdapConnect(ld);
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
-            };
+            var cred = ToNative(networkCredential);
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE);
         }
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld)
+
+
+        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential)
         {
             LdapConnect(ld);
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
-            };
+            var cred = ToNative(networkCredential);
 
             var task = Task.Factory.StartNew(() =>
             {
@@ -75,6 +67,28 @@ namespace LdapForNet.Native
                 return IntPtr.Zero;
             });
             return await task.ConfigureAwait(false);
+        }
+
+        private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(NetworkCredential networkCredential)
+        {
+            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
+            {
+                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
+                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
+                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
+            };
+
+            if (networkCredential != null)
+            {
+                cred.user = string.IsNullOrEmpty(networkCredential.UserName) ? null : networkCredential.UserName;
+                cred.userLength = networkCredential.UserName.Length;
+                cred.password = string.IsNullOrEmpty(networkCredential.Password) ? null : networkCredential.Password;
+                cred.passwordLength = networkCredential.Password.Length;
+                cred.domain = string.IsNullOrEmpty(networkCredential.Domain) ? null : networkCredential.Domain;
+                cred.domainLength = networkCredential.Domain.Length;
+            }
+
+            return cred;
         }
 
         internal override int BindSimple(SafeHandle ld, string who, string password)

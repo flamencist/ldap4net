@@ -98,7 +98,7 @@ namespace LdapForNet
             }
             else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
             {
-                result = await _native.BindKerberosAsync(_ld);
+                result = await _native.BindKerberosAsync(_ld, networkCredential);
             }
             else
             {
