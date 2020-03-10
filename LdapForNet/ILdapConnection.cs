@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -10,7 +11,9 @@ namespace LdapForNet
     {
         void Connect(Uri uri, LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3);
         void Connect(string hostname, int port = (int)LdapPort.LDAP, LdapVersion version = LdapVersion.LDAP_VERSION3);
+        void Bind(LdapAuthType authType, NetworkCredential networkCredential);
         void Bind(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
+        Task BindAsync(LdapAuthType authType, NetworkCredential networkCredential);
         Task BindAsync(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
         void SetOption(LdapOption option, int value);
         void SetOption(LdapOption option, string value);

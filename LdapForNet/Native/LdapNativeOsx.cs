@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
@@ -14,7 +15,7 @@ namespace LdapForNet.Native
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
-        internal override int BindKerberos(SafeHandle ld)
+        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
         {
             var saslDefaults = GetSaslDefaults(ld);
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));

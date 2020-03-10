@@ -1,7 +1,8 @@
 using System;
+using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -25,6 +26,7 @@ namespace LdapForNet.Native
             return Init(ref ld, uri.Host, port);
         }
 
+        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
         internal override int Init(ref IntPtr ld, string hostname, int port)
         {
             ld =  NativeMethodsWindows.ldap_init(hostname, port);
@@ -44,7 +46,7 @@ namespace LdapForNet.Native
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
-        internal override int BindKerberos(SafeHandle ld)
+        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
         {
             LdapConnect(ld);
             var cred = new SEC_WINNT_AUTH_IDENTITY_EX
@@ -78,7 +80,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
             LdapConnect(ld);
-            return NativeMethodsWindows.ldap_simple_bind_s(ld, who, password);
+            return NativeMethodsWindows.ldap_bind_s(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
         }
 
         internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password)
@@ -87,23 +89,25 @@ namespace LdapForNet.Native
             return await Task.Factory.StartNew(() =>
             {
                 var result = IntPtr.Zero;
-                var msgidp = NativeMethodsWindows.ldap_simple_bind(ld, who, password);
+                var msgidp = NativeMethodsWindows.ldap_bind(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
   
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_simple_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_simple_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_bind), 1);
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_simple_bind));
+                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_bind));
                 }
-
+                
                 return result;
             }).ConfigureAwait(false);
         }
+
+        internal override int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_abandon(ld, msgId);
 
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
@@ -139,8 +143,9 @@ namespace LdapForNet.Native
         internal override string LdapError2String(int error) => NativeMethodsWindows.LdapError2String(error);
 
         internal override string GetAdditionalErrorInfo(SafeHandle ld) => NativeMethodsWindows.GetAdditionalErrorInfo(ld);
+        internal override int LdapGetLastError() => NativeMethodsWindows.LdapGetLastError();
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
+        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
 
         internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message) => NativeMethodsWindows.ldap_first_entry(ld, message);
 
@@ -194,5 +199,65 @@ namespace LdapForNet.Native
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
             NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsWindows.ldap_controls_free(ctrls);
+        internal override int ldap_control_free(IntPtr control) => NativeMethodsWindows.ldap_control_free(control);
+
+        internal override int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
+            ref IntPtr control)
+            => NativeMethodsWindows.ldap_create_sort_control(handle, keys, critical, ref control);
+
+        internal override IntPtr ber_alloc_t(int option) => NativeMethodsWindows.ber_alloc_t(option);
+
+        internal override int ber_printf_emptyarg(SafeHandle berElement, string format)
+            => NativeMethodsWindows.ber_printf_emptyarg(berElement, format);
+
+        internal override int ber_printf_int(SafeHandle berElement, string format, int value)
+            => NativeMethodsWindows.ber_printf_int(berElement, format, value);
+        internal override int ber_printf_bytearray(SafeHandle berElement, string format, HGlobalMemHandle value, int length)
+            => NativeMethodsWindows.ber_printf_bytearray(berElement, format, value, length);
+
+        internal override int ber_printf_berarray(SafeHandle berElement, string format, IntPtr value)
+            => NativeMethodsWindows.ber_printf_berarray(berElement, format, value);
+
+        internal override int ber_flatten(SafeHandle berElement, ref IntPtr value)
+            => NativeMethodsWindows.ber_flatten(berElement, ref value);
+
+        internal override IntPtr ber_init(IntPtr value)
+            => NativeMethodsWindows.ber_init(value);
+
+        internal override int ber_scanf(SafeHandle berElement, string format)
+            => NativeMethodsWindows.ber_scanf(berElement,format);
+
+        internal override int ber_scanf_int(SafeHandle berElement, string format, ref int value)
+            => NativeMethodsWindows.ber_scanf_int(berElement, format, ref value);
+
+        internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsWindows.ber_peek_tag(berElement, ref length);
+
+        internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
+            => NativeMethodsWindows.ber_scanf_ptr(berElement, format, ref value);
+
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value)
+            => NativeMethodsWindows.ber_scanf_ostring(berElement, format, value);
+
+        internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
+            => NativeMethodsWindows.ber_scanf_bitstring(berElement, format, ref value, ref length);
+
+        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
+            => NativeMethodsWindows.ber_scanf_string(berElement, format, value, ref  length);
+
+        
+        internal override int ber_bvfree(IntPtr value)
+            => NativeMethodsWindows.ber_bvfree(value);
+
+        internal override int ber_bvecfree(IntPtr value)
+            => NativeMethodsWindows.ber_bvecfree(value);
+
+        internal override IntPtr ber_free(IntPtr berelem, int option)
+            => NativeMethodsWindows.ber_free(berelem, option);
+
+        internal override void ber_memfree(IntPtr value)
+            => NativeMethodsWindows.ldap_memfree(value);
+
+        internal override bool BerScanfSupports(char fmt) => 
+            _supportedFormats.Contains(fmt);
     }
 }
