@@ -67,16 +67,16 @@ namespace LdapForNet
             );
         }
 
-        public void Bind(Native.Native.LdapAuthType authType , NetworkCredential networkCredential)
+        public void Bind(Native.Native.LdapAuthType authType, NetworkCredential networkCredential, string proxyName)
         {
             ThrowIfNotInitialized();
             if (authType == Native.Native.LdapAuthType.Simple)
             {
                 _native.ThrowIfError(_ld, _native.BindSimple(_ld, networkCredential.UserName, networkCredential.Password), nameof(_native.BindSimple));
             }
-            else if (authType == Native.Native.LdapAuthType.GssApi || authType == Native.Native.LdapAuthType.Negotiate)
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                _native.ThrowIfError(_ld, _native.BindKerberos(_ld, networkCredential), nameof(_native.BindKerberos));
+                _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, networkCredential, proxyName), nameof(_native.BindSasl));
             }
             else
             {
@@ -87,7 +87,8 @@ namespace LdapForNet
             _bound = true;
         }
 
-        public async Task BindAsync(Native.Native.LdapAuthType authType, NetworkCredential networkCredential)
+        public async Task BindAsync(Native.Native.LdapAuthType authType, NetworkCredential networkCredential,
+            string proxyName)
         {
             ThrowIfNotInitialized();
             IntPtr result;
@@ -95,9 +96,9 @@ namespace LdapForNet
             {
                 result = await _native.BindSimpleAsync(_ld, networkCredential.UserName, networkCredential.Password);
             }
-            else if (authType == Native.Native.LdapAuthType.GssApi || authType == Native.Native.LdapAuthType.Negotiate)
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                result = await _native.BindKerberosAsync(_ld, networkCredential);
+                result = await _native.BindSaslAsync(_ld, authType, networkCredential, proxyName);
             }
             else
             {
@@ -120,7 +121,7 @@ namespace LdapForNet
             {
                 UserName = userDn,
                 Password = password
-            });
+            }, string.Empty);
         }
 
         
@@ -131,7 +132,7 @@ namespace LdapForNet
             {
                 UserName = userDn,
                 Password = password
-            });
+            }, string.Empty);
         }
 
         public void SetOption(Native.Native.LdapOption option, int value)
@@ -157,6 +158,8 @@ namespace LdapForNet
         public IList<LdapEntry> Search(string @base, string filter,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
+            var username = string.Empty;
+            _native.ldap_get_option(_ld,(int)Native.Native.LdapOption.LDAP_OPT_X_SASL_USERNAME, ref username);
             var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
             if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {

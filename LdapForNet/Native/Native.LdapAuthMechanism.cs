@@ -11,6 +11,7 @@ namespace LdapForNet.Native
             public const string GSSAPI = "GSSAPI";
             public const string Kerberos = "GSSAPI";
             public const string SIMPLE = "SIMPLE";
+            internal const string Digest = "DIGEST-MD5";
 
             public static LdapAuthType ToAuthType(string mechanism)
             {
@@ -23,8 +24,32 @@ namespace LdapForNet.Native
                 {
                     return LdapAuthType.Negotiate;
                 }
+                
+                if (Digest.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+                {
+                    return LdapAuthType.Digest;
+                }
 
                 return LdapAuthType.Unknown;
+            }
+
+            internal static string FromAuthType(LdapAuthType authType)
+            {
+                switch (authType)
+                {
+                    case LdapAuthType.Simple:
+                        return SIMPLE;
+                    case LdapAuthType.Negotiate:
+                        return Kerberos;
+                    case LdapAuthType.GssApi:
+                        return GSSAPI;
+                    case LdapAuthType.Digest:
+                        return Digest;
+                    case LdapAuthType.Unknown:
+                        return string.Empty;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(authType), authType, null);
+                }
             }
         }
 
@@ -36,7 +61,7 @@ namespace LdapForNet.Native
             Negotiate = 2,
             GssApi=11,
             //Ntlm = 3,
-            //Digest = 4,
+            Digest = 4,
             //Sicily = 5,
             //Dpa = 6,
             //Msn = 7,

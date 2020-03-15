@@ -15,32 +15,41 @@ namespace LdapForNet.Native
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsLinux.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
-        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, NetworkCredential networkCredential,
+            string proxyName)
         {
-            var cred = GetCredentials(ld, networkCredential);
+            var mech = Native.LdapAuthMechanism.FromAuthType(authType);
+            var cred = GetCredentials(ld, mech, networkCredential, proxyName);
 
-            var rc = NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, cred);
+            var rc = NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, mech, IntPtr.Zero, IntPtr.Zero,
+                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, SaslInteractProc, cred);
             Marshal.FreeHGlobal(cred);
             return rc;
         }
 
-        private IntPtr GetCredentials(SafeHandle ld, NetworkCredential networkCredential)
+        private IntPtr GetCredentials(SafeHandle ld, string mech, NetworkCredential networkCredential, string proxyName)
         {
-            var saslDefaults = GetSaslDefaults(ld);
+            var saslDefaults = GetSaslDefaults(ld, mech);
             if (!string.IsNullOrWhiteSpace(networkCredential?.UserName))
             {
-                saslDefaults.authzid = networkCredential.UserName;
+                saslDefaults.authcid = networkCredential.UserName;
             }
-
+            if (!string.IsNullOrWhiteSpace(networkCredential?.Password))
+            {
+                saslDefaults.passwd = networkCredential.Password;
+            }
+            if (!string.IsNullOrWhiteSpace(proxyName))
+            {
+                saslDefaults.authzid = proxyName;
+            }
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
             Marshal.StructureToPtr(saslDefaults, ptr, false);
             return ptr;
         }
 
-        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
+        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
         {
-            var defaults = new Native.LdapSaslDefaults { mech = Native.LdapAuthMechanism.GSSAPI };
+            var defaults = new Native.LdapSaslDefaults { mech = mech };
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
@@ -48,7 +57,8 @@ namespace LdapForNet.Native
         }
 
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
+            NetworkCredential networkCredential, string proxyName)
         {
             var task = Task.Factory.StartNew(() =>
             {
@@ -56,11 +66,12 @@ namespace LdapForNet.Native
                 var msgid = 0;
                 var result = IntPtr.Zero;
                 var rmech = IntPtr.Zero;
-                var cred = GetCredentials(ld, networkCredential);
+                var mech = Native.LdapAuthMechanism.FromAuthType(authType);
+                var cred = GetCredentials(ld, mech, networkCredential, proxyName);
                 var saslDefaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(cred);
                 do
                 {
-                    rc = NativeMethodsLinux.ldap_sasl_interactive_bind(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
+                    rc = NativeMethodsLinux.ldap_sasl_interactive_bind(ld, null, mech, IntPtr.Zero, IntPtr.Zero,
                         (uint) Native.LdapInteractionFlags.LDAP_SASL_QUIET,
                         SaslInteractProc , cred, result, ref rmech,
                         ref msgid);
@@ -99,7 +110,7 @@ namespace LdapForNet.Native
             var interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
             if (ld == IntPtr.Zero)
             {
-                return (int)Native.ResultCode.LDAP_PARAM_ERROR;
+                return (int)Native.ResultCode.LDAP_PARAM_ERROR;    
             }
 
             var defaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(d);
@@ -111,8 +122,8 @@ namespace LdapForNet.Native
                 {
                     return rc;
                 }
-
-                ptr = IntPtr.Add(ptr, Marshal.SizeOf<Native.LdapSaslDefaults>());
+                Marshal.StructureToPtr(interact, ptr, false);
+                ptr = IntPtr.Add(ptr, Marshal.SizeOf<Native.SaslInteract>());
                 interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
             }
 
@@ -158,7 +169,7 @@ namespace LdapForNet.Native
             if (flags != (uint)Native.LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)Native.SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
             {
                 interact.result = Encoder.Instance.StringToPtr(interact.defresult);
-                interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
+                interact.len = interact.defresult != null?(uint)interact.defresult.Length:0;
                 return (int) Native.ResultCode.Success;
             }
 
@@ -169,8 +180,8 @@ namespace LdapForNet.Native
 
             if (noecho)
             {
-                interact.result = Encoder.Instance.StringToPtr(interact.promt);
-                interact.len = (ushort)interact.promt.Length;
+                interact.result = Encoder.Instance.StringToPtr(interact.prompt);
+                interact.len = (ushort)interact.prompt.Length;
             }
             else
             {
