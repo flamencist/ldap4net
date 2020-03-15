@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,44 +67,43 @@ namespace LdapForNet
             );
         }
 
-        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
-            string password = null)
+        public void Bind(Native.Native.LdapAuthType authType, NetworkCredential networkCredential, string proxyName)
         {
             ThrowIfNotInitialized();
-            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            if (authType == Native.Native.LdapAuthType.Simple)
             {
-                _native.ThrowIfError(_ld, _native.BindSimple(_ld, userDn, password), nameof(_native.BindSimple));
+                _native.ThrowIfError(_ld, _native.BindSimple(_ld, networkCredential.UserName, networkCredential.Password), nameof(_native.BindSimple));
             }
-            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                _native.ThrowIfError(_ld, _native.BindKerberos(_ld), nameof(_native.BindKerberos));
+                _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, networkCredential, proxyName), nameof(_native.BindSasl));
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. ");
             }
 
             _bound = true;
         }
 
-        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
-            string password = null)
+        public async Task BindAsync(Native.Native.LdapAuthType authType, NetworkCredential networkCredential,
+            string proxyName)
         {
             ThrowIfNotInitialized();
             IntPtr result;
-            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            if (authType == Native.Native.LdapAuthType.Simple)
             {
-                result = await _native.BindSimpleAsync(_ld, userDn, password);
+                result = await _native.BindSimpleAsync(_ld, networkCredential.UserName, networkCredential.Password);
             }
-            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                result = await _native.BindKerberosAsync(_ld, networkCredential);
+                result = await _native.BindSaslAsync(_ld, authType, networkCredential, proxyName);
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. ");
             }
 
             if (result != IntPtr.Zero)
@@ -112,6 +112,27 @@ namespace LdapForNet
             }
 
             _bound = true;
+        }
+
+        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
+            string password = null)
+        {
+            Bind(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new NetworkCredential
+            {
+                UserName = userDn,
+                Password = password
+            }, string.Empty);
+        }
+
+        
+        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
+            string password = null)
+        {
+            await BindAsync(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new NetworkCredential
+            {
+                UserName = userDn,
+                Password = password
+            }, string.Empty);
         }
 
         public void SetOption(Native.Native.LdapOption option, int value)
@@ -137,6 +158,8 @@ namespace LdapForNet
         public IList<LdapEntry> Search(string @base, string filter,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
+            var username = string.Empty;
+            _native.ldap_get_option(_ld,(int)Native.Native.LdapOption.LDAP_OPT_X_SASL_USERNAME, ref username);
             var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
             if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {

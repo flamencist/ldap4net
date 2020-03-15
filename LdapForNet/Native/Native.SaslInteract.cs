@@ -10,14 +10,14 @@ namespace LdapForNet.Native
     public static partial class Native
     {
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct SaslInteract
+        public class SaslInteract
         {
-            public uint id;
+            public ulong id;
             public string challenge;
-            public string promt;
+            public string prompt;
             public string defresult;
             public IntPtr result;
-            public ushort len;
+            public uint len;
         }
 
         public enum SaslCb

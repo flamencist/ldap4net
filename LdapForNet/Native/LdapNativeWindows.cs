@@ -46,7 +46,8 @@ namespace LdapForNet.Native
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
-        internal override int BindKerberos(SafeHandle ld, NetworkCredential networkCredential)
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, NetworkCredential networkCredential,
+            string proxyName)
         {
             LdapConnect(ld);
             var cred = ToNative(networkCredential);
@@ -55,7 +56,8 @@ namespace LdapForNet.Native
 
 
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
+            NetworkCredential networkCredential, string proxyName)
         {
             LdapConnect(ld);
             var cred = ToNative(networkCredential);

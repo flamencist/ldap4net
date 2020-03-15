@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
@@ -14,7 +15,8 @@ namespace LdapForNet.Native
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
-        internal override int BindKerberos(SafeHandle ld)
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, NetworkCredential networkCredential,
+            string proxyName)
         {
             var cred = GetCredentials(ld, networkCredential);
 
@@ -46,7 +48,8 @@ namespace LdapForNet.Native
             return ptr;
         }
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld, NetworkCredential networkCredential)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
+            NetworkCredential networkCredential, string proxyName)
         {
             var task = Task.Factory.StartNew(() =>
             {
@@ -168,8 +171,8 @@ namespace LdapForNet.Native
 
             if (noecho)
             {
-                interact.result = Encoder.Instance.StringToPtr(interact.promt);
-                interact.len = (ushort)interact.promt.Length;
+                interact.result = Encoder.Instance.StringToPtr(interact.prompt);
+                interact.len = (ushort)interact.prompt.Length;
             }
             else
             {
