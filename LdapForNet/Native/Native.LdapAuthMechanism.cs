@@ -51,6 +51,25 @@ namespace LdapForNet.Native
                         throw new ArgumentOutOfRangeException(nameof(authType), authType, null);
                 }
             }
+
+            internal static BindMethod ToBindMethod(LdapAuthType authType)
+            {
+                switch (authType)
+                {
+                    case LdapAuthType.Simple:
+                        return BindMethod.LDAP_AUTH_SIMPLE;
+                    case LdapAuthType.Negotiate:
+                        return BindMethod.LDAP_AUTH_NEGOTIATE;
+                    case LdapAuthType.GssApi:
+                        return BindMethod.LDAP_AUTH_NEGOTIATE;
+                    case LdapAuthType.Digest:
+                        return BindMethod.LDAP_AUTH_DIGEST;
+                    case LdapAuthType.Unknown:
+                        return BindMethod.LDAP_AUTH_OTHERKIND;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(authType), authType, null);
+                }
+            }
         }
 
         public enum LdapAuthType

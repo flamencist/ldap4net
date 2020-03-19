@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -25,7 +24,6 @@ namespace LdapForNet.Native
             return Init(ref ld, uri.Host, port);
         }
 
-        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
         internal override int Init(ref IntPtr ld, string hostname, int port)
         {
             ld =  NativeMethodsWindows.ldap_init(hostname, port);
@@ -49,10 +47,8 @@ namespace LdapForNet.Native
         {
             LdapConnect(ld);
             var cred = ToNative(ldapCredential);
-            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE);
+            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
-
-
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
@@ -61,14 +57,12 @@ namespace LdapForNet.Native
 
             var task = Task.Factory.StartNew(() =>
             {
-                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(NativeMethodsWindows.ldap_bind_s));
+                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType)),nameof(NativeMethodsWindows.ldap_bind_s));
 
                 return IntPtr.Zero;
             });
             return await task.ConfigureAwait(false);
         }
-
-
 
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
