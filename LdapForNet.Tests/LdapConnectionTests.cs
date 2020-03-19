@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,6 +33,42 @@ namespace LdapForNetTests
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
                 Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                {
+                    UserName = Config.LdapDigestMd5UserName,
+                    Password = Config.LdapPassword
+                });
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);
+                Assert.Equal(Config.LdapDigestMd5UserName, entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5_Proxy()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                {
+                    UserName = Config.LdapDigestMd5UserName,
+                    Password = Config.LdapPassword,
+                    AuthorizationId = $"dn:{Config.LdapDigestMd5ProxyDn}" 
+                });
+                var authzId = connection.WhoAmI().Result;
+                Assert.Equal($"dn:{Config.LdapDigestMd5ProxyDn}", authzId);               
             }
         }
         
@@ -78,7 +115,6 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
-
 
         [Fact]
         public void LdapConnection_With_DirSync_Control_Search_Return_LdapEntries_List()

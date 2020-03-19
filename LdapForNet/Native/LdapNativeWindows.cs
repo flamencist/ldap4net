@@ -46,21 +46,19 @@ namespace LdapForNet.Native
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
-        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, NetworkCredential networkCredential,
-            string proxyName)
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = ToNative(networkCredential);
+            var cred = ToNative(ldapCredential);
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE);
         }
 
 
 
-        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
-            NetworkCredential networkCredential, string proxyName)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = ToNative(networkCredential);
+            var cred = ToNative(ldapCredential);
 
             var task = Task.Factory.StartNew(() =>
             {
@@ -71,27 +69,7 @@ namespace LdapForNet.Native
             return await task.ConfigureAwait(false);
         }
 
-        private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(NetworkCredential networkCredential)
-        {
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
-            };
 
-            if (networkCredential != null)
-            {
-                cred.user = string.IsNullOrEmpty(networkCredential.UserName) ? null : networkCredential.UserName;
-                cred.userLength = networkCredential.UserName.Length;
-                cred.password = string.IsNullOrEmpty(networkCredential.Password) ? null : networkCredential.Password;
-                cred.passwordLength = networkCredential.Password.Length;
-                cred.domain = string.IsNullOrEmpty(networkCredential.Domain) ? null : networkCredential.Domain;
-                cred.domainLength = networkCredential.Domain.Length;
-            }
-
-            return cred;
-        }
 
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
@@ -275,5 +253,27 @@ namespace LdapForNet.Native
 
         internal override bool BerScanfSupports(char fmt) => 
             _supportedFormats.Contains(fmt);
+        
+        private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(LdapCredential ldapCredential)
+        {
+            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
+            {
+                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
+                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
+                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
+            };
+
+            if (ldapCredential != null)
+            {
+                cred.user = string.IsNullOrEmpty(ldapCredential.UserName) ? null : ldapCredential.UserName;
+                cred.userLength = ldapCredential.UserName.Length;
+                cred.password = string.IsNullOrEmpty(ldapCredential.Password) ? null : ldapCredential.Password;
+                cred.passwordLength = ldapCredential.Password.Length;
+                cred.domain = string.IsNullOrEmpty(ldapCredential.Realm) ? null : ldapCredential.Realm;
+                cred.domainLength = ldapCredential.Realm.Length;
+            }
+
+            return cred;
+        }
     }
 }

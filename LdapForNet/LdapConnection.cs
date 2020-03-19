@@ -67,16 +67,16 @@ namespace LdapForNet
             );
         }
 
-        public void Bind(Native.Native.LdapAuthType authType, NetworkCredential networkCredential, string proxyName)
+        public void Bind(Native.Native.LdapAuthType authType, LdapCredential credential)
         {
             ThrowIfNotInitialized();
             if (authType == Native.Native.LdapAuthType.Simple)
             {
-                _native.ThrowIfError(_ld, _native.BindSimple(_ld, networkCredential.UserName, networkCredential.Password), nameof(_native.BindSimple));
+                _native.ThrowIfError(_ld, _native.BindSimple(_ld, credential.UserName, credential.Password), nameof(_native.BindSimple));
             }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, networkCredential, proxyName), nameof(_native.BindSasl));
+                _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, credential), nameof(_native.BindSasl));
             }
             else
             {
@@ -87,18 +87,17 @@ namespace LdapForNet
             _bound = true;
         }
 
-        public async Task BindAsync(Native.Native.LdapAuthType authType, NetworkCredential networkCredential,
-            string proxyName)
+        public async Task BindAsync(Native.Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             ThrowIfNotInitialized();
             IntPtr result;
             if (authType == Native.Native.LdapAuthType.Simple)
             {
-                result = await _native.BindSimpleAsync(_ld, networkCredential.UserName, networkCredential.Password);
+                result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password);
             }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                result = await _native.BindSaslAsync(_ld, authType, networkCredential, proxyName);
+                result = await _native.BindSaslAsync(_ld, authType, ldapCredential);
             }
             else
             {
@@ -117,22 +116,22 @@ namespace LdapForNet
         public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
         {
-            Bind(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new NetworkCredential
+            Bind(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new LdapCredential
             {
                 UserName = userDn,
                 Password = password
-            }, string.Empty);
+            });
         }
 
         
         public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
         {
-            await BindAsync(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new NetworkCredential
+            await BindAsync(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new LdapCredential
             {
                 UserName = userDn,
                 Password = password
-            }, string.Empty);
+            });
         }
 
         public void SetOption(Native.Native.LdapOption option, int value)

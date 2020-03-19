@@ -32,10 +32,8 @@ namespace LdapForNet.Native
 
         internal abstract int Init(ref IntPtr ld, Uri uri);
         internal abstract int Init(ref IntPtr ld, string hostname, int port);
-        internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, NetworkCredential networkCredential,
-            string proxyName);
-        internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType,
-            NetworkCredential networkCredential, string proxyName);
+        internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
+        internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract int BindSimple(SafeHandle ld, string who,string password);
         internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who,string password);
         internal abstract int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
