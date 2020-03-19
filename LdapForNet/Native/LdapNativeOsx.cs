@@ -15,41 +15,19 @@ namespace LdapForNet.Native
         internal override int Init(ref IntPtr ld, string hostname, int port) => 
             NativeMethodsOsx.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
 
-        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, NetworkCredential networkCredential,
-            string proxyName)
+       
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            var cred = GetCredentials(ld, networkCredential);
+            var mech = Native.LdapAuthMechanism.FromAuthType(authType);
+            var cred = ToNative(ld, mech, ldapCredential);
 
-            var rc = NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
-                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)Native.ResultCode.Success, cred);
+            var rc = NativeMethodsOsx.ldap_sasl_interactive_bind_s(ld, null, mech, IntPtr.Zero, IntPtr.Zero,
+                (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, UnixSaslMethods.SaslInteractionProcedure, cred);
             Marshal.FreeHGlobal(cred);
             return rc;
         }
-        
-        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld)
-        {
-            var defaults = new Native.LdapSaslDefaults { mech = Native.LdapAuthMechanism.GSSAPI };
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
-            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
-            return defaults;
-        }
 
-        private IntPtr GetCredentials(SafeHandle ld, NetworkCredential networkCredential)
-        {
-            var saslDefaults = GetSaslDefaults(ld);
-            if (!string.IsNullOrWhiteSpace(networkCredential?.UserName))
-            {
-                saslDefaults.authzid = networkCredential.UserName;
-            }
-
-            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(saslDefaults));
-            Marshal.StructureToPtr(saslDefaults, ptr, false);
-            return ptr;
-        }
-
-        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
-            NetworkCredential networkCredential, string proxyName)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             var task = Task.Factory.StartNew(() =>
             {
@@ -57,22 +35,22 @@ namespace LdapForNet.Native
                 var msgid = 0;
                 var result = IntPtr.Zero;
                 var rmech = IntPtr.Zero;
-                var cred = GetCredentials(ld, networkCredential);
+                var mech = Native.LdapAuthMechanism.FromAuthType(authType);
+                var cred = ToNative(ld, mech, ldapCredential);
                 var saslDefaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(cred);
-                Marshal.StructureToPtr(saslDefaults, cred, false);
                 do
                 {
-                    rc = NativeMethodsOsx.ldap_sasl_interactive_bind(ld, null, Native.LdapAuthMechanism.GSSAPI, IntPtr.Zero, IntPtr.Zero,
+                    rc = NativeMethodsOsx.ldap_sasl_interactive_bind(ld, null, mech, IntPtr.Zero, IntPtr.Zero,
                         (uint) Native.LdapInteractionFlags.LDAP_SASL_QUIET,
-                        SaslInteractProc , cred, result, ref rmech,
+                        UnixSaslMethods.SaslInteractionProcedure , cred, result, ref rmech,
                         ref msgid);
                     if (rc != (int) Native.ResultCode.SaslBindInProgress)
                     {
                         break;
                     }
-                    NativeMethodsOsx.ldap_msgfree(result);
+                    ldap_msgfree(result);
 
-                    if (NativeMethodsOsx.ldap_result(ld, msgid, 0, IntPtr.Zero, ref result) == Native.LdapResultType.LDAP_ERROR)
+                    if (ldap_result(ld, msgid, 0, IntPtr.Zero, ref result) == Native.LdapResultType.LDAP_ERROR)
                     {
                         ThrowIfError(rc,nameof(NativeMethodsOsx.ldap_sasl_interactive_bind));
                     }
@@ -83,8 +61,8 @@ namespace LdapForNet.Native
                     }
                     
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
-
                 Marshal.FreeHGlobal(cred);
+                
                 ThrowIfError(ld,rc, nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), new Dictionary<string, string>
                 {
                     [nameof(saslDefaults)] = saslDefaults.ToString()
@@ -93,107 +71,6 @@ namespace LdapForNet.Native
             });
             return await task.ConfigureAwait(false);
         }
-        
-        
-        private static int SaslInteractProc(IntPtr ld, uint flags, IntPtr d, IntPtr @in)
-        {
-            var ptr = @in;
-            var interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
-            if (ld == IntPtr.Zero)
-            {
-                return (int)Native.ResultCode.LDAP_PARAM_ERROR;
-            }
-
-            var defaults = Marshal.PtrToStructure<Native.LdapSaslDefaults>(d);
-
-            while (interact.id != (int)Native.SaslCb.SASL_CB_LIST_END)
-            {
-                var rc = SaslInteraction(flags, interact, defaults);
-                if (rc != (int) Native.ResultCode.Success)
-                {
-                    return rc;
-                }
-
-                ptr = IntPtr.Add(ptr, Marshal.SizeOf<Native.LdapSaslDefaults>());
-                interact = Marshal.PtrToStructure<Native.SaslInteract>(ptr);
-            }
-
-            return (int) Native.ResultCode.Success;
-        }
-
-        private static int SaslInteraction(uint flags, Native.SaslInteract interact, Native.LdapSaslDefaults defaults)
-        {
-            var noecho = false;
-            switch (interact.id)
-            {
-                case (int)Native.SaslCb.SASL_CB_GETREALM:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.realm;
-                    }
-                    break;
-                case (int)Native.SaslCb.SASL_CB_AUTHNAME:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.authcid;
-                    }
-                    break;
-                case (int)Native.SaslCb.SASL_CB_PASS:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.passwd;
-                    }
-                    break;
-                case (int)Native.SaslCb.SASL_CB_USER:
-                    if (!defaults.IsEmpty())
-                    {
-                        interact.defresult = defaults.authzid;
-                    }
-                    break;
-                case (int)Native.SaslCb.SASL_CB_NOECHOPROMPT:
-                    noecho = true;
-                    break;
-                case (int)Native.SaslCb.SASL_CB_ECHOPROMPT:
-                    break;
-            }
-
-            if (flags != (uint)Native.LdapInteractionFlags.LDAP_SASL_INTERACTIVE && (interact.id == (int)Native.SaslCb.SASL_CB_USER || !string.IsNullOrEmpty(interact.defresult)))
-            {
-                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
-                interact.len = interact.defresult != null?(ushort)interact.defresult.Length:(ushort)0;
-                return (int) Native.ResultCode.Success;
-            }
-
-            if (flags == (int) Native.LdapInteractionFlags.LDAP_SASL_QUIET)
-            {
-                return (int) Native.ResultCode.Other;
-            }
-
-            if (noecho)
-            {
-                interact.result = Encoder.Instance.StringToPtr(interact.prompt);
-                interact.len = (ushort)interact.prompt.Length;
-            }
-            else
-            {
-                return (int)Native.ResultCode.LDAP_NOT_SUPPORTED;
-            }
-
-            if (interact.len > 0)
-            {
-                /*
-                 * 
-                 */
-            }
-            else
-            {
-                interact.result = Encoder.Instance.StringToPtr(interact.defresult);
-                interact.len = interact.defresult != null ? (ushort) interact.defresult.Length : (ushort)0;
-            }
-
-            return (int) Native.ResultCode.Success;
-        }
-
 
         internal override int BindSimple(SafeHandle ld, string userDn, string password) =>
             NativeMethodsOsx.ldap_simple_bind_s(ld, userDn, password);
@@ -416,5 +293,20 @@ namespace LdapForNet.Native
         internal override IntPtr ber_free(IntPtr berelem, int option)
             => NativeMethodsOsx.ber_free(berelem, option);
         internal override bool BerScanfSupports(char fmt) => true;
+        
+        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
+        {
+            var defaults = new Native.LdapSaslDefaults { mech = mech };
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid),nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid),nameof(ldap_get_option));
+            return defaults;
+        }
+
+        private IntPtr ToNative(SafeHandle ld, string mech, LdapCredential ldapCredential)
+        {
+            var saslDefaults = GetSaslDefaults(ld, mech);
+            return UnixSaslMethods.GetSaslCredentials(ldapCredential, saslDefaults);
+        }
     }
 }
