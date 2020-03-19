@@ -8,6 +8,19 @@ addons:
     packages:
       - ldap-utils
       - slapd
+      - sasl2-bin
+      - ca-certificates
+      - libsasl2-2
+      - curl
+      - libsasl2-modules
+      - libsasl2-modules-db
+      - libsasl2-modules-gssapi-mit
+      - libsasl2-modules-ldap
+      - libsasl2-modules-otp
+      - libsasl2-modules-sql
+      - openssl
+      - slapd
+      - krb5-kdc-ldap
   homebrew:
     packages:
       - openldap
