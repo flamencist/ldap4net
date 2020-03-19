@@ -8,8 +8,6 @@ LC_ALL=C DEBIAN_FRONTEND=noninteractive apt install -y \
     sasl2-bin \
     ca-certificates \
     curl \
-    ca-certificates \
-    curl \
     ldap-utils \
     libsasl2-2 \
     libsasl2-modules \

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -241,11 +240,6 @@ namespace LdapForNet
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
             ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
-        public void Abandon(AbandonRequest abandonRequest)
-        {
-            ThrowIfNotInitialized();
-            SendRequest(abandonRequest, out _);
-        }
 
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
@@ -258,9 +252,6 @@ namespace LdapForNet
             var status = LdapResultCompleteStatus.Unknown;
             var msg = Marshal.AllocHGlobal(IntPtr.Size);
 
-            directoryRequest.MessageId = messageId;
-            token.Register(() => Abandon(new AbandonRequest(messageId)));
-
             DirectoryResponse response = default;
             while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
@@ -268,7 +259,6 @@ namespace LdapForNet
                 ThrowIfResultError(directoryRequest, resType);
 
                 status = requestHandler.Handle(_ld, resType, msg, out response);
-                response.MessageId = messageId;
 
                 if (status == LdapResultCompleteStatus.Unknown)
                 {
@@ -277,14 +267,9 @@ namespace LdapForNet
                 
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-                    var responseReferral = new Uri[0];
-                    var responseControl = new DirectoryControl[0];
-                    var res = ParseResultError(msg, out var errorMessage, out var matchedDn,ref responseReferral,ref responseControl);
+                    var res = ParseResultError(msg, out var errorMessage, out _);
                     response.ResultCode = (Native.Native.ResultCode) res;
                     response.ErrorMessage = errorMessage;
-                    response.Referral = responseReferral;
-                    response.Controls = responseControl;
-                    response.MatchedDN = matchedDn;
                 }
             }
 
@@ -330,8 +315,6 @@ namespace LdapForNet
                     return new CompareRequestHandler();
                 case ExtendedRequest _:
                     return new ExtendedRequestHandler();
-                case AbandonRequest _:
-                    return new AbandonRequestHandler();
                 default:
                     throw new LdapException("Not supported operation of request: " + request?.GetType());
             }
@@ -339,9 +322,7 @@ namespace LdapForNet
 
         private void ThrowIfParseResultError(IntPtr msg)
         {
-            var responseReferral = new Uri[0];
-            var responseControl = new DirectoryControl[0];
-            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage, ref responseReferral, ref responseControl);
+            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage);
             _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
             {
                 [nameof(errorMessage)] = errorMessage,
@@ -349,50 +330,21 @@ namespace LdapForNet
             });
         }
         
-        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedDn, ref Uri[] responseReferral, ref DirectoryControl[] responseControl)
+        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedMessage)
         {
-            var matchedDnPtr = IntPtr.Zero;
+            var matchedMessagePtr = IntPtr.Zero;
             var errorMessagePtr = IntPtr.Zero;
-            var rc = 0;
+            var res = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
-            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref rc, ref matchedDnPtr, ref errorMessagePtr,
+            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
             errorMessage = Encoder.Instance.PtrToString(errorMessagePtr);
-            matchedDn = Encoder.Instance.PtrToString(matchedDnPtr);
-            if (referrals != IntPtr.Zero)
-            {
-                
-            }
+            matchedMessage = Encoder.Instance.PtrToString(matchedMessagePtr);
             
-            if (serverctrls != IntPtr.Zero)
-            {
-                responseControl = MarshalUtils.GetPointerArray(serverctrls)
-                    .Select(ConstructControl)
-                    .ToArray();
-            }
-            
-            return rc;
+            return res;
         }
         
-        private DirectoryControl ConstructControl(IntPtr controlPtr)
-        {
-            var control = new Native.Native.LdapControl();
-            Marshal.PtrToStructure(controlPtr, control);
-
-            var controlType = Encoder.Instance.PtrToString(control.ldctl_oid);
-
-            var bytes = new byte[control.ldctl_value.bv_len];
-            Marshal.Copy(control.ldctl_value.bv_val, bytes, 0, control.ldctl_value.bv_len);
-
-            var criticality = control.ldctl_iscritical;
-
-            return new DirectoryControl(controlType, bytes, criticality, true);
-        }
-
-
-
-
         private void ThrowIfNotInitialized()
         {
             if (_ld == null || _ld.IsInvalid)
@@ -419,8 +371,6 @@ namespace LdapForNet
                     [nameof(response.ErrorMessage)] = response.ErrorMessage,
                 });
         }
-
-
         
     }
 }

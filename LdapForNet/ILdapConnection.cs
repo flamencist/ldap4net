@@ -24,5 +24,7 @@ namespace LdapForNet
         void Modify(LdapModifyEntry entry);
         void Delete(string dn);
         void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
+        Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
+        DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
     }
 }
