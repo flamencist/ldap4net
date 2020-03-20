@@ -37,5 +37,17 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
+
+        [Fact]
+        public async Task LdapConnection_GetRootDse_Returns_Server_Information()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                await connection.BindAsync(Native.LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var entry =  connection.GetRootDse();
+                Assert.NotEmpty(entry.Attributes);
+            }
+        }
     }
 }
