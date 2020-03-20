@@ -197,11 +197,11 @@ namespace LdapForNet.Native
             if (ldapCredential != null)
             {
                 cred.user = string.IsNullOrEmpty(ldapCredential.UserName) ? null : ldapCredential.UserName;
-                cred.userLength = ldapCredential.UserName.Length;
+                cred.userLength = ldapCredential.UserName?.Length ?? 0;
                 cred.password = string.IsNullOrEmpty(ldapCredential.Password) ? null : ldapCredential.Password;
-                cred.passwordLength = ldapCredential.Password.Length;
+                cred.passwordLength = ldapCredential.Password?.Length ?? 0;
                 cred.domain = string.IsNullOrEmpty(ldapCredential.Realm) ? null : ldapCredential.Realm;
-                cred.domainLength = ldapCredential.Realm.Length;
+                cred.domainLength = ldapCredential.Realm?.Length ?? 0;
             }
 
             return cred;
