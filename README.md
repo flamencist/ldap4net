@@ -59,6 +59,7 @@ using (var cn = new LdapConnection())
 	* [SendRequest](#sendRequest)
 	* [SendRequestAsync](#sendRequestAsync)
 	* [GetRootDse](#getRootDse)
+	* [WhoAmI](#whoami)
 	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
 	* [License](#license)
 	* [Authors](#authors)
@@ -156,7 +157,6 @@ using (var cn = new LdapConnection())
 
 ### BindAsync
 
-
 ```cs
 using (var cn = new LdapConnection())
 {
@@ -198,7 +198,7 @@ using (var cn = new LdapConnection())
     {
         UserName = "username",
         Password = "clearTextPassword",
-		AuthorizationId = $"dn:cn=admin,dc=example,dc=com" 
+        AuthorizationId = "dn:cn=admin,dc=example,dc=com" 
     });
 	...
 }
@@ -215,7 +215,7 @@ using (var cn = new LdapConnection())
     {
         UserName = "username",
         Password = "clearTextPassword",
-		AuthorizationId = $"u:admin" 
+        AuthorizationId = "u:admin" 
     });
 	...
 }
@@ -230,9 +230,7 @@ using (var cn = new LdapConnection())
 
     connection.Bind(LdapAuthType.GssApi, new LdapCredential
     {
-        UserName = "username",
-        Password = "clearTextPassword",
-		AuthorizationId = $"u:admin" 
+        AuthorizationId = "u:admin" 
     });
 	...
 }
