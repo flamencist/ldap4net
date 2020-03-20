@@ -274,6 +274,8 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 
   case 'one':
     scopeCheck = function(k) {
+      if(k === "rootDse")
+        return false;
       if (req.dn.equals(k))
         return true;
 
@@ -284,6 +286,8 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 
   case 'sub':
     scopeCheck = function(k) {
+      if(k === "rootDse")
+        return false;
       return (req.dn.equals(k) || req.dn.parentOf(k));
     };
 
