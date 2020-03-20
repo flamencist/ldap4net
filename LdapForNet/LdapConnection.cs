@@ -10,7 +10,7 @@ using LdapForNet.Utils;
 
 namespace LdapForNet
 {
-    public class LdapConnection:ILdapConnection
+    public class LdapConnection : ILdapConnection
     {
         private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
