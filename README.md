@@ -39,8 +39,6 @@ using (var cn = new LdapConnection())
 	* [Connect](#connect)
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
-	* [Bind DIGEST-MD5](#bind-digest-md5)
-	* [Bind SASL proxy](#bind-sasl-proxy)
 	* [Search](#search)
 	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
 	* [Search (retrieve concrete list of attributes)](#search-retrieve-concrete-list-of-attributes)
@@ -80,8 +78,8 @@ using (var cn = new LdapConnection())
 	- Simple \ Basic
 	- SASL:
 		- GSSAPI \ Kerberos V5 \ Negotiate 
-		- DIGEST-MD5
-	- SASL proxy authorization
+		- [DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
+	- [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 
 ## Installation
 
@@ -163,6 +161,7 @@ using (var cn = new LdapConnection())
 
 ### BindAsync
 
+
 ```cs
 using (var cn = new LdapConnection())
 {
@@ -175,6 +174,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind DIGEST-MD5
+[About DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
 
 ```cs
 using (var cn = new LdapConnection())
@@ -192,6 +192,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL proxy
+[About SASL auhtorization proxy](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 
 Works on UNIX systems
 ```cs
