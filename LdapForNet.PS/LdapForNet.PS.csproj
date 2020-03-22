@@ -15,4 +15,10 @@
     <ProjectReference Include="..\LdapForNet\LdapForNet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="LdapForNet.PS.psd1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
