@@ -50,10 +50,8 @@ namespace LdapForNet.Native
         {
             LdapConnect(ld);
             var cred = ToNative(ldapCredential);
-            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE);
+            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
-
-
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
@@ -62,14 +60,12 @@ namespace LdapForNet.Native
 
             var task = Task.Factory.StartNew(() =>
             {
-                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(NativeMethodsWindows.ldap_bind_s));
+                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType)),nameof(NativeMethodsWindows.ldap_bind_s));
 
                 return IntPtr.Zero;
             });
             return await task.ConfigureAwait(false);
         }
-
-
 
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
@@ -266,11 +262,11 @@ namespace LdapForNet.Native
             if (ldapCredential != null)
             {
                 cred.user = string.IsNullOrEmpty(ldapCredential.UserName) ? null : ldapCredential.UserName;
-                cred.userLength = ldapCredential.UserName.Length;
+                cred.userLength = ldapCredential.UserName?.Length ?? 0;
                 cred.password = string.IsNullOrEmpty(ldapCredential.Password) ? null : ldapCredential.Password;
-                cred.passwordLength = ldapCredential.Password.Length;
+                cred.passwordLength = ldapCredential.Password?.Length ?? 0;
                 cred.domain = string.IsNullOrEmpty(ldapCredential.Realm) ? null : ldapCredential.Realm;
-                cred.domainLength = ldapCredential.Realm.Length;
+                cred.domainLength = ldapCredential.Realm?.Length ?? 0;
             }
 
             return cred;

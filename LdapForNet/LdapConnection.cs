@@ -11,7 +11,7 @@ using LdapForNet.Utils;
 
 namespace LdapForNet
 {
-    public class LdapConnection:ILdapConnection
+    public class LdapConnection : ILdapConnection
     {
         private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
@@ -157,8 +157,6 @@ namespace LdapForNet
         public IList<LdapEntry> Search(string @base, string filter,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            var username = string.Empty;
-            _native.ldap_get_option(_ld,(int)Native.Native.LdapOption.LDAP_OPT_X_SASL_USERNAME, ref username);
             var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
             if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {

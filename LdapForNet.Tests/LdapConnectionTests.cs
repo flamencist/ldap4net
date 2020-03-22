@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
@@ -36,12 +35,18 @@ namespace LdapForNetTests
             }
         }
         
-        [Fact]
-        public void LdapConnection_Bind_Using_Sasl_DigestMd5()
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5(string platform)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost,Config.LdapPort);
+
                 connection.Bind(LdapAuthType.Digest, new LdapCredential
                 {
                     UserName = Config.LdapDigestMd5UserName,
@@ -55,9 +60,14 @@ namespace LdapForNetTests
             }
         }
         
-        [Fact]
-        public void LdapConnection_Bind_Using_Sasl_DigestMd5_Proxy()
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5_Proxy(string platform)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost,Config.LdapPort);
@@ -246,7 +256,7 @@ namespace LdapForNetTests
                 var directoryAttribute = response.Entries.First().Attributes["cn"];
                 var cnBinary = directoryAttribute.GetValues<byte[]>().First();
                 Assert.NotEmpty(cnBinary);
-                var actual = new ASCIIEncoding().GetString(cnBinary);
+                var actual = LdapForNet.Utils.Encoder.Instance.GetString(cnBinary);
                 Assert.Equal("admin", actual);
 
                 var cn = directoryAttribute.GetValues<string>().First();

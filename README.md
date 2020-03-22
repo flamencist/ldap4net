@@ -39,6 +39,8 @@ using (var cn = new LdapConnection())
 	* [Connect](#connect)
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
+	* [Bind DIGEST-MD5](#bind-digest-md5)
+	* [Bind SASL proxy](#bind-sasl-proxy)
 	* [Search](#search)
 	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
 	* [Search (retrieve concrete list of attributes)](#search-retrieve-concrete-list-of-attributes)
@@ -62,6 +64,8 @@ using (var cn = new LdapConnection())
 		* [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
 		* [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
 		* [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
+	* [GetRootDse](#getRootDse)
+	* [WhoAmI](#whoami)
 	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
 	* [License](#license)
 	* [Authors](#authors)
@@ -72,6 +76,12 @@ using (var cn = new LdapConnection())
 * OSX
 * Windows
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
+* Supported authentications:
+	- Simple \ Basic
+	- SASL:
+		- GSSAPI \ Kerberos V5 \ Negotiate 
+		- DIGEST-MD5
+	- SASL proxy authorization
 
 ## Installation
 
@@ -153,7 +163,6 @@ using (var cn = new LdapConnection())
 
 ### BindAsync
 
-
 ```cs
 using (var cn = new LdapConnection())
 {
@@ -165,7 +174,90 @@ using (var cn = new LdapConnection())
 
 ```
 
+### Bind DIGEST-MD5
 
+```cs
+using (var cn = new LdapConnection())
+{
+    connection.Connect();
+
+    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    {
+        UserName = "username",
+        Password = "clearTextPassword"
+    });
+	...
+}
+
+```
+
+### Bind SASL proxy
+
+Works on UNIX systems
+```cs
+
+using (var cn = new LdapConnection())
+{
+    connection.Connect();
+
+    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    {
+        UserName = "username",
+        Password = "clearTextPassword",
+        AuthorizationId = "dn:cn=admin,dc=example,dc=com" 
+    });
+	...
+}
+
+```
+
+Works on UNIX systems
+```cs
+using (var cn = new LdapConnection())
+{
+    connection.Connect();
+
+    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    {
+        UserName = "username",
+        Password = "clearTextPassword",
+        AuthorizationId = "u:admin" 
+    });
+	...
+}
+
+```
+
+Works on UNIX systems
+```cs
+using (var cn = new LdapConnection())
+{
+    connection.Connect();
+
+    connection.Bind(LdapAuthType.GssApi, new LdapCredential
+    {
+        AuthorizationId = "u:admin" 
+    });
+	...
+}
+
+```
+
+Works on Windows system
+```cs
+using (var cn = new LdapConnection())
+{
+    connection.Connect();
+
+    connection.Bind(LdapAuthType.Negotiate, new LdapCredential
+    {
+        UserName = "username",
+        Password = "clearTextPassword"
+    });
+	...
+}
+
+```
 
 ### Search
 
@@ -495,7 +587,7 @@ Inspired by .NET Framework LdapConnection.SendRequest
  	//whoami
  	var res = await cn.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"), cancellationTokenSource.Token);
  	var extendedResponse = (ExtendedResponse) res;
- 	var name = new UTF8Encoding().GetString(extendedResponse.ResponseValue);
+ 	var name = Encoding.UTF8.GetString(extendedResponse.ResponseValue);
  }
  ```
 
@@ -627,6 +719,31 @@ using (var connection = new LdapConnection())
     var response = (SearchResponse) connection.SendRequestAsync(directoryRequest,cts.Token).Result;
                 
 }
+```
+### GetRootDse
+Information about server https://ldapwiki.com/wiki/RootDSE
+
+```cs
+
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+	var rootDse =  connection.GetRootDse();
+ }
+```
+
+### WhoAmI
+Returns authorization id of user https://ldapwiki.com/wiki/Who%20Am%20I%20Extended%20Operation
+
+```cs
+
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+	var authzId = connection.WhoAmI().Result;
+ }
 ```
 
 ### GetNativeLdapPtr
