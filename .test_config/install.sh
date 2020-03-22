@@ -18,7 +18,14 @@ LC_ALL=C DEBIAN_FRONTEND=noninteractive apt install -y \
     libsasl2-modules-sql \
     openssl \
     slapd \
-    krb5-kdc-ldap
+    krb5-kdc-ldap \
+    krb5-user \
+    krb5-kdc \
+    krb5-admin-server \
+    krb5-config
+
+gzip -d /usr/share/doc/krb5-kdc-ldap/kerberos.schema.gz
+cp /usr/share/doc/krb5-kdc-ldap/kerberos.schema /etc/ldap/schema/
 
 if [ -f "${APPARMOR_FILE}" ]; 
 then
