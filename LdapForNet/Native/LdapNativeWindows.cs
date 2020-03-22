@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -44,31 +43,21 @@ namespace LdapForNet.Native
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
         }
 
-        internal override int BindKerberos(SafeHandle ld)
+        internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
-            };
-            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE);
+            var cred = ToNative(ldapCredential);
+            return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
 
-        internal override async Task<IntPtr> BindKerberosAsync(SafeHandle ld)
+        internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
-            {
-                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
-                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
-                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
-            };
+            var cred = ToNative(ldapCredential);
 
             var task = Task.Factory.StartNew(() =>
             {
-                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, BindMethod.LDAP_AUTH_NEGOTIATE),nameof(NativeMethodsWindows.ldap_bind_s));
+                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType)),nameof(NativeMethodsWindows.ldap_bind_s));
 
                 return IntPtr.Zero;
             });
@@ -78,7 +67,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
             LdapConnect(ld);
-            return NativeMethodsWindows.ldap_simple_bind_s(ld, who, password);
+            return NativeMethodsWindows.ldap_bind_s(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
         }
 
         internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password)
@@ -87,23 +76,25 @@ namespace LdapForNet.Native
             return await Task.Factory.StartNew(() =>
             {
                 var result = IntPtr.Zero;
-                var msgidp = NativeMethodsWindows.ldap_simple_bind(ld, who, password);
+                var msgidp = NativeMethodsWindows.ldap_bind(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
   
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_simple_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_simple_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_bind), 1);
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_simple_bind));
+                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_bind));
                 }
-
+                
                 return result;
             }).ConfigureAwait(false);
         }
+
+        internal override int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_abandon(ld, msgId);
 
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
@@ -139,6 +130,7 @@ namespace LdapForNet.Native
         internal override string LdapError2String(int error) => NativeMethodsWindows.LdapError2String(error);
 
         internal override string GetAdditionalErrorInfo(SafeHandle ld) => NativeMethodsWindows.GetAdditionalErrorInfo(ld);
+        internal override int LdapGetLastError(SafeHandle ld) => NativeMethodsWindows.LdapGetLastError();
 
         internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
 
@@ -193,6 +185,26 @@ namespace LdapForNet.Native
 
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
             NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
-        internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsWindows.ldap_controls_free(ctrls);
+        private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(LdapCredential ldapCredential)
+        {
+            var cred = new SEC_WINNT_AUTH_IDENTITY_EX
+            {
+                version = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_VERSION,
+                length = Marshal.SizeOf(typeof(SEC_WINNT_AUTH_IDENTITY_EX)),
+                flags = NativeMethodsWindows.SEC_WINNT_AUTH_IDENTITY_UNICODE
+            };
+
+            if (ldapCredential != null)
+            {
+                cred.user = string.IsNullOrEmpty(ldapCredential.UserName) ? null : ldapCredential.UserName;
+                cred.userLength = ldapCredential.UserName?.Length ?? 0;
+                cred.password = string.IsNullOrEmpty(ldapCredential.Password) ? null : ldapCredential.Password;
+                cred.passwordLength = ldapCredential.Password?.Length ?? 0;
+                cred.domain = string.IsNullOrEmpty(ldapCredential.Realm) ? null : ldapCredential.Realm;
+                cred.domainLength = ldapCredential.Realm?.Length ?? 0;
+            }
+
+            return cred;
+        }
     }
 }

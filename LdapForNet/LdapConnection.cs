@@ -10,7 +10,7 @@ using LdapForNet.Utils;
 
 namespace LdapForNet
 {
-    public class LdapConnection:ILdapConnection
+    public class LdapConnection : ILdapConnection
     {
         private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
@@ -66,44 +66,42 @@ namespace LdapForNet
             );
         }
 
-        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
-            string password = null)
+        public void Bind(Native.Native.LdapAuthType authType, LdapCredential credential)
         {
             ThrowIfNotInitialized();
-            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            if (authType == Native.Native.LdapAuthType.Simple)
             {
-                _native.ThrowIfError(_ld, _native.BindSimple(_ld, userDn, password), nameof(_native.BindSimple));
+                _native.ThrowIfError(_ld, _native.BindSimple(_ld, credential.UserName, credential.Password), nameof(_native.BindSimple));
             }
-            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                _native.ThrowIfError(_ld, _native.BindKerberos(_ld), nameof(_native.BindKerberos));
+                _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, credential), nameof(_native.BindSasl));
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. ");
             }
 
             _bound = true;
         }
 
-        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
-            string password = null)
+        public async Task BindAsync(Native.Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             ThrowIfNotInitialized();
             IntPtr result;
-            if (Native.Native.LdapAuthMechanism.SIMPLE.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            if (authType == Native.Native.LdapAuthType.Simple)
             {
-                result = await _native.BindSimpleAsync(_ld, userDn, password);
+                result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password);
             }
-            else if (Native.Native.LdapAuthMechanism.Kerberos.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+            else if(authType != Native.Native.LdapAuthType.Unknown)
             {
-                result = await _native.BindKerberosAsync(_ld);
+                result = await _native.BindSaslAsync(_ld, authType, ldapCredential);
             }
             else
             {
                 throw new LdapException(
-                    $"Not implemented mechanism: {mechanism}. Available: {Native.Native.LdapAuthMechanism.Kerberos} | {Native.Native.LdapAuthMechanism.SIMPLE}. ");
+                    $"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. ");
             }
 
             if (result != IntPtr.Zero)
@@ -114,23 +112,44 @@ namespace LdapForNet
             _bound = true;
         }
 
+        public void Bind(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
+            string password = null)
+        {
+            Bind(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new LdapCredential
+            {
+                UserName = userDn,
+                Password = password
+            });
+        }
+
+        
+        public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
+            string password = null)
+        {
+            await BindAsync(Native.Native.LdapAuthMechanism.ToAuthType(mechanism), new LdapCredential
+            {
+                UserName = userDn,
+                Password = password
+            });
+        }
+
         public void SetOption(Native.Native.LdapOption option, int value)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, string value)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
         public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
         {
-            ThrowIfNotBound();
+            ThrowIfNotInitialized();
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
         }
 
@@ -219,6 +238,7 @@ namespace LdapForNet
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
             ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
+
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
 
@@ -256,8 +276,7 @@ namespace LdapForNet
 
         private RequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
         {
-            var operation = GetLdapOperation(directoryRequest);
-            var requestHandler = GetSendRequestHandler(operation);
+            var requestHandler = GetSendRequestHandler(directoryRequest);
             messageId = 0;
             _native.ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),
                 requestHandler.GetType().Name);
@@ -269,33 +288,33 @@ namespace LdapForNet
             switch (resType)
             {
                 case Native.Native.LdapResultType.LDAP_ERROR:
-                    _native.ThrowIfError(1, directoryRequest.GetType().Name);
+                    _native.ThrowIfError(_native.LdapGetLastError(_ld), directoryRequest.GetType().Name);
                     break;
                 case Native.Native.LdapResultType.LDAP_TIMEOUT:
                     throw new LdapException("Timeout exceeded", nameof(_native.ldap_result), 1);
             }
         }
 
-        private static RequestHandler GetSendRequestHandler(LdapOperation operation)
+        private static RequestHandler GetSendRequestHandler(DirectoryRequest request)
         {
-            switch (operation)
+            switch (request)
             {
-                case LdapOperation.LdapAdd:
+                case AddRequest _:
                     return new AddRequestHandler();
-                case LdapOperation.LdapModify:
+                case ModifyRequest _:
                     return new ModifyRequestHandler();
-                case LdapOperation.LdapSearch:
+                case SearchRequest _:
                     return new SearchRequestHandler();
-                case LdapOperation.LdapDelete:
+                case DeleteRequest _:
                     return new DeleteRequestHandler();
-                case LdapOperation.LdapModifyDn:
+                case ModifyDNRequest _:
                     return new ModifyDnRequestHandler();
-                case LdapOperation.LdapCompare:
+                case CompareRequest _:
                     return new CompareRequestHandler();
-                case LdapOperation.LdapExtendedRequest:
+                case ExtendedRequest _:
                     return new ExtendedRequestHandler();
                 default:
-                    throw new LdapException("Not supported operation: " + operation);
+                    throw new LdapException("Not supported operation of request: " + request?.GetType());
             }
         }
 
@@ -323,26 +342,7 @@ namespace LdapForNet
             
             return res;
         }
-
-
-        private IEnumerable<LdapEntry> GetLdapReferences(SafeHandle ld, IntPtr msg)
-        {
-            string[] refs = null;
-            var ctrls = IntPtr.Zero;
-            var rc = _native.ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
-            _native.ThrowIfError(ld, rc, nameof(_native.ldap_parse_reference));
-            if (refs != null)
-            {
-            }
-
-            if (ctrls != IntPtr.Zero)
-            {
-                _native.ldap_controls_free(ctrls);
-            }
-
-            return default;
-        }
-
+        
         private void ThrowIfNotInitialized()
         {
             if (_ld == null || _ld.IsInvalid)
@@ -360,6 +360,7 @@ namespace LdapForNet
             }
         }
         
+        
         private void ThrowIfResponseError(DirectoryResponse response)
         {
             _native.ThrowIfError(_ld, (int) response.ResultCode, nameof(_native.ldap_parse_result),
@@ -368,40 +369,6 @@ namespace LdapForNet
                     [nameof(response.ErrorMessage)] = response.ErrorMessage,
                 });
         }
-
-
-        private static LdapOperation GetLdapOperation(DirectoryRequest request)
-        {
-            LdapOperation operation;
-            switch (request)
-            {
-                case DeleteRequest _:
-                    operation = LdapOperation.LdapDelete;
-                    break;
-                case AddRequest _:
-                    operation = LdapOperation.LdapAdd;
-                    break;
-                case ModifyRequest _:
-                    operation = LdapOperation.LdapModify;
-                    break;
-                case SearchRequest _:
-                    operation = LdapOperation.LdapSearch;
-                    break;
-                case ModifyDNRequest _:
-                    operation = LdapOperation.LdapModifyDn;
-                    break;
-                case ExtendedRequest _:
-                    operation = LdapOperation.LdapExtendedRequest;
-                    break;
-                case CompareRequest _:
-                    operation = LdapOperation.LdapCompare;
-                    break;
-
-                default:
-                    throw new LdapException($"Unknown ldap operation for {request.GetType()}");
-            }
-
-            return operation;
-        }
+        
     }
 }

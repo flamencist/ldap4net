@@ -7,6 +7,33 @@ ldap.DN.prototype.format = function(options){
   options.keepCase = true;
   return old.call(this,options);
 };
+
+var bindRequestOld = ldap.BindRequest.prototype._parse;
+ldap.BindRequest.prototype._parse = function(ber){
+  try{
+    return bindRequestOld.call(this, ber);
+  }catch(e){
+    this.authentication = ber.readString(0xa3);
+    this.name = "cn=digestTest,dc=example,dc=com";
+    this.credentials = "test";
+    return true;
+  }
+};
+
+
+ldap.BindResponse.prototype._parse = function(ber) {
+  assert.ok(ber);
+
+  if (!ldap.LDAPResult.prototype._parse.call(this, ber)) {
+    return false
+  }
+  const saslCredentials = ber.readString(135);
+  if (saslCredentials) {
+    this.saslCredentials = saslCredentials
+  }
+
+  return true
+};
 ///--- Shared handlers
 
 function authorize(req, res, next) {
@@ -36,7 +63,33 @@ var db = {
 		sn: "administrator",
 		objectClass: ["top","person","organizationalPerson","inetOrgPerson"],
 		displayName: "Directory Superuser"
-	}
+	},
+    "cn=digestTest,dc=example,dc=com":{
+        dn: "cn=digestTest,dc=example,dc=com",
+        cn: "digestTest",
+        sn: "digestTest",
+        objectClass: ["top","person","organizationalPerson","inetOrgPerson"],
+        displayName: "DigestMd5 user",
+        userpassword: "test",
+        uid: "digestTest"
+    },
+    "rootDse":{
+      "subschemasubentry": "CN=Aggregate,CN=Schema,CN=Configuration,"+SUFFIX,
+      "dsservicename": "CN=NTDS Settings,CN=Configuration,"+SUFFIX,
+      "namingcontexts": [ SUFFIX, "CN=Configuration," + SUFFIX, "CN=Schema,CN=Configuration," + SUFFIX],
+      "defaultnamingcontext": SUFFIX,
+      "schemanamingcontext": "CN=Schema,CN=Configuration," + SUFFIX,
+      "configurationnamingcontext": "CN=Configuration," + SUFFIX,
+      "rootdomainnamingcontext": SUFFIX,
+      "supportedcontrol": ["1.3.6.1.4.1.4203.1.11.3"],
+      "supportedldapversion":["3", "2"],
+      "supportedldappolicies":[],
+      "supportedsaslmechanisms":["GSSAPI", "GSS-SPNEGO", "EXTERNAL", "DIGEST-MD5"],
+      "dnshostname":"example.com",
+      "ldapservicename":"example.com$@EXAMPLE.COM",
+      "servername":"CN=EXAMPLE,CN=Servers,CN=NN,CN=Sites,CN=Configuration," + SUFFIX,
+      "supportedcapabilities":[]
+    }
 };
 var server = ldap.createServer();
 
@@ -71,18 +124,17 @@ server.add(SUFFIX, authorize, function(req, res, next) {
 });
 
 server.bind(SUFFIX, function(req, res, next) {
-	console.log(req.dn.toString());
+  console.log(req.dn.toString());
   var dn = req.dn.toString().replaceSpaces();
   if (!db[dn]){
 	  return next(new ldap.NoSuchObjectError(dn));
-  }   
-
+  }
   if (!db[dn].userpassword)
     return next(new ldap.NoSuchAttributeError('userPassword'));
 
-  if (db[dn].userpassword.indexOf(req.credentials) === -1)
+  if (db[dn].userpassword.indexOf(req.credentials) === -1){
     return next(new ldap.InvalidCredentialsError());
-
+  }
   res.end();
   return next();
 });
@@ -189,6 +241,18 @@ server.modifyDN(SUFFIX, function(req, res, next){
   return next();
 });
 
+server.search("", function(req, res, next){
+  var dn = req.dn.toString().replaceSpaces();
+  if(!dn){
+    res.send({
+      dn: dn,
+      attributes: db["rootDse"]
+    });
+  }
+  res.end();
+  return next();
+});
+
 server.search(SUFFIX, authorize, function(req, res, next) {
   var dn = req.dn.toString().replaceSpaces();
   if (!db[dn])
@@ -210,6 +274,8 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 
   case 'one':
     scopeCheck = function(k) {
+      if(k === "rootDse")
+        return false;
       if (req.dn.equals(k))
         return true;
 
@@ -220,6 +286,8 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 
   case 'sub':
     scopeCheck = function(k) {
+      if(k === "rootDse")
+        return false;
       return (req.dn.equals(k) || req.dn.parentOf(k));
     };
 

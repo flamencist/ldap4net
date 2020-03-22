@@ -84,6 +84,9 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
+        
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_get_option(SafeHandle ld, int option, ref int value);
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_unbind_s(IntPtr ld);
@@ -267,6 +270,9 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_parse_extended_result([In] SafeHandle ldapHandle, [In] IntPtr result, ref IntPtr oid, ref IntPtr data, int freeIt);
+        
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
     }
 
 }

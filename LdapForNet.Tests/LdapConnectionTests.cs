@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
@@ -31,6 +31,53 @@ namespace LdapForNetTests
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"][0]);
                 Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5(string platform)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+
+                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                {
+                    UserName = Config.LdapDigestMd5UserName,
+                    Password = Config.LdapPassword
+                });
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);
+                Assert.Equal(Config.LdapDigestMd5UserName, entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_DigestMd5_Proxy(string platform)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
+                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                {
+                    UserName = Config.LdapDigestMd5UserName,
+                    Password = Config.LdapPassword,
+                    AuthorizationId = $"dn:{Config.LdapDigestMd5ProxyDn}" 
+                });
+                var authzId = connection.WhoAmI().Result;
+                Assert.Equal($"dn:{Config.LdapDigestMd5ProxyDn}", authzId);               
             }
         }
 
@@ -65,7 +112,7 @@ namespace LdapForNetTests
                 var directoryAttribute = response.Entries.First().Attributes["cn"];
                 var cnBinary = directoryAttribute.GetValues<byte[]>().First();
                 Assert.NotEmpty(cnBinary);
-                var actual = new ASCIIEncoding().GetString(cnBinary);
+                var actual = LdapForNet.Utils.Encoder.Instance.GetString(cnBinary);
                 Assert.Equal("admin", actual);
 
                 var cn = directoryAttribute.GetValues<string>().First();

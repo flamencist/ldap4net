@@ -7,6 +7,7 @@ namespace LdapForNet.Native
     internal static class NativeMethodsLinux
     {
         private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
+        private const string LIB_LBER_PATH = "lber-2.4.so.2";
         internal delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
 
         [DllImport(LIB_LDAP_PATH)]
@@ -84,6 +85,9 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
+        
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_get_option(SafeHandle ld, int option, ref int value);
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_unbind_s(IntPtr ld);
@@ -121,8 +125,7 @@ namespace LdapForNet.Native
         /// <returns>result type </returns>
         [DllImport(LIB_LDAP_PATH)]
         internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
-        
-        
+
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);
 
@@ -267,6 +270,50 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_parse_extended_result([In] SafeHandle ldapHandle, [In] IntPtr result, ref IntPtr oid, ref IntPtr data, int freeIt);
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_control_free(IntPtr control);
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical,
+            ref IntPtr control);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern IntPtr ber_alloc_t(int option);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
+        internal static extern int ber_printf_emptyarg(SafeHandle berElement, string format);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
+        internal static extern int ber_printf_int(SafeHandle berElement, string format, int value);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
+        internal static extern int ber_printf_bytearray(SafeHandle berElement, string format, HGlobalMemHandle value,
+            int length);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_printf")]
+        internal static extern int ber_printf_berarray(SafeHandle berElement, string format, IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_flatten(SafeHandle berElement, ref IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern IntPtr ber_init(IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_scanf(SafeHandle berElement, string format);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_int(SafeHandle berElement, string format, ref int value);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
+        [DllImport(LIB_LBER_PATH,EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
+        [DllImport(LIB_LBER_PATH, EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_bvfree(IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_bvecfree(IntPtr value);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern IntPtr ber_free(IntPtr berelement, int option);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern void ber_memfree(IntPtr value);
+        [DllImport(LIB_LBER_PATH, EntryPoint = "ber_scanf")]
+        internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
+        [DllImport(LIB_LBER_PATH)]
+        internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
 
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
     }
 }

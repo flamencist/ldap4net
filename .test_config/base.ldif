@@ -14,3 +14,29 @@ objectClass: person
 objectClass: organizationalPerson
 objectClass: inetOrgPerson
 displayName: Directory Superuser
+uid: admin
+
+# DigestMd5 user
+dn: cn=digestTest,dc=example,dc=com
+cn: digestTest
+sn: digestTest
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+displayName: DigestMd5 user
+userPassword: test
+uid: digestTest
+
+# DigestMd5 proxy user
+dn: cn=digestTestProxy,dc=example,dc=com
+cn: digestTestProxy
+sn: digestTestProxy
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+displayName: DigestMd5 proxy user
+userPassword: test
+uid: digestTestProxy
+authzFrom: dn:cn=digestTest,dc=example,dc=com
