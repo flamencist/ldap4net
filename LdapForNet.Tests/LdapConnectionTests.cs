@@ -239,25 +239,6 @@ namespace LdapForNetTests
             await DeleteLdapEntryAsync();                    
         }
 
-        /// <summary>
-        /// https://github.com/delphij/openldap/blob/master/clients/tools/ldapwhoami.c
-        /// </summary>
-        /// <returns></returns>
-        [Fact]
-        public async Task LdapConnection_Extended_Operation_WhoAmI_Async()
-        {
-            using (var connection = new LdapConnection())
-            {
-                connection.Connect(Config.LdapHost,Config.LdapPort);
-                await connection.BindAsync(LdapAuthMechanism.SIMPLE,Config.LdapUserDn, Config.LdapPassword);
-                var result = await connection.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"));
-                var extendedResponse = (ExtendedResponse) result;
-                Assert.True(result.ResultCode==ResultCode.Success);
-                var name = LdapForNet.Utils.Encoder.Instance.GetString(extendedResponse.ResponseValue);
-                Assert.Equal($"dn:{Config.LdapUserDn}",name);
-            }
-        }
-
         [Fact]
         public async Task LdapConnection_Compare_Operation_Async_Returns_True_If_Attribute_Exists()
         {

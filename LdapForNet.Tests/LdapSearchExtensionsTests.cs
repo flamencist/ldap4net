@@ -45,7 +45,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
                 await connection.BindAsync(Native.LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
-                var entry =  connection.GetRootDse();
+                var entry = connection.GetRootDse();
                 Assert.NotEmpty(entry.Attributes);
             }
         }
