@@ -12,6 +12,8 @@ namespace LdapForNet.Native
             public const string Kerberos = "GSSAPI";
             public const string SIMPLE = "SIMPLE";
             internal const string Digest = "DIGEST-MD5";
+            internal const string External = "EXTERNAL";
+            internal const string Anonymous = "ANONYMOUS";
 
             public static LdapAuthType ToAuthType(string mechanism)
             {
@@ -30,6 +32,16 @@ namespace LdapForNet.Native
                     return LdapAuthType.Digest;
                 }
 
+                if (External.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+                {
+                    return LdapAuthType.External;
+                }
+                
+                if (Anonymous.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
+                {
+                    return LdapAuthType.Anonymous;
+                }
+                
                 return LdapAuthType.Unknown;
             }
 
@@ -45,6 +57,10 @@ namespace LdapForNet.Native
                         return GSSAPI;
                     case LdapAuthType.Digest:
                         return Digest;
+                    case LdapAuthType.External:
+                        return External;
+                    case LdapAuthType.Anonymous:
+                        return Anonymous;
                     case LdapAuthType.Unknown:
                         return string.Empty;
                     default:
@@ -58,12 +74,16 @@ namespace LdapForNet.Native
                 {
                     case LdapAuthType.Simple:
                         return BindMethod.LDAP_AUTH_SIMPLE;
+                    case LdapAuthType.Anonymous:
+                        return BindMethod.LDAP_AUTH_SIMPLE;
                     case LdapAuthType.Negotiate:
                         return BindMethod.LDAP_AUTH_NEGOTIATE;
                     case LdapAuthType.GssApi:
                         return BindMethod.LDAP_AUTH_NEGOTIATE;
                     case LdapAuthType.Digest:
-                        return BindMethod.LDAP_AUTH_DIGEST;
+                        return BindMethod.LDAP_AUTH_NEGOTIATE;
+                    case LdapAuthType.External:
+                        return BindMethod.LDAP_AUTH_EXTERNAL;
                     case LdapAuthType.Unknown:
                         return BindMethod.LDAP_AUTH_OTHERKIND;
                     default:
@@ -74,7 +94,7 @@ namespace LdapForNet.Native
 
         public enum LdapAuthType
         {
-            //Anonymous = 12,
+            Anonymous = 12,
             //Basic = 1,
             Simple = 10,
             Negotiate = 2,
@@ -84,7 +104,7 @@ namespace LdapForNet.Native
             //Sicily = 5,
             //Dpa = 6,
             //Msn = 7,
-            //External = 8,
+            External = 8,
             //Kerberos = 9,
             Unknown=0
         }

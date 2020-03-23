@@ -46,6 +46,11 @@ namespace LdapForNet.Native
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
+            if (authType == Native.LdapAuthType.Anonymous)
+            {
+                return NativeMethodsWindows.ldap_bind_s(ld, null, (string)null, BindMethod.LDAP_AUTH_SIMPLE);
+            }
+            
             var cred = ToNative(ldapCredential);
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
