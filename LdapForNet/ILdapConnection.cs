@@ -18,8 +18,8 @@ namespace LdapForNet
         void SetOption(LdapOption option, int value);
         void SetOption(LdapOption option, string value);
         void SetOption(LdapOption option, IntPtr valuePtr);
-        IList<LdapEntry> Search(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
-        Task<IList<LdapEntry>> SearchAsync(string @base, string filter, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE, CancellationToken token = default);
+        IList<LdapEntry> Search(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
+        Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE,  CancellationToken token = default);
         void Add(LdapEntry entry);
         void Modify(LdapModifyEntry entry);
         void Delete(string dn);

@@ -61,7 +61,7 @@ namespace LdapForNetTests
         
         [Theory]
         [InlineData("LINUX")]
-        public void LdapConnection_Bind_Using_Sasl_External(string platform)
+        public void LdapConnection_Bind_Anonymous(string platform)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
             {
@@ -72,6 +72,21 @@ namespace LdapForNetTests
                 connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthType.Anonymous, new LdapCredential());
                 var rootDse = connection.GetRootDse();    
+                Assert.NotNull(rootDse);
+            }
+        }
+        
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_External(string platform)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost,Config.LdapPort);
                 connection.Bind(LdapAuthType.External, new LdapCredential());
                 var authId = connection.WhoAmI().Result;
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");

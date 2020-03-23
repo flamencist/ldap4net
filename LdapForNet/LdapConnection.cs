@@ -73,6 +73,10 @@ namespace LdapForNet
             {
                 _native.ThrowIfError(_ld, _native.BindSimple(_ld, credential.UserName, credential.Password), nameof(_native.BindSimple));
             }
+            else if (authType == Native.Native.LdapAuthType.Anonymous)
+            {
+                _native.BindSimple(_ld, null, null);
+            }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
                 _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, credential), nameof(_native.BindSasl));
@@ -93,6 +97,10 @@ namespace LdapForNet
             if (authType == Native.Native.LdapAuthType.Simple)
             {
                 result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password);
+            }
+            else if (authType == Native.Native.LdapAuthType.Anonymous)
+            {
+                result = await _native.BindSimpleAsync(_ld, null, null);
             }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
@@ -153,10 +161,11 @@ namespace LdapForNet
             _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
         }
 
-        public IList<LdapEntry> Search(string @base, string filter,
+      
+        public IList<LdapEntry> Search(string @base, string filter,string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
+            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope, attributes));
             if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {
                 ThrowIfResponseError(response);
@@ -166,11 +175,12 @@ namespace LdapForNet
                 .ToList();
         }
 
-        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
+       
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
             CancellationToken token = default)
         {
-            var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
+            var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope, attributes), token);
             if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {
                 ThrowIfResponseError(response);
