@@ -7,6 +7,10 @@
 Cross platform port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap)  
 and Windows Ldap (https://docs.microsoft.com/en-us/windows/win32/api/_ldap/) to DotNet Core
 
+Help support the project:
+
+<a href="https://www.buymeacoffee.com/flamencist" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+
 For Linux\OSX you must ensure you have the latest OpenLDAP client libraries installed from http://www.openldap.org
 
   
