@@ -15,19 +15,18 @@ namespace LdapForNet
         private readonly LdapNative _native = LdapNative.Instance;
         private SafeHandle _ld;
         private bool _bound;
-
-        public void Connect(Uri uri,
-            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
+        
+        public void Connect(string url, Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
             var details = new Dictionary<string, string>
             {
-                [nameof(uri)] = uri.ToString(),
+                [nameof(url)] = url,
                 [nameof(version)] = version.ToString()
             };
             var nativeHandle = IntPtr.Zero;
 
             _native.ThrowIfError(
-                _native.Init(ref nativeHandle, uri),
+                _native.Init(ref nativeHandle, url),
                 nameof(_native.Init),
                 details
             );
@@ -36,31 +35,6 @@ namespace LdapForNet
 
             _native.ThrowIfError(
                 _native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
-                nameof(_native.ldap_set_option),
-                details
-            );
-        }
-
-        public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
-            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
-        {
-            var details = new Dictionary<string, string>
-            {
-                [nameof(hostname)] = hostname,
-                [nameof(port)] = port.ToString(),
-                [nameof(version)] = version.ToString()
-            };
-            var nativeHandle = IntPtr.Zero;
-            _native.ThrowIfError(
-                _native.Init(ref nativeHandle, hostname, port),
-                nameof(_native.Init),
-                details
-            );
-            _ld = new LdapHandle(nativeHandle);
-            var ldapVersion = (int) version;
-
-            _native.ThrowIfError(
-                _native.ldap_set_option(_ld, (int) Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
                 nameof(_native.ldap_set_option),
                 details
             );

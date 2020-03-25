@@ -48,7 +48,7 @@ namespace LdapForNet.PS
                 }
                 else if(!string.IsNullOrEmpty(HostName))
                 {
-                    cn.Connect(HostName,Port, GetLdapVersion());
+                    cn.Connect(HostName, Port, version: GetLdapVersion());
                 }
                 
                 cn.Bind(ToAuthType(Auth), new LdapCredential

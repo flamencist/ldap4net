@@ -6,34 +6,16 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeWindows : LdapNative
     {
-        internal override int Init(ref IntPtr ld, Uri uri)
+        internal override int Init(ref IntPtr ld, string url)
         {
-            var port = uri.Port;
-            if (uri.IsDefaultPort)
-            {
-                if (string.Compare(uri.Scheme, Native.LdapPort.LDAP.ToString(), StringComparison.InvariantCultureIgnoreCase) == 0)
-                {
-                    port = (int)Native.LdapPort.LDAP;
-                }
-                else if (string.Compare(uri.Scheme, Native.LdapPort.LDAPS.ToString(), StringComparison.InvariantCultureIgnoreCase) == 0)
-                {
-                    port = (int)Native.LdapPort.LDAPS;
-                }
-            }
-
-            return Init(ref ld, uri.Host, port);
-        }
-
-        internal override int Init(ref IntPtr ld, string hostname, int port)
-        {
-            ld =  NativeMethodsWindows.ldap_init(hostname, port);
+            ld =  NativeMethodsWindows.ldap_init(url, (int)Native.LdapPort.LDAP);
             if (ld == IntPtr.Zero)
             {
                 return -1;
             }
             return (int)Native.ResultCode.Success;
         }
-
+        
         private void LdapConnect(SafeHandle ld)
         {
             var timeout = new LDAP_TIMEVAL

@@ -71,9 +71,9 @@ namespace LdapForNetTests
             }
         }
         
-        [Theory(Skip = "not worked")]
+        [Theory]
         [InlineData("LINUX")]
-        public void LdapConnection_Bind_Using_Sasl_External(string platform)
+        public void LdapConnection_Bind_Using_Sasl_External_IPC(string platform)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
             {
@@ -81,7 +81,7 @@ namespace LdapForNetTests
             }
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost,Config.LdapPort);
+                connection.ConnectI("/tmp/slapd/slapdunix");
                 connection.Bind(LdapAuthType.External, new LdapCredential());
                 var authId = connection.WhoAmI().Result;
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");

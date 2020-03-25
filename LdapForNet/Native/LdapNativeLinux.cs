@@ -1,19 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
-    internal class LdapNativeLinux:LdapNative
+    internal class LdapNativeLinux : LdapNative
     {
-        internal override int Init(ref IntPtr ld, Uri uri) =>
-            NativeMethodsLinux.ldap_initialize(ref ld, uri.ToString());
-
-        internal override int Init(ref IntPtr ld, string hostname, int port) => 
-            NativeMethodsLinux.ldap_initialize(ref ld,$"LDAP://{hostname}:{port}");
+        internal override int Init(ref IntPtr ld, string url) => NativeMethodsLinux.ldap_initialize(ref ld, url);
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {

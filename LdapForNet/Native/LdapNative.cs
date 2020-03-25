@@ -29,8 +29,7 @@ namespace LdapForNet.Native
             throw new PlatformNotSupportedException();
         }
 
-        internal abstract int Init(ref IntPtr ld, Uri uri);
-        internal abstract int Init(ref IntPtr ld, string hostname, int port);
+        internal abstract int Init(ref IntPtr ld, string url);
         internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract int BindSimple(SafeHandle ld, string who,string password);
