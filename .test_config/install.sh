@@ -27,7 +27,7 @@ LC_ALL=C DEBIAN_FRONTEND=noninteractive apt install -y \
 gzip -d /usr/share/doc/krb5-kdc-ldap/kerberos.schema.gz
 cp /usr/share/doc/krb5-kdc-ldap/kerberos.schema /etc/ldap/schema/
 
-if [ -f "${APPARMOR_FILE}" ]; 
+if [[ -f "${APPARMOR_FILE}" ]]; 
 then
   echo "${DIRNAME}/ r," | sudo tee ${APPARMOR_FILE}
   echo "${DIRNAME}/** rwk," | sudo tee -a ${APPARMOR_FILE}

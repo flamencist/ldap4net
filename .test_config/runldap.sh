@@ -10,7 +10,10 @@ else
   rm -rf "${TMPDIR}"
   mkdir -p "${TMPDIR}"
 fi
+mkdir "${TMPDIR}/certs"
+cp "${DIRNAME}/testldap.crt" "${TMPDIR}/certs/"
+cp "${DIRNAME}/testldap.key" "${TMPDIR}/certs/"
 
-slapd -f "${DIRNAME}/slapd.linux.conf" -h "ldap://localhost:4389/ ldaps://localhost:4636/ ldapi://${LDAPI_PATH}" -d 256 &
+slapd -f "${DIRNAME}/slapd.linux.conf" -h "ldap://localhost:4389 ldaps://localhost:4636 ldapi://${LDAPI_PATH}" -d 256 &
 sleep 6
 ldapadd -h localhost:4389 -D cn=admin,dc=example,dc=com -w test -f "${DIRNAME}/base.ldif"

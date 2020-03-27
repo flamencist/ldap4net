@@ -106,8 +106,8 @@ namespace LdapForNet.Native
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsOsx.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)=>
-            NativeMethodsOsx.ldap_set_option(ld, option, ref invalue);
+        internal override int ldap_set_option(SafeHandle ld, int option, string invalue)=>
+            NativeMethodsOsx.ldap_set_option(ld, option, invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
             => NativeMethodsOsx.ldap_set_option(ld, option,  invalue);
@@ -231,7 +231,17 @@ namespace LdapForNet.Native
 
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
             NativeMethodsOsx.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
-        
+
+        internal override int ldap_start_tls_s(SafeHandle ld,  ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls)
+        {
+            return NativeMethodsOsx.ldap_start_tls_s(ld, serverctrls, clientctrls);
+        }
+
+        internal override int ldap_stop_tls_s(SafeHandle ld)
+        {
+            return 0;
+        }
+
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
         {
             var defaults = new Native.LdapSaslDefaults { mech = mech };

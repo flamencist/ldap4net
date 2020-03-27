@@ -85,7 +85,7 @@ namespace LdapForNet.Native
         internal static extern int ldap_set_option(SafeHandle ld, int option, [In] ref int invalue);
 
         [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_set_optionW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int ldap_set_option(SafeHandle ld, int option, [In] ref string invalue);
+        internal static extern int ldap_set_option(SafeHandle ld, int option, [In] string invalue);
 
         [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_set_optionW",CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
@@ -284,5 +284,11 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_abandon(SafeHandle ld, int msgId);
+        
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_start_tls_sW", CharSet = CharSet.Unicode)]
+        internal static extern int ldap_start_tls_s(SafeHandle ld, int serverReturnValue, IntPtr message, IntPtr serverctrls, IntPtr clientctrls);
+
+        [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ldap_stop_tls_s", CharSet = CharSet.Unicode)]
+        internal static extern int ldap_stop_tls_s(SafeHandle ld);
     }
 }

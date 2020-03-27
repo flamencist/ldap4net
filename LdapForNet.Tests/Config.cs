@@ -4,6 +4,8 @@
     {
         public const string LdapHost = "localhost";
         public const int LdapPort = 4389;
+        public const int LdapsPort = 4636;
+        public const string LdapIUnixSocketPath = "/tmp/slapd/slapdunix";
         public const string RootDn = "dc=example,dc=com";
         public const string LdapUserDn = "cn=admin,dc=example,dc=com";
         public const string LdapDigestMd5UserName = "digestTest";

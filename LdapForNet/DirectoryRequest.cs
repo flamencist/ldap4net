@@ -215,5 +215,9 @@ namespace LdapForNet
         public string DistinguishedName { get; set; }
 
         public DirectoryAttribute Assertion { get; } = new DirectoryAttribute();
-    }   
+    }
+
+    public class TransportLayerSecurityRequest:DirectoryRequest
+    {
+    }
 }

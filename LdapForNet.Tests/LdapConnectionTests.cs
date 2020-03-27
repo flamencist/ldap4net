@@ -81,8 +81,35 @@ namespace LdapForNetTests
             }
             using (var connection = new LdapConnection())
             {
-                connection.ConnectI("/tmp/slapd/slapdunix");
+                connection.ConnectI(Config.LdapIUnixSocketPath);
                 connection.Bind(LdapAuthType.External, new LdapCredential());
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);
+                Assert.Equal(Config.LdapDigestMd5UserName, entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Theory]
+        [InlineData("LINUX")]
+        public void LdapConnection_Bind_Using_Sasl_External(string platform)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            {
+                return;
+            }
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect("example", Config.LdapPort, LdapSchema.LDAP);
+                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,(int) LdapOption.LDAP_OPT_X_TLS_NEVER, true);
+                connection.StartTransportLayerSecurity();
+                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                {
+                    UserName = Config.LdapDigestMd5UserName,
+                    Password = Config.LdapPassword
+                });
+                //connection.Bind(LdapAuthType.External, new LdapCredential());
                 var authId = connection.WhoAmI().Result;
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
                 Assert.True(entries.Count == 1);
@@ -173,7 +200,7 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
-                connection.Connect("someunknown.host");
+                connection.Connect("someunknown.host",389);
                 Assert.Throws<LdapException>(() =>
                     connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword));
             }
@@ -209,7 +236,7 @@ namespace LdapForNetTests
         {
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost);
+                connection.Connect(Config.LdapHost, Config.LdapPort);
                 Assert.Throws<LdapException>(()=>
                 connection.Search("dc=example,dc=com", "(&(objectclass=top)...wrong...)"));
             }

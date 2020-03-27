@@ -38,6 +38,12 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option),
                 details
             );
+
+            //SetOption(Native.Native.LdapOption.LDAP_OPT_DEBUG_LEVEL,65535);
+            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTDIR,"/tmp/slapd/certs");
+            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTFILE,"/tmp/slapd/certs/testldap.crt");
+            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,"/tmp/slapd/certs/testldap.crt");
+            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,"/tmp/slapd/certs/testldap.key");
         }
 
         public void Bind(Native.Native.LdapAuthType authType, LdapCredential credential)
@@ -115,27 +121,29 @@ namespace LdapForNet
             });
         }
 
-        public void SetOption(Native.Native.LdapOption option, int value)
+        public void SetOption(Native.Native.LdapOption option, int value, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
-        public void SetOption(Native.Native.LdapOption option, string value)
+        public void SetOption(Native.Native.LdapOption option, string value, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, value),
                 nameof(_native.ldap_set_option));
         }
 
-        public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
+        public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, valuePtr), nameof(_native.ldap_set_option));
         }
 
-      
+        private SafeHandle GetLdapHandle(bool global) => global ? new LdapHandle(IntPtr.Zero) : _ld;
+
+
         public IList<LdapEntry> Search(string @base, string filter,string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
@@ -191,6 +199,12 @@ namespace LdapForNet
             return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
         }
 
+        public void StartTransportLayerSecurity()
+        {
+            ThrowIfNotInitialized();
+            SendRequest(new TransportLayerSecurityRequest(), out _);
+        }
+
 
         public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
             ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
@@ -200,6 +214,7 @@ namespace LdapForNet
 
         public void Dispose()
         {
+            //_native.ldap_stop_tls_s(_ld);
             _ld?.Dispose();
         }
 
@@ -297,6 +312,8 @@ namespace LdapForNet
                     return new CompareRequestHandler();
                 case ExtendedRequest _:
                     return new ExtendedRequestHandler();
+                case TransportLayerSecurityRequest _:
+                    return new TransportLayerSecurityRequestHandler();
                 default:
                     throw new LdapException("Not supported operation of request: " + request?.GetType());
             }

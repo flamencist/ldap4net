@@ -8,7 +8,10 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeLinux : LdapNative
     {
-        internal override int Init(ref IntPtr ld, string url) => NativeMethodsLinux.ldap_initialize(ref ld, url);
+        internal override int Init(ref IntPtr ld, string url) 
+        {
+            return NativeMethodsLinux.ldap_initialize(ref ld, url);
+        }
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
@@ -26,8 +29,6 @@ namespace LdapForNet.Native
             var saslDefaults = GetSaslDefaults(ld, mech);
             return UnixSaslMethods.GetSaslCredentials(ldapCredential, saslDefaults);
         }
-
-
 
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
         {
@@ -124,8 +125,8 @@ namespace LdapForNet.Native
         internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
             => NativeMethodsLinux.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref string invalue)=>
-            NativeMethodsLinux.ldap_set_option(ld, option, ref invalue);
+        internal override int ldap_set_option(SafeHandle ld, int option, string invalue)=>
+            NativeMethodsLinux.ldap_set_option(ld, option, invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
             => NativeMethodsLinux.ldap_set_option(ld, option,  invalue);
@@ -254,6 +255,15 @@ namespace LdapForNet.Native
 
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
             NativeMethodsLinux.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
-      
+
+        internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls)
+        {
+            return NativeMethodsLinux.ldap_start_tls_s(ld, serverctrls, clientctrls);
+        }
+
+        internal override int ldap_stop_tls_s(SafeHandle ld)
+        {
+            return NativeMethodsLinux.ldap_stop_tls_s(ld);
+        }
     }
 }

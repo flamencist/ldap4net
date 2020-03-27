@@ -14,9 +14,9 @@ namespace LdapForNet
         void Bind(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
         Task BindAsync(LdapAuthType authType, LdapCredential ldapCredential);
         Task BindAsync(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
-        void SetOption(LdapOption option, int value);
-        void SetOption(LdapOption option, string value);
-        void SetOption(LdapOption option, IntPtr valuePtr);
+        void SetOption(LdapOption option, int value, bool global = false);
+        void SetOption(LdapOption option, string value, bool global = false);
+        void SetOption(LdapOption option, IntPtr valuePtr, bool global = false);
         IList<LdapEntry> Search(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
         Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE,  CancellationToken token = default);
         void Add(LdapEntry entry);
@@ -25,5 +25,6 @@ namespace LdapForNet
         void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
+        void StartTransportLayerSecurity();
     }
 }

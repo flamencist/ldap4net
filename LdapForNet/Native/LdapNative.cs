@@ -36,7 +36,7 @@ namespace LdapForNet.Native
         internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who,string password);
         internal abstract int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
         internal abstract int ldap_set_option(SafeHandle ld, int option, ref int invalue);
-        internal abstract int ldap_set_option(SafeHandle ld, int option, ref string invalue);
+        internal abstract int ldap_set_option(SafeHandle ld, int option, string invalue);
         internal abstract int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref string value);
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
@@ -69,6 +69,9 @@ namespace LdapForNet.Native
         internal abstract int ldap_rename(SafeHandle ld, string dn, string newrdn, string newparent, int deleteoldrdn, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
         internal abstract int ldap_extended_operation(SafeHandle ld,string requestoid,IntPtr requestdata,IntPtr serverctrls, IntPtr clientctrls,ref int msgidp );
         internal abstract int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt);
+        
+        internal abstract int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls);
+        internal abstract int ldap_stop_tls_s(SafeHandle ld);
 
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
@@ -101,6 +104,7 @@ namespace LdapForNet.Native
                 throw new LdapException(message, method, res);
             }
         }
+        
         
         
 
