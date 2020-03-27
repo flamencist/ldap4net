@@ -8,7 +8,7 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeOsx:LdapNative
     {
-        internal override int Init(ref IntPtr ld, string url) => NativeMethodsLinux.ldap_initialize(ref ld, url);
+        internal override int Init(ref IntPtr ld, string url) => NativeMethodsOsx.ldap_initialize(ref ld, url);
        
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
