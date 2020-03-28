@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
@@ -8,14 +10,25 @@ namespace LdapForNet.Native
     {
         internal override int Init(ref IntPtr ld, string url)
         {
-            ld =  NativeMethodsWindows.ldap_init(url, (int)Native.LdapPort.LDAP);
+            var urls = url.Split(' ').Select(_=> new Uri(_)).ToList();
+            var schema = urls.Any(_=>_.IsLdaps())? Native.LdapSchema.LDAPS:Native.LdapSchema.LDAP;
+            var hostnames = string.Join(" ", urls.Select(_ => _.ToHostname()));
+
+            Init(out ld, hostnames, schema);
             if (ld == IntPtr.Zero)
             {
                 return -1;
             }
             return (int)Native.ResultCode.Success;
         }
-        
+
+        private static void Init(out IntPtr ld, string hostnames, Native.LdapSchema schema)
+        {
+            ld = schema == Native.LdapSchema.LDAPS
+                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int) Native.LdapPort.LDAPS, 1)
+                : NativeMethodsWindows.ldap_init(hostnames, (int) Native.LdapPort.LDAP);
+        }
+
         private void LdapConnect(SafeHandle ld)
         {
             var timeout = new LDAP_TIMEVAL

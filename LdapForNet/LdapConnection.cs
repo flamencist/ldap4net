@@ -38,12 +38,6 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option),
                 details
             );
-
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_DEBUG_LEVEL,65535);
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTDIR,"/tmp/slapd/certs");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTFILE,"/tmp/slapd/certs/testldap.crt");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,"/tmp/slapd/certs/testldap.crt");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,"/tmp/slapd/certs/testldap.key");
         }
 
         public void Bind(Native.Native.LdapAuthType authType, LdapCredential credential)
