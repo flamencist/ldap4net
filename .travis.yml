@@ -26,6 +26,7 @@ addons:
       - krb5-kdc-ldap
   homebrew:
     packages:
+      - openssl
       - openldap
     update: true
 before_script:
