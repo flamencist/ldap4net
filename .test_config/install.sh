@@ -24,6 +24,12 @@ LC_ALL=C DEBIAN_FRONTEND=noninteractive apt install -y \
     krb5-admin-server \
     krb5-config
 
+# PATH TO YOUR HOSTS FILE
+ETC_HOSTS=/etc/hosts
+
+# DEFAULT IP FOR HOSTNAME
+IP="127.0.0.1"
+
 gzip -d /usr/share/doc/krb5-kdc-ldap/kerberos.schema.gz
 cp /usr/share/doc/krb5-kdc-ldap/kerberos.schema /etc/ldap/schema/
 
@@ -36,3 +42,25 @@ then
   
   apparmor_parser -r  ${SLAPD_APPARMOR_FILE}
 fi
+
+function addhost() {
+    HOSTNAME=$1
+    HOSTS_LINE="$IP\t$HOSTNAME"
+    if [ -n "$(grep $HOSTNAME /etc/hosts)" ]
+        then
+            echo "$HOSTNAME already exists : $(grep $HOSTNAME $ETC_HOSTS)"
+        else
+            echo "Adding $HOSTNAME to your $ETC_HOSTS";
+            sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts";
+
+            if [ -n "$(grep $HOSTNAME /etc/hosts)" ]
+                then
+                    echo "$HOSTNAME was added succesfully \n $(grep $HOSTNAME /etc/hosts)";
+                else
+                    echo "Failed to Add $HOSTNAME, Try again!";
+            fi
+    fi
+}
+
+addhost "example"
+addhost "example.com"
