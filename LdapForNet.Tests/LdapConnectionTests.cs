@@ -101,7 +101,7 @@ namespace LdapForNetTests
             }
             using (var connection = new LdapConnection())
             {
-                connection.Connect("example", Config.LdapPort, LdapSchema.LDAP);
+                connection.Connect(Config.LdapHostName, Config.LdapPort, LdapSchema.LDAP);
                 connection.SetOption(LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,(int) LdapOption.LDAP_OPT_X_TLS_NEVER, true);
                 connection.StartTransportLayerSecurity();
                 connection.Bind(LdapAuthType.Digest, new LdapCredential

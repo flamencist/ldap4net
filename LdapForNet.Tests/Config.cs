@@ -3,6 +3,7 @@
     public static class Config
     {
         public const string LdapHost = "localhost";
+        public const string LdapHostName = "example";
         public const int LdapPort = 4389;
         public const int LdapsPort = 4636;
         public const string LdapIUnixSocketPath = "/tmp/slapd/slapdunix";

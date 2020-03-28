@@ -4,6 +4,7 @@ dotnet: 2.1.504
 dist: trusty
 sudo: false
 addons:
+  hostname: example
   apt:
     packages:
       - ldap-utils
@@ -27,8 +28,8 @@ addons:
     update: true
 before_script:
   - mkdir -p /tmp/slapd/certs
-  - cp .test_config/testldap.crt /tmp/slapd/certs/
-  - cp .test_config/testldap.key /tmp/slapd/certs/
+  - cp .test_config/server.crt /tmp/slapd/certs/
+  - cp .test_config/server.key /tmp/slapd/certs/
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PATH=/usr/libexec:$PATH ; fi
   - slapd -f .test_config/slapd."$TRAVIS_OS_NAME".conf -h "ldap://localhost:4389 ldaps://localhost:4636 ldapi://%2Ftmp%2Fslapd%2Fslapdunix" -d 6126 &
   - sleep 6
