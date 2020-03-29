@@ -21,7 +21,7 @@ steps:
     targetType: 'inline'
     script: |
       $file = "$env:windir\System32\drivers\etc\hosts"
-      "example" | Add-Content -PassThru $file
+      "127.0.0.1\texample" | Add-Content -PassThru $file
       Get-Content -Path $file
 - task: NuGetToolInstaller@1
 - task: Npm@1
