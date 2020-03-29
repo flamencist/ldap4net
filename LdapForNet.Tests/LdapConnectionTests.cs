@@ -101,7 +101,7 @@ namespace LdapForNetTests
             }*/
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHost, Config.LdapsPort, LdapSchema.LDAPS);
+                connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
                 connection.Bind(LdapAuthType.Simple, new LdapCredential
                 {
