@@ -10,7 +10,7 @@ namespace LdapForNet.Native
     {
         internal override int TrustAllCertificates(SafeHandle ld)
         {
-            var value = (int)Native.LdapOption.LDAP_OPT_X_TLS_NEVER;
+            var value = (int)Native.LdapOption.LDAP_OPT_X_TLS_ALLOW;
             return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,
                 ref value);
         }
