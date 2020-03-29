@@ -6,8 +6,24 @@ using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate bool VERIFYSERVERCERT(IntPtr Connection, IntPtr pServerCert);
     internal class LdapNativeWindows : LdapNative
     {
+        internal override int TrustAllCertificates(SafeHandle ld)
+        {
+            var sslEnabled = 0;
+            ThrowIfError(ldap_get_option(ld, (int) Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_get_option));
+            if (sslEnabled == 0)
+            {
+                sslEnabled = 1;
+                ThrowIfError(ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_set_option));
+            }
+
+            return ldap_set_option(ld,(int) Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT> ((connection, serverCert) =>true));
+
+        }
+
         internal override int Init(ref IntPtr ld, string url)
         {
             var urls = url.Split(' ').Select(_=> new Uri(_)).ToList();
@@ -106,7 +122,11 @@ namespace LdapForNet.Native
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
-        
+
+        internal override int ldap_get_option(SafeHandle ld, int option, ref int value)
+            => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
+
+
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsWindows.ldap_unbind_s(ld);
 
         internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes, int attrsonly, IntPtr serverctrls,

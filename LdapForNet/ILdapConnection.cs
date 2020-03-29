@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -25,6 +24,7 @@ namespace LdapForNet
         void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
-        void StartTransportLayerSecurity();
+        void StartTransportLayerSecurity(bool trustAll = false);
+        void TrustAllCertificates();
     }
 }

@@ -91,26 +91,23 @@ namespace LdapForNetTests
             }
         }
         
-        [Theory]
-        [InlineData("LINUX")]
-        public void LdapConnection_Bind_Using_Sasl_External(string platform)
+        [Fact]
+        //[InlineData("LINUX")]
+        public void LdapConnection_Connect_Ssl()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            /*if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
             {
                 return;
-            }
+            }*/
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHostName, Config.LdapPort, LdapSchema.LDAP);
-                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,(int) LdapOption.LDAP_OPT_X_TLS_NEVER, true);
-                connection.StartTransportLayerSecurity();
-                connection.Bind(LdapAuthType.Digest, new LdapCredential
+                connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
+                connection.TrustAllCertificates();
+                connection.Bind(LdapAuthType.Simple, new LdapCredential
                 {
-                    UserName = Config.LdapDigestMd5UserName,
+                    UserName = Config.LdapUserDn,
                     Password = Config.LdapPassword
                 });
-                //connection.Bind(LdapAuthType.External, new LdapCredential());
-                var authId = connection.WhoAmI().Result;
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
                 Assert.True(entries.Count == 1);
                 Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);

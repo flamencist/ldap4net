@@ -29,6 +29,7 @@ namespace LdapForNet.Native
             throw new PlatformNotSupportedException();
         }
 
+        internal abstract int TrustAllCertificates(SafeHandle ld);
         internal abstract int Init(ref IntPtr ld, string url);
         internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
@@ -40,6 +41,7 @@ namespace LdapForNet.Native
         internal abstract int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref string value);
         internal abstract int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
+        internal abstract int ldap_get_option(SafeHandle ld, int option, ref int value);
         internal abstract int ldap_unbind_s(IntPtr ld);
         internal abstract int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp);
