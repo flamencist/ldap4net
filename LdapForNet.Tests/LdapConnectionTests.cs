@@ -71,12 +71,12 @@ namespace LdapForNetTests
             }
         }
         
-        [Theory]
-        [InlineData("LINUX")]
-        public void LdapConnection_Bind_Using_Sasl_External_IPC(string platform)
+        [Fact]
+        public void LdapConnection_Bind_Using_Sasl_External_Via_Unix_Socket()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                _testOutputHelper.WriteLine("Ldap external auth via unix socket is not supported on windows");
                 return;
             }
             using (var connection = new LdapConnection())
