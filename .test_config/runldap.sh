@@ -11,8 +11,8 @@ else
   mkdir -p "${TMPDIR}"
 fi
 mkdir "${TMPDIR}/certs"
-cp "${DIRNAME}/testldap.crt" "${TMPDIR}/certs/"
-cp "${DIRNAME}/testldap.key" "${TMPDIR}/certs/"
+cp "${DIRNAME}/server.crt" "${TMPDIR}/certs/"
+cp "${DIRNAME}/server.key" "${TMPDIR}/certs/"
 
 slapd -f "${DIRNAME}/slapd.linux.conf" -h "ldap://localhost:4389 ldaps://localhost:4636 ldapi://${LDAPI_PATH}" -d 256 &
 sleep 6
