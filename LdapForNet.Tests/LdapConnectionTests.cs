@@ -92,13 +92,13 @@ namespace LdapForNetTests
         }
         
         [Fact]
-        //[InlineData("LINUX")]
         public void LdapConnection_Connect_Ssl()
         {
-            /*if (!RuntimeInformation.IsOSPlatform(OSPlatform.Create(platform)))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
+                //todo setup tls/ssl for ldap server on OSX
                 return;
-            }*/
+            }
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
