@@ -8,6 +8,13 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeLinux : LdapNative
     {
+        internal override int TrustAllCertificates(SafeHandle ld)
+        {
+            var value = (int) Native.LdapOption.LDAP_OPT_X_TLS_ALLOW;
+            return ldap_set_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,
+                ref value);
+        }
+
         internal override int Init(ref IntPtr ld, string url) 
         {
             return NativeMethodsLinux.ldap_initialize(ref ld, url);
@@ -137,7 +144,10 @@ namespace LdapForNet.Native
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsLinux.ldap_get_option(ld, option, ref value);
-        
+
+        internal override int ldap_get_option(SafeHandle ld, int option, ref int value) 
+            => NativeMethodsLinux.ldap_get_option(ld, option, ref value);
+
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsLinux.ldap_unbind_s(ld);
 
         internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes, int attrsonly, IntPtr serverctrls,

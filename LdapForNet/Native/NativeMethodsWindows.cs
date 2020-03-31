@@ -14,7 +14,10 @@ namespace LdapForNet.Native
         
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_initW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr ldap_init(string host, int port);
-        
+
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_sslinitW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr ldap_sslinit(string host, int port, int secure);
+
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_connect(SafeHandle ld,LDAP_TIMEVAL timeout);
 
@@ -95,6 +98,9 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_get_optionW",CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);
+
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_get_optionW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ldap_get_option(SafeHandle ld, int option, ref int value);
 
         [DllImport(LIB_LDAP_PATH,CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_unbind_s(IntPtr ld);

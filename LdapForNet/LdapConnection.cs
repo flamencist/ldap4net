@@ -38,12 +38,6 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option),
                 details
             );
-
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_DEBUG_LEVEL,65535);
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTDIR,"/tmp/slapd/certs");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CACERTFILE,"/tmp/slapd/certs/testldap.crt");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,"/tmp/slapd/certs/testldap.crt");
-            //SetOption(Native.Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,"/tmp/slapd/certs/testldap.key");
         }
 
         public void Bind(Native.Native.LdapAuthType authType, LdapCredential credential)
@@ -199,22 +193,30 @@ namespace LdapForNet
             return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
         }
 
-        public void StartTransportLayerSecurity()
+        public void StartTransportLayerSecurity(bool trustAll = false)
         {
             ThrowIfNotInitialized();
+            if (trustAll)
+            {
+                TrustAllCertificates();
+            }
             SendRequest(new TransportLayerSecurityRequest(), out _);
+        }
+
+        public void TrustAllCertificates()
+        {
+            _native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
         }
 
 
         public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
-            ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
+            ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));  
 
         public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
 
 
         public void Dispose()
         {
-            //_native.ldap_stop_tls_s(_ld);
             _ld?.Dispose();
         }
 

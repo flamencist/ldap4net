@@ -1,21 +1,50 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate bool VERIFYSERVERCERT(IntPtr Connection, IntPtr pServerCert);
     internal class LdapNativeWindows : LdapNative
     {
+        internal override int TrustAllCertificates(SafeHandle ld)
+        {
+            var sslEnabled = 0;
+            ThrowIfError(ldap_get_option(ld, (int) Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_get_option));
+            if (sslEnabled == 0)
+            {
+                sslEnabled = 1;
+                ThrowIfError(ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_set_option));
+            }
+
+            return ldap_set_option(ld,(int) Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT> ((connection, serverCert) =>true));
+
+        }
+
         internal override int Init(ref IntPtr ld, string url)
         {
-            ld =  NativeMethodsWindows.ldap_init(url, (int)Native.LdapPort.LDAP);
+            var urls = url.Split(' ').Select(_=> new Uri(_)).ToList();
+            var schema = urls.Any(_=>_.IsLdaps())? Native.LdapSchema.LDAPS:Native.LdapSchema.LDAP;
+            var hostnames = string.Join(" ", urls.Select(_ => _.ToHostname()));
+
+            Init(out ld, hostnames, schema);
             if (ld == IntPtr.Zero)
             {
                 return -1;
             }
             return (int)Native.ResultCode.Success;
         }
-        
+
+        private static void Init(out IntPtr ld, string hostnames, Native.LdapSchema schema)
+        {
+            ld = schema == Native.LdapSchema.LDAPS
+                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int) Native.LdapPort.LDAPS, 1)
+                : NativeMethodsWindows.ldap_init(hostnames, (int) Native.LdapPort.LDAP);
+        }
+
         private void LdapConnect(SafeHandle ld)
         {
             var timeout = new LDAP_TIMEVAL
@@ -93,7 +122,11 @@ namespace LdapForNet.Native
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
-        
+
+        internal override int ldap_get_option(SafeHandle ld, int option, ref int value)
+            => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
+
+
         internal override int ldap_unbind_s(IntPtr ld) => NativeMethodsWindows.ldap_unbind_s(ld);
 
         internal override int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes, int attrsonly, IntPtr serverctrls,
