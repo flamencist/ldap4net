@@ -92,6 +92,30 @@ namespace LdapForNetTests
         }
         
         [Fact]
+        public void LdapConnection_Bind_Using_Sasl_External_Via_Tls()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
+                connection.TrustAllCertificates();
+                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_CERTFILE,"/tmp/slapd/certs/server.crt", true);
+                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_KEYFILE,"/tmp/slapd/certs/server.key", true);
+                connection.Bind(LdapAuthType.External, new LdapCredential
+                {
+                    AuthorizationId = $"dn:{Config.LdapDigestMd5ProxyDn}" 
+                });
+                var authzId = connection.WhoAmI().Result;
+                Assert.Equal($"dn:{Config.LdapDigestMd5ProxyDn}", authzId);   
+                
+                var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);
+                Assert.Equal(Config.LdapDigestMd5UserName, entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
         public void LdapConnection_Connect_Ssl()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
