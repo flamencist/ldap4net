@@ -98,14 +98,10 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
-                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_CERTFILE,"/tmp/slapd/certs/server.crt", true);
-                connection.SetOption(LdapOption.LDAP_OPT_X_TLS_KEYFILE,"/tmp/slapd/certs/server.key", true);
-                connection.Bind(LdapAuthType.External, new LdapCredential
-                {
-                    AuthorizationId = $"dn:{Config.LdapDigestMd5ProxyDn}" 
-                });
+                connection.SetClientCertificate(Config.ClientCertPath, Config.ClientCertKeyPath);
+                connection.Bind(LdapAuthType.External, new LdapCredential());
                 var authzId = connection.WhoAmI().Result;
-                Assert.Equal($"dn:{Config.LdapDigestMd5ProxyDn}", authzId);   
+                Assert.Equal($"dn:{Config.LdapExternalDn}", authzId);   
                 
                 var entries = connection.Search(Config.RootDn, $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
                 Assert.True(entries.Count == 1);

@@ -26,5 +26,6 @@ namespace LdapForNet
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);
         void TrustAllCertificates();
+        void SetClientCertificate(string certificateFilePath, string keyFilePath);
     }
 }

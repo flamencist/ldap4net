@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
@@ -8,26 +10,47 @@ namespace LdapForNet.Native
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate bool VERIFYSERVERCERT(IntPtr Connection, IntPtr pServerCert);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate bool QUERYCLIENTCERT(IntPtr Connection, IntPtr trusted_CAs, ref IntPtr certificateHandle);
+
     internal class LdapNativeWindows : LdapNative
     {
         internal override int TrustAllCertificates(SafeHandle ld)
         {
             var sslEnabled = 0;
-            ThrowIfError(ldap_get_option(ld, (int) Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_get_option));
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_get_option));
             if (sslEnabled == 0)
             {
                 sslEnabled = 1;
                 ThrowIfError(ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled), nameof(ldap_set_option));
             }
 
-            return ldap_set_option(ld,(int) Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT> ((connection, serverCert) =>true));
+            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
 
+        }
+
+        internal override int SetClientCertificate(SafeHandle ld, string certificateFilePath, string keyFilePath)
+        {
+            if (!File.Exists(certificateFilePath))
+            {
+                throw new FileNotFoundException("Client certificate file is not found", certificateFilePath);
+            }
+
+            var certificate = new X509Certificate(certificateFilePath);
+            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_CLIENT_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<QUERYCLIENTCERT>(
+                // ReSharper disable once RedundantAssignment
+                (IntPtr connection, IntPtr trustedCAs, ref IntPtr certificateHandle) =>
+                {
+                    certificateHandle = certificate.Handle;
+                    return true;
+                }));
         }
 
         internal override int Init(ref IntPtr ld, string url)
         {
-            var urls = url.Split(' ').Select(_=> new Uri(_)).ToList();
-            var schema = urls.Any(_=>_.IsLdaps())? Native.LdapSchema.LDAPS:Native.LdapSchema.LDAP;
+            var urls = url.Split(' ').Select(_ => new Uri(_)).ToList();
+            var schema = urls.Any(_ => _.IsLdaps()) ? Native.LdapSchema.LDAPS : Native.LdapSchema.LDAP;
             var hostnames = string.Join(" ", urls.Select(_ => _.ToHostname()));
 
             Init(out ld, hostnames, schema);
@@ -41,8 +64,8 @@ namespace LdapForNet.Native
         private static void Init(out IntPtr ld, string hostnames, Native.LdapSchema schema)
         {
             ld = schema == Native.LdapSchema.LDAPS
-                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int) Native.LdapPort.LDAPS, 1)
-                : NativeMethodsWindows.ldap_init(hostnames, (int) Native.LdapPort.LDAP);
+                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int)Native.LdapPort.LDAPS, 1)
+                : NativeMethodsWindows.ldap_init(hostnames, (int)Native.LdapPort.LDAP);
         }
 
         private void LdapConnect(SafeHandle ld)
@@ -51,29 +74,31 @@ namespace LdapForNet.Native
             {
                 tv_sec = (int)(TimeSpan.FromMinutes(10).Ticks / TimeSpan.TicksPerSecond)
             };
-            ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout),nameof(NativeMethodsWindows.ldap_connect));
+            ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout), nameof(NativeMethodsWindows.ldap_connect));
         }
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = ToNative(ldapCredential);
+            var cred = GetCredentials(authType, ldapCredential); ;
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = ToNative(ldapCredential);
+            var cred = GetCredentials(authType, ldapCredential);
 
             var task = Task.Factory.StartNew(() =>
             {
-                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType)),nameof(NativeMethodsWindows.ldap_bind_s));
+                ThrowIfError(NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType)), nameof(NativeMethodsWindows.ldap_bind_s));
 
                 return IntPtr.Zero;
             });
             return await task.ConfigureAwait(false);
         }
+
+
 
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
@@ -88,36 +113,36 @@ namespace LdapForNet.Native
             {
                 var result = IntPtr.Zero;
                 var msgidp = NativeMethodsWindows.ldap_bind(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
-  
+
                 if (msgidp == -1)
                 {
-                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",  nameof(NativeMethodsWindows.ldap_bind), 1);
+                    throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result", nameof(NativeMethodsWindows.ldap_bind), 1);
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int)rc,nameof(NativeMethodsWindows.ldap_bind));
+                    ThrowIfError((int)rc, nameof(NativeMethodsWindows.ldap_bind));
                 }
-                
+
                 return result;
             }).ConfigureAwait(false);
         }
 
         internal override int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_abandon(ld, msgId);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue) 
+        internal override int ldap_set_option(SafeHandle ld, int option, ref int invalue)
             => NativeMethodsWindows.ldap_set_option(ld, option, ref invalue);
 
-        internal override int ldap_set_option(SafeHandle ld, int option, string invalue)=>
+        internal override int ldap_set_option(SafeHandle ld, int option, string invalue) =>
             NativeMethodsWindows.ldap_set_option(ld, option, invalue);
 
         internal override int ldap_set_option(SafeHandle ld, int option, IntPtr invalue)
-            => NativeMethodsWindows.ldap_set_option(ld, option,  invalue);
+            => NativeMethodsWindows.ldap_set_option(ld, option, invalue);
 
 
-        internal override int ldap_get_option(SafeHandle ld, int option, ref string value) 
+        internal override int ldap_get_option(SafeHandle ld, int option, ref string value)
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
@@ -134,8 +159,8 @@ namespace LdapForNet.Native
             NativeMethodsWindows.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
                 serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 
-        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) => 
-            NativeMethodsWindows.ldap_result(ld,msgid,all,timeout,ref pMessage);
+        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout, ref IntPtr pMessage) =>
+            NativeMethodsWindows.ldap_result(ld, msgid, all, timeout, ref pMessage);
 
         internal override int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp, ref IntPtr errmsgp,
             ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit) =>
@@ -194,16 +219,25 @@ namespace LdapForNet.Native
             IntPtr clientctrls, ref int msgidp)
         {
             return NativeMethodsWindows.ldap_rename(ld, dn,
-                newrdn,newparent, deleteoldrdn,
+                newrdn, newparent, deleteoldrdn,
                 serverctrls, clientctrls, ref msgidp);
         }
 
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) =>
+            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
 
-        internal override int ldap_start_tls_s(SafeHandle ld,  ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_start_tls_s(ld, serverReturnValue, message, serverctrls, clientctrls);
+        internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_start_tls_s(ld, serverReturnValue, message, serverctrls, clientctrls);
 
         internal override int ldap_stop_tls_s(SafeHandle ld) => NativeMethodsWindows.ldap_stop_tls_s(ld);
+
+        private static SEC_WINNT_AUTH_IDENTITY_EX GetCredentials(Native.LdapAuthType authType, LdapCredential ldapCredential)
+        {
+            if (authType == Native.LdapAuthType.External)
+            {
+                return null;
+            }
+            return ToNative(ldapCredential);
+        }
 
         private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(LdapCredential ldapCredential)
         {

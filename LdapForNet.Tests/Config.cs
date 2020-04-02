@@ -1,4 +1,7 @@
-﻿namespace LdapForNetTests
+﻿using System.IO;
+using System.Reflection;
+
+namespace LdapForNetTests
 {
     public static class Config
     {
@@ -10,7 +13,12 @@
         public const string RootDn = "dc=example,dc=com";
         public const string LdapUserDn = "cn=admin,dc=example,dc=com";
         public const string LdapDigestMd5UserName = "digestTest";
+        public const string LdapExternalDn = "cn=external,dc=example,dc=com";
         public const string LdapDigestMd5ProxyDn= "cn=digesttestproxy,dc=example,dc=com";
         public const string LdapPassword = "test";
+        public static string ClientCertPath => Path.Combine(GetExeDirectory(), "client.crt");
+        public static string ClientCertKeyPath => Path.Combine(GetExeDirectory(), "client.key");
+
+        private static string GetExeDirectory() => new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
     }
 }

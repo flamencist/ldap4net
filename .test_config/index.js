@@ -34,8 +34,15 @@ ldap.BindRequest.prototype._parse = function(ber){
     return bindRequestOld.call(this, ber);
   }catch(e){
     this.authentication = ber.readString(0xa3);
-    this.name = "cn=digestTest,dc=example,dc=com";
-    this.credentials = "test";
+    if(this.authentication.includes("DIGEST-MD5")){
+      this.name = "cn=digestTest,dc=example,dc=com";
+      this.credentials = "test";
+    }
+    else if(this.authentication.includes("EXTERNAL")){
+      this.name = "cn=external,dc=example,dc=com";
+      this.credentials = "test";
+    }
+
     return true;
   }
 };
@@ -59,9 +66,10 @@ ldap.BindResponse.prototype._parse = function(ber) {
 
 
 function authorize(req, res, next) {
-  /* Any user may search after bind, only cn=root has full power */
-  var isSearch = (req instanceof ldap.SearchRequest);
-  if (!req.connection.ldap.bindDN.equals('cn=admin,dc=example,dc=com'))
+  if (!req.connection.ldap.bindDN.equals('cn=admin,dc=example,dc=com')
+    && !req.connection.ldap.bindDN.equals('cn=digest,dc=example,dc=com')
+    && !req.connection.ldap.bindDN.equals('cn=external,dc=example,dc=com')
+  )
     return next(new ldap.InsufficientAccessRightsError());
 
   return next();
@@ -94,6 +102,15 @@ var db = {
         displayName: "DigestMd5 user",
         userpassword: "test",
         uid: "digestTest"
+    },
+    "cn=external,dc=example,dc=com":{
+      dn: "cn=external,dc=example,dc=com",
+      cn: "external",
+      sn: "external",
+      objectClass: ["top","person","organizationalPerson","inetOrgPerson"],
+      displayName: "external user",
+      userpassword: "test",
+      uid: "external"
     },
     "rootDse":{
       "subschemasubentry": "CN=Aggregate,CN=Schema,CN=Configuration,"+SUFFIX,
@@ -349,7 +366,7 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 server.exop('1.3.6.1.4.1.4203.1.11.3', function(req, res, next) {
   console.log('name: ' + req.name);
   console.log('value: ' + req.value);
-  res.value = 'dn:cn=admin,dc=example,dc=com';
+  res.value = 'dn:'+req.connection.ldap.bindDN.toString();
   res.end();
   return next();
 });

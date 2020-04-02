@@ -208,6 +208,12 @@ namespace LdapForNet
             _native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
         }
 
+        public void SetClientCertificate(string certificateFilePath, string keyFilePath)
+        {
+            ThrowIfNotInitialized();
+            _native.ThrowIfError(_native.SetClientCertificate(_ld, certificateFilePath, keyFilePath), nameof(_native.SetClientCertificate));
+        }
+
 
         public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
             ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));  
