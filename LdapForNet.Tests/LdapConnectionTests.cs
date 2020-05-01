@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
+using LdapForNet.Utils;
+using LdapForNetTests.TestUtils;
 using Xunit;
 using Xunit.Abstractions;
 using static LdapForNet.Native.Native;
@@ -98,7 +102,13 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
-                connection.SetClientCertificate(Config.ClientCertPath, Config.ClientCertKeyPath);
+                var keyPath = Config.ClientCertKeyPath;
+                var cert = new X509Certificate2(Config.ClientCertPath);
+                var keyBytes = RsaUtils.GetBytesFromPem(File.ReadAllText(keyPath), RsaUtils.PemStringType.Pkcs8PrivateKey);
+
+                cert = RsaUtils.ImportPkcs8PrivateKey(cert,keyBytes);
+                connection.SetClientCertificate(cert);
+                
                 connection.Bind(LdapAuthType.External, new LdapCredential());
                 var authzId = connection.WhoAmI().Result;
                 Assert.Equal($"dn:{Config.LdapExternalDn}", authzId);   
@@ -110,7 +120,7 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
-        
+
         [Fact]
         public void LdapConnection_Connect_Ssl()
         {
@@ -189,7 +199,7 @@ namespace LdapForNetTests
                 var directoryAttribute = response.Entries.First().Attributes["cn"];
                 var cnBinary = directoryAttribute.GetValues<byte[]>().First();
                 Assert.NotEmpty(cnBinary);
-                var actual = LdapForNet.Utils.Encoder.Instance.GetString(cnBinary);
+                var actual = Encoder.Instance.GetString(cnBinary);
                 Assert.Equal("admin", actual);
 
                 var cn = directoryAttribute.GetValues<string>().First();
@@ -319,7 +329,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
                 await connection.BindAsync(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
-                var result = await connection.SendRequestAsync(new CompareRequest(Config.LdapUserDn,"objectClass",LdapForNet.Utils.Encoder.Instance.GetBytes("top")));
+                var result = await connection.SendRequestAsync(new CompareRequest(Config.LdapUserDn,"objectClass",Encoder.Instance.GetBytes("top")));
                 Assert.True(result.ResultCode == ResultCode.CompareTrue, result.ResultCode.ToString());
             }
         }

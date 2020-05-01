@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Native;
@@ -208,10 +209,10 @@ namespace LdapForNet
             _native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
         }
 
-        public void SetClientCertificate(string certificateFilePath, string keyFilePath)
+        public void SetClientCertificate(X509Certificate2 certficate)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.SetClientCertificate(_ld, certificateFilePath, keyFilePath), nameof(_native.SetClientCertificate));
+            _native.ThrowIfError(_native.SetClientCertificate(_ld, certficate), nameof(_native.SetClientCertificate));
         }
 
 

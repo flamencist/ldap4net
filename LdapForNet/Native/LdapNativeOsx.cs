@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
@@ -16,23 +17,9 @@ namespace LdapForNet.Native
                 ref value);
         }
 
-        internal override int SetClientCertificate(SafeHandle ld, string certificateFilePath, string keyFilePath)
+        internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            if (!File.Exists(certificateFilePath))
-            {
-                throw new FileNotFoundException("Client certificate file is not found", certificateFilePath);
-            }
-
-            if (!File.Exists(keyFilePath))
-            {
-                throw new FileNotFoundException("Client certificate key file is not found", keyFilePath);
-            }
-
-            ThrowIfError(ld,
-                ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,
-                    certificateFilePath), nameof(ldap_set_option));
-            return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,
-                keyFilePath);
+            return 0;
         }
 
         internal override int Init(ref IntPtr ld, string url) => NativeMethodsOsx.ldap_initialize(ref ld, url);

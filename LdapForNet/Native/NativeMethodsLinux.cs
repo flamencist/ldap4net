@@ -326,5 +326,46 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
+
+        internal enum GNUTLS_X509_FMT
+        {
+            GNUTLS_X509_FMT_DER = 0,
+            GNUTLS_X509_FMT_PEM = 1
+        }
+        /*
+         * typedef enum {
+	GNUTLS_X509_FMT_DER = 0,
+	GNUTLS_X509_FMT_PEM = 1
+} gnutls_x509_crt_fmt_t;
+
+typedef struct {
+	unsigned char *data;
+	unsigned int size;
+} gnutls_datum_t;
+         */
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_x509_crt_list_import(IntPtr certs, ref int cert_max, IntPtr data, GNUTLS_X509_FMT format, uint flags);
+        
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_x509_privkey_init(ref IntPtr key);
+        
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_x509_privkey_import(IntPtr key,  IntPtr data, GNUTLS_X509_FMT format);
+        
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_certificate_set_x509_key(IntPtr cred, IntPtr certs, int max, IntPtr key);
+        
+        [DllImport("libgnutls.so.30")]
+        internal static extern string gnutls_strerror(int error);
+        
+        [DllImport("libgnutls.so.30")]
+        internal static extern string gnutls_strerror_name(int error);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal class gnutls_datum_t
+        {
+            public IntPtr data = IntPtr.Zero;
+            public int size = 0;
+        }
     }
 }

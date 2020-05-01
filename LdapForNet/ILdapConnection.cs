@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -26,6 +27,6 @@ namespace LdapForNet
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);
         void TrustAllCertificates();
-        void SetClientCertificate(string certificateFilePath, string keyFilePath);
+        void SetClientCertificate(X509Certificate2 certificate);
     }
 }

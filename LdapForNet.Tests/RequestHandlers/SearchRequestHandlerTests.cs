@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using LdapForNet;
 using LdapForNet.Native;
 using LdapForNet.RequestHandlers;
@@ -27,6 +26,7 @@ namespace LdapForNetTests.RequestHandlers
 
             native.Setup(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
                     It.IsAny<IntPtr>(), It.IsAny<int>(),
+                    // ReSharper disable once AccessToModifiedClosure
                     It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), It.IsAny<int>(), ref messageId))
                 .Returns(20);
 
