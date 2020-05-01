@@ -27,7 +27,42 @@ namespace LdapForNet
             LdapEntry = ldapEntry;
         }
 
-        public LdapEntry LdapEntry { get; set; }
+        public AddRequest(string distinguishedName, params DirectoryAttribute[] attributes)
+        {
+            DistinguishedName = distinguishedName;
+            foreach (var attribute in attributes)
+            {
+                Attributes.Add(attribute);
+            }            
+        }
+
+        public string DistinguishedName { get; set; }
+        public SearchResultAttributeCollection Attributes { get; } = new SearchResultAttributeCollection();
+
+        public LdapEntry LdapEntry {
+            get
+            {
+                return new LdapEntry
+                {
+                    Dn = DistinguishedName,
+                    Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
+                };
+            }
+            set
+            {
+                DistinguishedName = value.Dn;
+                Attributes.Clear();
+                foreach (var attribute in value.Attributes)
+                {
+                    var item = new DirectoryAttribute
+                    {
+                        Name = attribute.Key
+                    };
+                    item.AddValues(attribute.Value);
+                    Attributes.Add(item);
+                }
+            }
+        }
     }
 
     public class ModifyRequest : DirectoryRequest
@@ -36,7 +71,43 @@ namespace LdapForNet
         {
             LdapEntry = ldapModifyEntry;
         }
-        public LdapModifyEntry LdapEntry { get; set; }
+        public ModifyRequest(string distinguishedName, params DirectoryModificationAttribute[] attributes)
+        {
+            DistinguishedName = distinguishedName;
+            foreach (var attribute in attributes)
+            {
+                Attributes.Add(attribute);
+            }
+        }
+        public string DistinguishedName { get; set; }
+        public LdapModifyEntry LdapEntry
+        {
+            get
+            {
+                return new LdapModifyEntry
+                {
+                    Dn = DistinguishedName,
+                    Attributes = Attributes.Select(_=> new LdapModifyAttribute { Type = _.Name, Values = _.GetValues<string>().ToList(), LdapModOperation = _.LdapModOperation }).ToList()
+                };
+            }
+            set
+            {
+                DistinguishedName = value.Dn;
+                Attributes.Clear();
+                foreach (var attribute in value.Attributes)
+                {
+                    var item = new DirectoryModificationAttribute
+                    {
+                        Name = attribute.Type,
+                        LdapModOperation = attribute.LdapModOperation
+                    };
+                    item.AddValues(attribute.Values);
+                    Attributes.Add(item);
+                }
+            }
+        }
+        public ModifyAttributeCollection Attributes { get; } = new ModifyAttributeCollection();
+
     }
 
 

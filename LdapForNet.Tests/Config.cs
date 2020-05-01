@@ -19,6 +19,6 @@ namespace LdapForNetTests
         public static string ClientCertPath => Path.Combine(GetExeDirectory(), "client.crt");
         public static string ClientCertKeyPath => Path.Combine(GetExeDirectory(), "client.key");
 
-        private static string GetExeDirectory() => new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
+        internal static string GetExeDirectory() => new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
     }
 }

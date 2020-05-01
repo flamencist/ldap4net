@@ -92,6 +92,15 @@ namespace LdapForNet.Native
             LDAP_OPT_X_TLS_NEWCTX = 0x600f,
             LDAP_OPT_X_TLS_CRLFILE = 0x6010, /* GNUtls only */
             LDAP_OPT_X_TLS_PACKAGE = 0x6011,
+            LDAP_OPT_X_TLS_ECNAME =	0x6012,
+            LDAP_OPT_X_TLS_VERSION =	0x6013,	/* read-only */
+            LDAP_OPT_X_TLS_CIPHER	=	0x6014,	/* read-only */
+            LDAP_OPT_X_TLS_PEERCERT	=	0x6015,	/* read-only */
+            LDAP_OPT_X_TLS_CACERT	=	0x6016,
+            LDAP_OPT_X_TLS_CERT		=	0x6017,
+            LDAP_OPT_X_TLS_KEY		=	0x6018,
+            LDAP_OPT_X_TLS_PEERKEY_HASH	= 0x6019,
+
             LDAP_OPT_X_TLS_NEVER = 0,
             LDAP_OPT_X_TLS_HARD = 1,
             LDAP_OPT_X_TLS_DEMAND = 2,
