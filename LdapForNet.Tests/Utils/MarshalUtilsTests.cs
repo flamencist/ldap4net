@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using LdapForNet;
@@ -18,17 +19,17 @@ namespace LdapForNetTests.Utils
         [InlineData("數字", "四")]
         public void MarshalUtils_PtrToStringArray_Returns_List_Of_String(params string[] data)
         {
-            var dataPtrs = data.Select(Encoder.Instance.StringToPtr).Union(new []{IntPtr.Zero, }).ToArray();
-            var ptr = Marshal.AllocCoTaskMem(dataPtrs.Length*IntPtr.Size);
+            var dataPointers = data.Select(Encoder.Instance.StringToPtr).Union(new []{IntPtr.Zero, }).ToArray();
+            var ptr = Marshal.AllocCoTaskMem(dataPointers.Length*IntPtr.Size);
 
-            for (var i = 0; i < dataPtrs.Length; i++)
+            for (var i = 0; i < dataPointers.Length; i++)
             {
-                Marshal.WriteIntPtr(ptr, IntPtr.Size * i, dataPtrs[i]);
+                Marshal.WriteIntPtr(ptr, IntPtr.Size * i, dataPointers[i]);
             }
 
             var actual = MarshalUtils.PtrToStringArray(ptr);
 
-            foreach (var dataPtr in dataPtrs)
+            foreach (var dataPtr in dataPointers)
             {
                 Marshal.FreeHGlobal(dataPtr);
             }
@@ -155,7 +156,7 @@ namespace LdapForNetTests.Utils
 
             var actualData = new List<LdapModifyAttribute>();
             var count = 0;
-            var tempPtr = Marshal.ReadIntPtr(actual, IntPtr.Size * count);
+            var tempPtr = Marshal.ReadIntPtr(actual);
             while (tempPtr != IntPtr.Zero)
             {
                 var mod = Marshal.PtrToStructure<Native.LDAPMod>(tempPtr);
@@ -194,30 +195,30 @@ namespace LdapForNetTests.Utils
         [InlineData(new byte[] { 1, 2, 3, 4 },  new byte[] { 1, 2, 3, 4 , 5 })]
         public void MarshalUtils_BerValArrayToByteArray_Returns_List_Of_ByteArray(params byte[][] sourceData)
         {
-            var sourceDataPtrs = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length + 1)).ToArray();
+            var sourceDataPointers = sourceData.Select(_ => Marshal.AllocCoTaskMem(_.Length + 1)).ToArray();
             for (var i = 0; i < sourceData.Length; i++)
             {
-                Marshal.Copy(sourceData[i].Union(new byte[]{0}).ToArray(),0,sourceDataPtrs[i], sourceData[i].Length + 1);
+                Marshal.Copy(sourceData[i].Union(new byte[]{0}).ToArray(),0,sourceDataPointers[i], sourceData[i].Length + 1);
             }
 
             var ptr = Marshal.AllocCoTaskMem((sourceData.Length + 1) * IntPtr.Size);
-            for (var i = 0; i < sourceDataPtrs.Length; i++)
+            for (var i = 0; i < sourceDataPointers.Length; i++)
             {
                 var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<Native.berval>());
                 Marshal.StructureToPtr(new Native.berval
                 {
-                    bv_val = sourceDataPtrs[i],
+                    bv_val = sourceDataPointers[i],
                     bv_len = sourceData[i].Length
                 }, berPtr, true);
                 Marshal.WriteIntPtr(ptr,i*IntPtr.Size,berPtr);
             }
-            Marshal.WriteIntPtr(ptr, sourceDataPtrs.Length * IntPtr.Size, IntPtr.Zero);
+            Marshal.WriteIntPtr(ptr, sourceDataPointers.Length * IntPtr.Size, IntPtr.Zero);
 
             var actual = MarshalUtils.BerValArrayToByteArrays(ptr);
 
-            for (var i = 0; i < sourceDataPtrs.Length; i++)
+            for (var i = 0; i < sourceDataPointers.Length; i++)
             {
-                var sourceDataPtr = sourceDataPtrs[i];
+                var sourceDataPtr = sourceDataPointers[i];
                 var tempPtr = Marshal.ReadIntPtr(ptr, i * IntPtr.Size);
                 Marshal.FreeHGlobal(tempPtr);
                 Marshal.FreeCoTaskMem(sourceDataPtr);
@@ -242,6 +243,7 @@ namespace LdapForNetTests.Utils
 
     }
     
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public struct Point
     {
         public int X;

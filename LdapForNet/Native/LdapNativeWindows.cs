@@ -30,14 +30,8 @@ namespace LdapForNet.Native
 
         }
 
-        internal override int SetClientCertificate(SafeHandle ld, string certificateFilePath, string keyFilePath)
+        internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            if (!File.Exists(certificateFilePath))
-            {
-                throw new FileNotFoundException("Client certificate file is not found", certificateFilePath);
-            }
-
-            var certificate = new X509Certificate(certificateFilePath);
             return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_CLIENT_CERTIFICATE, Marshal.GetFunctionPointerForDelegate<QUERYCLIENTCERT>(
                 // ReSharper disable once RedundantAssignment
                 (IntPtr connection, IntPtr trustedCAs, ref IntPtr certificateHandle) =>

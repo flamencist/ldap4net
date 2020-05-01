@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
@@ -16,23 +17,50 @@ namespace LdapForNet.Native
                 ref value);
         }
 
-        internal override int SetClientCertificate(SafeHandle ld, string certificateFilePath, string keyFilePath)
+        internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            if (!File.Exists(certificateFilePath))
+            var certData = MarshalUtils.ByteArrayToGnuTlsDatum(certificate.Export(X509ContentType.Cert));
+            var certs = Marshal.AllocHGlobal(IntPtr.Size);
+            var privateKey = (RSA) certificate.PrivateKey;
+            
+            var keyData = MarshalUtils.ByteArrayToGnuTlsDatum(privateKey.ToRsaPrivateKey());
+            try     
             {
-                throw new FileNotFoundException("Client certificate file is not found", certificateFilePath);
+                var max = 6;
+                var tlsCtx = IntPtr.Zero;
+                var isServer = 0;
+                ThrowIfError(ld, ldap_set_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_NEWCTX, ref isServer), nameof(ldap_set_option));
+                ThrowIfError(ld,
+                    ldap_get_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_CTX, ref tlsCtx),
+                    nameof(ldap_set_option));
+            
+                var key = IntPtr.Zero;
+                
+                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_privkey_init(ref key), nameof(NativeMethodsLinux.gnutls_x509_privkey_init));
+                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_privkey_import(key, keyData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER), nameof(NativeMethodsLinux.gnutls_x509_privkey_import));
+                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_crt_list_import(certs, ref max, certData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER, 0), nameof(NativeMethodsLinux.gnutls_x509_crt_list_import));
+                var cred = Marshal.ReadIntPtr(tlsCtx);
+                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_certificate_set_x509_key(cred, certs, max, key), nameof(NativeMethodsLinux.gnutls_certificate_set_x509_key));
+                return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CTX, tlsCtx);
             }
-
-            if (!File.Exists(keyFilePath))
+            finally
             {
-                throw new FileNotFoundException("Client certificate key file is not found", keyFilePath);
+                MarshalUtils.TlsDatumFree(certData);
+                MarshalUtils.TlsDatumFree(keyData);
+                Marshal.FreeHGlobal(certs);
             }
+        }
+        
+       
 
-            ThrowIfError(ld,
-                ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,
-                    certificateFilePath), nameof(ldap_set_option));
-            return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,
-                keyFilePath);
+        private static void ThrowIfGnuTlsError(int res, string method)
+        {
+            if (res < 0)
+            {
+                throw new LdapException(
+                    $"GnuTls error: {NativeMethodsLinux.gnutls_strerror_name(res)} {NativeMethodsLinux.gnutls_strerror(res)}",
+                    method, res);
+            }
         }
 
         internal override int Init(ref IntPtr ld, string url)
@@ -42,24 +70,24 @@ namespace LdapForNet.Native
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            var mech = Native.LdapAuthMechanism.FromAuthType(authType);
-            var cred = ToNative(ld, mech, ldapCredential);
+            var mechanism = Native.LdapAuthMechanism.FromAuthType(authType);
+            var cred = ToNative(ld, mechanism, ldapCredential);
 
-            var rc = NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, mech, IntPtr.Zero, IntPtr.Zero,
+            var rc = NativeMethodsLinux.ldap_sasl_interactive_bind_s(ld, null, mechanism, IntPtr.Zero, IntPtr.Zero,
                 (uint)Native.LdapInteractionFlags.LDAP_SASL_QUIET, UnixSaslMethods.SaslInteractionProcedure, cred);
             Marshal.FreeHGlobal(cred);
             return rc;
         }
 
-        private IntPtr ToNative(SafeHandle ld, string mech, LdapCredential ldapCredential)
+        private IntPtr ToNative(SafeHandle ld, string mechanism, LdapCredential ldapCredential)
         {
-            var saslDefaults = GetSaslDefaults(ld, mech);
+            var saslDefaults = GetSaslDefaults(ld, mechanism);
             return UnixSaslMethods.GetSaslCredentials(ldapCredential, saslDefaults);
         }
 
-        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
+        private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mechanism)
         {
-            var defaults = new Native.LdapSaslDefaults { mech = mech };
+            var defaults = new Native.LdapSaslDefaults { mech = mechanism };
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_REALM, ref defaults.realm), nameof(ldap_get_option));
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHCID, ref defaults.authcid), nameof(ldap_get_option));
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_X_SASL_AUTHZID, ref defaults.authzid), nameof(ldap_get_option));
@@ -71,7 +99,7 @@ namespace LdapForNet.Native
         {
             var task = Task.Factory.StartNew(() =>
             {
-                var rc = 0;
+                int rc;
                 var msgid = 0;
                 var result = IntPtr.Zero;
                 var rmech = IntPtr.Zero;
@@ -115,7 +143,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string userDn, string password) =>
             NativeMethodsLinux.ldap_simple_bind_s(ld, userDn, password);
 
-        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle _ld, string userDn, string password)
+        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string userDn, string password)
         {
 
             return await Task.Factory.StartNew(() =>
@@ -129,14 +157,14 @@ namespace LdapForNet.Native
                 Marshal.StructureToPtr(berval, ptr, false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
-                NativeMethodsLinux.ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
+                NativeMethodsLinux.ldap_sasl_bind(ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
                 Marshal.FreeHGlobal(ptr);
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result", nameof(NativeMethodsLinux.ldap_sasl_bind), 1);
                 }
 
-                var rc = ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
+                var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {

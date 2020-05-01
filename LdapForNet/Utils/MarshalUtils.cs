@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using LdapForNet.Native;
 
 namespace LdapForNet.Utils
 {
@@ -54,6 +55,29 @@ namespace LdapForNet.Utils
                 bv_len = bytes.Length
             }, berPtr, true);
             return berPtr;
+        }
+        
+        internal static IntPtr ByteArrayToGnuTlsDatum(byte[] bytes)
+        {
+            var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeMethodsLinux.gnutls_datum_t>());
+            var valPtr = Marshal.AllocHGlobal(bytes.Length);
+            Marshal.Copy(bytes,0,valPtr,bytes.Length);
+            Marshal.StructureToPtr(new NativeMethodsLinux.gnutls_datum_t
+            {
+                data = valPtr,
+                size = bytes.Length
+            }, berPtr, true);
+            return berPtr;
+        }
+        
+        internal static void TlsDatumFree(IntPtr datum)
+        {
+            if (datum != IntPtr.Zero)
+            {
+                var d = Marshal.PtrToStructure<NativeMethodsLinux.gnutls_datum_t>(datum);
+                Marshal.FreeHGlobal(d.data);
+                Marshal.FreeHGlobal(datum);
+            }
         }
 
         internal static void BerValFree(IntPtr berval)

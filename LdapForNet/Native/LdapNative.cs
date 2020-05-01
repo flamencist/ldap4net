@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
@@ -30,7 +31,7 @@ namespace LdapForNet.Native
         }
 
         internal abstract int TrustAllCertificates(SafeHandle ld);
-        internal abstract int SetClientCertificate(SafeHandle ld, string certificateFilePath, string keyFilePath);
+        internal abstract int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate);
         internal abstract int Init(ref IntPtr ld, string url);
         internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
