@@ -19,14 +19,20 @@ namespace LdapForNet.Native
 
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
+            const int VERIFY_DEPTH = 6;
             var certData = MarshalUtils.ByteArrayToGnuTlsDatum(certificate.Export(X509ContentType.Cert));
             var certs = Marshal.AllocHGlobal(IntPtr.Size);
+            for (int i = 0; i < VERIFY_DEPTH; i++)
+            {
+                var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+                Marshal.WriteIntPtr(certs, i*IntPtr.Size, ptr);
+            }
             var privateKey = (RSA) certificate.PrivateKey;
             
             var keyData = MarshalUtils.ByteArrayToGnuTlsDatum(privateKey.ToRsaPrivateKey());
             try     
             {
-                var max = 6;
+                var max = VERIFY_DEPTH;
                 var tlsCtx = IntPtr.Zero;
                 var isServer = 0;
                 ThrowIfError(ld, ldap_set_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_NEWCTX, ref isServer), nameof(ldap_set_option));
@@ -35,12 +41,33 @@ namespace LdapForNet.Native
                     nameof(ldap_set_option));
             
                 var key = IntPtr.Zero;
-                
+                var cred = Marshal.ReadIntPtr(tlsCtx);
+
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_privkey_init(ref key), nameof(NativeMethodsLinux.gnutls_x509_privkey_init));
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_privkey_import(key, keyData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER), nameof(NativeMethodsLinux.gnutls_x509_privkey_import));
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_crt_list_import(certs, ref max, certData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER, 0), nameof(NativeMethodsLinux.gnutls_x509_crt_list_import));
-                var cred = Marshal.ReadIntPtr(tlsCtx);
+
+                if(max == 1 && NativeMethodsLinux.gnutls_x509_crt_check_issuer(Marshal.ReadIntPtr(certs), Marshal.ReadIntPtr(certs)) == 0) {
+                    for (var i = 1; i < VERIFY_DEPTH; i++)
+                    {
+                        var prev = Marshal.ReadIntPtr(certs, (i - 1) * IntPtr.Size);
+                        var cert = Marshal.ReadIntPtr(certs, i * IntPtr.Size);
+
+                        if (NativeMethodsLinux.gnutls_certificate_get_issuer(cred, prev, ref cert, 0) > 0)
+                            break;
+                        max++;
+                        /* If this CA is self-signed, we're done */
+                        if (NativeMethodsLinux.gnutls_x509_crt_check_issuer(cert, cert) > 0)
+                            break;
+                    }
+                }
+
+                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_crt_list_import(certs, ref max, certData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER, 0), nameof(NativeMethodsLinux.gnutls_x509_crt_list_import));
+
+      
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_certificate_set_x509_key(cred, certs, max, key), nameof(NativeMethodsLinux.gnutls_certificate_set_x509_key));
+                NativeMethodsLinux.gnutls_certificate_set_verify_flags(cred, 0);
+
                 return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CTX, tlsCtx);
             }
             finally
@@ -70,6 +97,10 @@ namespace LdapForNet.Native
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
+            if(authType == Native.LdapAuthType.External)
+            {
+                return 0;
+            }
             var mechanism = Native.LdapAuthMechanism.FromAuthType(authType);
             var cred = ToNative(ld, mechanism, ldapCredential);
 
@@ -97,6 +128,10 @@ namespace LdapForNet.Native
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
+            if (authType == Native.LdapAuthType.External)
+            {
+                return IntPtr.Zero;
+            }
             var task = Task.Factory.StartNew(() =>
             {
                 int rc;

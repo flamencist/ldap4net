@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
     <PackageReference Include="Moq" Version="4.13.1" />
-    <PackageReference Include="System.Security.Cryptography.Asn1.Experimental" Version="0.1.2-e200127-1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
@@ -18,10 +17,10 @@
     <ProjectReference Include="..\LdapForNet\LdapForNet.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="client.crt">
+    <None Update="client.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="client.key">
+    <None Update="flamencist.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

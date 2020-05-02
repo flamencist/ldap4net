@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -74,14 +73,23 @@ namespace LdapForNet.Native
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = GetCredentials(authType, ldapCredential); ;
+            if(authType == Native.LdapAuthType.External)
+            {
+                return 0;
+            }
+            var cred = ToNative(ldapCredential);
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             LdapConnect(ld);
-            var cred = GetCredentials(authType, ldapCredential);
+            if (authType == Native.LdapAuthType.External)
+            {
+                return IntPtr.Zero;
+            }
+
+            var cred = ToNative(ldapCredential);
 
             var task = Task.Factory.StartNew(() =>
             {
@@ -224,14 +232,6 @@ namespace LdapForNet.Native
 
         internal override int ldap_stop_tls_s(SafeHandle ld) => NativeMethodsWindows.ldap_stop_tls_s(ld);
 
-        private static SEC_WINNT_AUTH_IDENTITY_EX GetCredentials(Native.LdapAuthType authType, LdapCredential ldapCredential)
-        {
-            if (authType == Native.LdapAuthType.External)
-            {
-                return null;
-            }
-            return ToNative(ldapCredential);
-        }
 
         private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(LdapCredential ldapCredential)
         {

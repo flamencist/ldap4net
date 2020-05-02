@@ -16,9 +16,8 @@ namespace LdapForNetTests
         public const string LdapExternalDn = "cn=external,dc=example,dc=com";
         public const string LdapDigestMd5ProxyDn= "cn=digesttestproxy,dc=example,dc=com";
         public const string LdapPassword = "test";
-        public static string ClientCertPath => Path.Combine(GetExeDirectory(), "client.crt");
-        public static string ClientCertKeyPath => Path.Combine(GetExeDirectory(), "client.key");
-
+        public static string ClientCertPfxPath => GetLocation("client.pfx");
         internal static string GetExeDirectory() => new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
+        internal static string GetLocation(string filename) => Path.Combine(GetExeDirectory(), filename);
     }
 }

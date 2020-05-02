@@ -332,20 +332,30 @@ namespace LdapForNet.Native
             GNUTLS_X509_FMT_DER = 0,
             GNUTLS_X509_FMT_PEM = 1
         }
-        /*
-         * typedef enum {
-	GNUTLS_X509_FMT_DER = 0,
-	GNUTLS_X509_FMT_PEM = 1
-} gnutls_x509_crt_fmt_t;
 
-typedef struct {
-	unsigned char *data;
-	unsigned int size;
-} gnutls_datum_t;
-         */
         [DllImport("libgnutls.so.30")]
         internal static extern int gnutls_x509_crt_list_import(IntPtr certs, ref int cert_max, IntPtr data, GNUTLS_X509_FMT format, uint flags);
-        
+
+        /// <summary>
+        ///  unsigned gnutls_x509_crt_check_issuer(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer);
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <param name="issuer"></param>
+        /// <returns></returns>
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_x509_crt_check_issuer(IntPtr cert, IntPtr issuer);
+
+        /// <summary>
+        /// int gnutls_certificate_get_issuer(gnutls_certificate_credentials_t sc, gnutls_x509_crt_t cert, gnutls_x509_crt_t * issuer, unsigned int  flags);
+        /// </summary>
+        /// <param name="cred"></param>
+        /// <param name="cert"></param>
+        /// <param name="issuer"></param>
+        /// <param name="flags"></param>
+        /// <returns></returns>
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_certificate_get_issuer(IntPtr cred, IntPtr cert, ref IntPtr issuer, uint flags);
+
         [DllImport("libgnutls.so.30")]
         internal static extern int gnutls_x509_privkey_init(ref IntPtr key);
         
@@ -354,7 +364,10 @@ typedef struct {
         
         [DllImport("libgnutls.so.30")]
         internal static extern int gnutls_certificate_set_x509_key(IntPtr cred, IntPtr certs, int max, IntPtr key);
-        
+
+        [DllImport("libgnutls.so.30")]
+        internal static extern int gnutls_certificate_set_verify_flags(IntPtr cred, uint flags);
+
         [DllImport("libgnutls.so.30")]
         internal static extern string gnutls_strerror(int error);
         
