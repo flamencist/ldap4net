@@ -369,10 +369,10 @@ namespace LdapForNet.Native
         internal static extern int gnutls_certificate_set_verify_flags(IntPtr cred, uint flags);
 
         [DllImport("libgnutls.so.30")]
-        internal static extern string gnutls_strerror(int error);
+        internal static extern IntPtr gnutls_strerror(int error);
         
         [DllImport("libgnutls.so.30")]
-        internal static extern string gnutls_strerror_name(int error);
+        internal static extern IntPtr gnutls_strerror_name(int error);
 
         [StructLayout(LayoutKind.Sequential)]
         internal class gnutls_datum_t

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -8,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet;
 using LdapForNet.Utils;
-using LdapForNetTests.TestUtils;
 using Xunit;
 using Xunit.Abstractions;
 using static LdapForNet.Native.Native;
@@ -102,11 +100,8 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
-                var keyPath = Config.ClientCertKeyPath;
-                var cert = new X509Certificate2(Config.ClientCertPath);
-                var keyBytes = RsaUtils.GetBytesFromPem(File.ReadAllText(keyPath), RsaUtils.PemStringType.Pkcs8PrivateKey);
+                var cert = new X509Certificate2(Config.ClientCertPfxPath);
 
-                cert = RsaUtils.ImportPkcs8PrivateKey(cert,keyBytes);
                 connection.SetClientCertificate(cert);
                 
                 connection.Bind(LdapAuthType.External, new LdapCredential());

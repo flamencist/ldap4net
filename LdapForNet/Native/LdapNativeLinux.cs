@@ -21,11 +21,10 @@ namespace LdapForNet.Native
         {
             const int VERIFY_DEPTH = 6;
             var certData = MarshalUtils.ByteArrayToGnuTlsDatum(certificate.Export(X509ContentType.Cert));
-            var certs = Marshal.AllocHGlobal(IntPtr.Size);
-            for (int i = 0; i < VERIFY_DEPTH; i++)
+            var certs = Marshal.AllocHGlobal(IntPtr.Size * VERIFY_DEPTH);
+            for (var i = 0; i < VERIFY_DEPTH; i++)
             {
-                var ptr = Marshal.AllocHGlobal(IntPtr.Size);
-                Marshal.WriteIntPtr(certs, i*IntPtr.Size, ptr);
+                Marshal.WriteIntPtr(certs, i*IntPtr.Size, IntPtr.Zero);
             }
             var privateKey = (RSA) certificate.PrivateKey;
             
@@ -53,17 +52,20 @@ namespace LdapForNet.Native
                         var prev = Marshal.ReadIntPtr(certs, (i - 1) * IntPtr.Size);
                         var cert = Marshal.ReadIntPtr(certs, i * IntPtr.Size);
 
-                        if (NativeMethodsLinux.gnutls_certificate_get_issuer(cred, prev, ref cert, 0) > 0)
+                        var rc = NativeMethodsLinux.gnutls_certificate_get_issuer(cred, prev, ref cert, 0);
+                        if (rc > 0)
+                        {
                             break;
+                        }
+                        ThrowIfGnuTlsError(rc, nameof(NativeMethodsLinux.gnutls_certificate_get_issuer));
                         max++;
                         /* If this CA is self-signed, we're done */
                         if (NativeMethodsLinux.gnutls_x509_crt_check_issuer(cert, cert) > 0)
+                        {
                             break;
+                        }
                     }
                 }
-
-                ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_crt_list_import(certs, ref max, certData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER, 0), nameof(NativeMethodsLinux.gnutls_x509_crt_list_import));
-
       
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_certificate_set_x509_key(cred, certs, max, key), nameof(NativeMethodsLinux.gnutls_certificate_set_x509_key));
                 NativeMethodsLinux.gnutls_certificate_set_verify_flags(cred, 0);
@@ -74,19 +76,29 @@ namespace LdapForNet.Native
             {
                 MarshalUtils.TlsDatumFree(certData);
                 MarshalUtils.TlsDatumFree(keyData);
-                Marshal.FreeHGlobal(certs);
+                if (certs != IntPtr.Zero)
+                {
+                    for (var i = 0; i < VERIFY_DEPTH; i++)
+                    {
+                        var ptr = Marshal.ReadIntPtr(certs, i*IntPtr.Size);
+                        if (ptr != IntPtr.Zero)
+                        {
+                            Marshal.FreeHGlobal(ptr);
+                        }
+                    }
+                    Marshal.FreeHGlobal(certs);
+                }
             }
         }
-        
-       
 
         private static void ThrowIfGnuTlsError(int res, string method)
         {
             if (res < 0)
             {
+                var errorName = Encoder.Instance.PtrToString(NativeMethodsLinux.gnutls_strerror_name(res));
+                var errorMessage = Encoder.Instance.PtrToString(NativeMethodsLinux.gnutls_strerror(res));
                 throw new LdapException(
-                    $"GnuTls error: {NativeMethodsLinux.gnutls_strerror_name(res)} {NativeMethodsLinux.gnutls_strerror(res)}",
-                    method, res);
+                    $"GnuTls error name: {errorName}. GnuTls error message: {errorMessage} Result: {res}. Method: {method}");
             }
         }
 
