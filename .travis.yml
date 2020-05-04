@@ -24,6 +24,7 @@ addons:
       - openssl
       - slapd
       - krb5-kdc-ldap
+      - dotnet-sdk-2.1
   homebrew:
     packages:
       - openssl
