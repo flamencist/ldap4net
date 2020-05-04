@@ -58,6 +58,7 @@ namespace LdapForNet.Native
                     case LdapAuthType.Digest:
                         return Digest;
                     case LdapAuthType.External:
+                    case LdapAuthType.ExternalAd:
                         return External;
                     case LdapAuthType.Anonymous:
                         return Anonymous;
@@ -83,6 +84,7 @@ namespace LdapForNet.Native
                     case LdapAuthType.Digest:
                         return BindMethod.LDAP_AUTH_NEGOTIATE;
                     case LdapAuthType.External:
+                    case LdapAuthType.ExternalAd:
                         return BindMethod.LDAP_AUTH_EXTERNAL;
                     case LdapAuthType.Unknown:
                         return BindMethod.LDAP_AUTH_OTHERKIND;
@@ -99,6 +101,7 @@ namespace LdapForNet.Native
             Simple = 10,
             Negotiate = 2,
             GssApi=11,
+            ExternalAd = 9,
             //Ntlm = 3,
             Digest = 4,
             //Sicily = 5,

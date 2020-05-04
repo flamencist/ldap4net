@@ -33,6 +33,7 @@ namespace LdapForNet.Native
         internal abstract int TrustAllCertificates(SafeHandle ld);
         internal abstract int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate);
         internal abstract int Init(ref IntPtr ld, string url);
+        internal abstract void LdapConnect(SafeHandle ld);
         internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
         internal abstract int BindSimple(SafeHandle ld, string who,string password);

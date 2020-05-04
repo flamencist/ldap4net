@@ -52,6 +52,10 @@ namespace LdapForNet
             {
                 _native.BindSimple(_ld, null, null);
             }
+            else if (authType == Native.Native.LdapAuthType.ExternalAd)
+            {
+                _native.LdapConnect(_ld);
+            }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
                 _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, credential), nameof(_native.BindSasl));

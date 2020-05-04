@@ -8,6 +8,8 @@ namespace LdapForNet.Native
     {
         private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
         private const string LIB_LBER_PATH = "lber-2.4.so.2";
+        private const string LIB_GNUTLS = "libgnutls.so.30";
+
         internal delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
 
         [DllImport(LIB_LDAP_PATH)]
@@ -333,7 +335,7 @@ namespace LdapForNet.Native
             GNUTLS_X509_FMT_PEM = 1
         }
 
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_x509_crt_list_import(IntPtr certs, ref int cert_max, IntPtr data, GNUTLS_X509_FMT format, uint flags);
 
         /// <summary>
@@ -342,7 +344,7 @@ namespace LdapForNet.Native
         /// <param name="cert"></param>
         /// <param name="issuer"></param>
         /// <returns></returns>
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_x509_crt_check_issuer(IntPtr cert, IntPtr issuer);
 
         /// <summary>
@@ -353,25 +355,25 @@ namespace LdapForNet.Native
         /// <param name="issuer"></param>
         /// <param name="flags"></param>
         /// <returns></returns>
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_certificate_get_issuer(IntPtr cred, IntPtr cert, ref IntPtr issuer, uint flags);
 
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_x509_privkey_init(ref IntPtr key);
         
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_x509_privkey_import(IntPtr key,  IntPtr data, GNUTLS_X509_FMT format);
         
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern int gnutls_certificate_set_x509_key(IntPtr cred, IntPtr certs, int max, IntPtr key);
 
-        [DllImport("libgnutls.so.30")]
-        internal static extern int gnutls_certificate_set_verify_flags(IntPtr cred, uint flags);
+        [DllImport(LIB_GNUTLS)]
+        internal static extern void gnutls_certificate_set_verify_flags(IntPtr cred, uint flags);
 
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern IntPtr gnutls_strerror(int error);
         
-        [DllImport("libgnutls.so.30")]
+        [DllImport(LIB_GNUTLS)]
         internal static extern IntPtr gnutls_strerror_name(int error);
 
         [StructLayout(LayoutKind.Sequential)]

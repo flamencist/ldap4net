@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -272,6 +271,11 @@ namespace LdapForNet.Native
         {
             var saslDefaults = GetSaslDefaults(ld, mech);
             return UnixSaslMethods.GetSaslCredentials(ldapCredential, saslDefaults);
+        }
+
+        internal override void LdapConnect(SafeHandle ld)
+        {
+            //no such method in openldap client library
         }
     }
 }

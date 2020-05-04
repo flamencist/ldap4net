@@ -59,15 +59,15 @@ namespace LdapForNet.Utils
         
         internal static IntPtr ByteArrayToGnuTlsDatum(byte[] bytes)
         {
-            var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeMethodsLinux.gnutls_datum_t>());
+            var ptr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeMethodsLinux.gnutls_datum_t>());
             var valPtr = Marshal.AllocHGlobal(bytes.Length);
             Marshal.Copy(bytes,0,valPtr,bytes.Length);
             Marshal.StructureToPtr(new NativeMethodsLinux.gnutls_datum_t
             {
                 data = valPtr,
                 size = bytes.Length
-            }, berPtr, true);
-            return berPtr;
+            }, ptr, true);
+            return ptr;
         }
         
         internal static void TlsDatumFree(IntPtr datum)

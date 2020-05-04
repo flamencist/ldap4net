@@ -24,21 +24,21 @@ namespace LdapForNet.Native
             var certs = Marshal.AllocHGlobal(IntPtr.Size * VERIFY_DEPTH);
             for (var i = 0; i < VERIFY_DEPTH; i++)
             {
-                Marshal.WriteIntPtr(certs, i*IntPtr.Size, IntPtr.Zero);
+                Marshal.WriteIntPtr(certs, i * IntPtr.Size, IntPtr.Zero);
             }
-            var privateKey = (RSA) certificate.PrivateKey;
-            
+            var privateKey = (RSA)certificate.PrivateKey;
+
             var keyData = MarshalUtils.ByteArrayToGnuTlsDatum(privateKey.ToRsaPrivateKey());
-            try     
+            try
             {
                 var max = VERIFY_DEPTH;
                 var tlsCtx = IntPtr.Zero;
                 var isServer = 0;
-                ThrowIfError(ld, ldap_set_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_NEWCTX, ref isServer), nameof(ldap_set_option));
+                ThrowIfError(ld, ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_NEWCTX, ref isServer), nameof(ldap_set_option));
                 ThrowIfError(ld,
-                    ldap_get_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_CTX, ref tlsCtx),
+                    ldap_get_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CTX, ref tlsCtx),
                     nameof(ldap_set_option));
-            
+
                 var key = IntPtr.Zero;
                 var cred = Marshal.ReadIntPtr(tlsCtx);
 
@@ -46,30 +46,33 @@ namespace LdapForNet.Native
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_privkey_import(key, keyData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER), nameof(NativeMethodsLinux.gnutls_x509_privkey_import));
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_x509_crt_list_import(certs, ref max, certData, NativeMethodsLinux.GNUTLS_X509_FMT.GNUTLS_X509_FMT_DER, 0), nameof(NativeMethodsLinux.gnutls_x509_crt_list_import));
 
-                if(max == 1 && NativeMethodsLinux.gnutls_x509_crt_check_issuer(Marshal.ReadIntPtr(certs), Marshal.ReadIntPtr(certs)) == 0) {
+                var cert = Marshal.ReadIntPtr(certs);
+
+                // If there's only one cert and it's not self-signed, then we have to build the cert chain.
+                if (max == 1 && !IsSelfSigned(cert))
+                {
                     for (var i = 1; i < VERIFY_DEPTH; i++)
                     {
-                        var prev = Marshal.ReadIntPtr(certs, (i - 1) * IntPtr.Size);
-                        var cert = Marshal.ReadIntPtr(certs, i * IntPtr.Size);
+                        cert = Marshal.ReadIntPtr(certs, (i - 1) * IntPtr.Size);
+                        var issuer = Marshal.ReadIntPtr(certs, i * IntPtr.Size);
 
-                        var rc = NativeMethodsLinux.gnutls_certificate_get_issuer(cred, prev, ref cert, 0);
-                        if (rc > 0)
+
+                        if (NativeMethodsLinux.gnutls_certificate_get_issuer(cred, cert, ref issuer, 0) != 0)
                         {
                             break;
                         }
-                        ThrowIfGnuTlsError(rc, nameof(NativeMethodsLinux.gnutls_certificate_get_issuer));
+                        Marshal.WriteIntPtr(certs, i * IntPtr.Size, issuer);
                         max++;
-                        /* If this CA is self-signed, we're done */
-                        if (NativeMethodsLinux.gnutls_x509_crt_check_issuer(cert, cert) > 0)
+                        
+                        if (IsSelfSigned(issuer))
                         {
                             break;
                         }
                     }
                 }
-      
+
                 ThrowIfGnuTlsError(NativeMethodsLinux.gnutls_certificate_set_x509_key(cred, certs, max, key), nameof(NativeMethodsLinux.gnutls_certificate_set_x509_key));
                 NativeMethodsLinux.gnutls_certificate_set_verify_flags(cred, 0);
-
                 return ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_CTX, tlsCtx);
             }
             finally
@@ -78,18 +81,12 @@ namespace LdapForNet.Native
                 MarshalUtils.TlsDatumFree(keyData);
                 if (certs != IntPtr.Zero)
                 {
-                    for (var i = 0; i < VERIFY_DEPTH; i++)
-                    {
-                        var ptr = Marshal.ReadIntPtr(certs, i*IntPtr.Size);
-                        if (ptr != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(ptr);
-                        }
-                    }
                     Marshal.FreeHGlobal(certs);
                 }
             }
         }
+
+        private bool IsSelfSigned(IntPtr cert) => NativeMethodsLinux.gnutls_x509_crt_check_issuer(cert, cert) != 0;
 
         private static void ThrowIfGnuTlsError(int res, string method)
         {
@@ -109,10 +106,6 @@ namespace LdapForNet.Native
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            if(authType == Native.LdapAuthType.External)
-            {
-                return 0;
-            }
             var mechanism = Native.LdapAuthMechanism.FromAuthType(authType);
             var cred = ToNative(ld, mechanism, ldapCredential);
 
@@ -140,10 +133,6 @@ namespace LdapForNet.Native
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            if (authType == Native.LdapAuthType.External)
-            {
-                return IntPtr.Zero;
-            }
             var task = Task.Factory.StartNew(() =>
             {
                 int rc;
@@ -369,6 +358,11 @@ namespace LdapForNet.Native
         internal override int ldap_stop_tls_s(SafeHandle ld)
         {
             return NativeMethodsLinux.ldap_stop_tls_s(ld);
+        }
+
+        internal override void LdapConnect(SafeHandle ld)
+        {
+            //no such method in openldap client library
         }
     }
 }

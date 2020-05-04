@@ -61,7 +61,7 @@ namespace LdapForNet.Native
                 : NativeMethodsWindows.ldap_init(hostnames, (int)Native.LdapPort.LDAP);
         }
 
-        private void LdapConnect(SafeHandle ld)
+        internal override void LdapConnect(SafeHandle ld)
         {
             var timeout = new LDAP_TIMEVAL
             {
@@ -72,23 +72,14 @@ namespace LdapForNet.Native
 
         internal override int BindSasl(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            LdapConnect(ld);
-            if(authType == Native.LdapAuthType.External)
-            {
-                return 0;
-            }
-            var cred = ToNative(ldapCredential);
+            var cred = GetCredentials(authType, ldapCredential);
             return NativeMethodsWindows.ldap_bind_s(ld, null, cred, Native.LdapAuthMechanism.ToBindMethod(authType));
         }
 
+        private static SEC_WINNT_AUTH_IDENTITY_EX GetCredentials(Native.LdapAuthType authType, LdapCredential ldapCredential) => authType == Native.LdapAuthType.External ? null : ToNative(ldapCredential);
+
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
-            LdapConnect(ld);
-            if (authType == Native.LdapAuthType.External)
-            {
-                return IntPtr.Zero;
-            }
-
             var cred = ToNative(ldapCredential);
 
             var task = Task.Factory.StartNew(() =>
@@ -100,17 +91,13 @@ namespace LdapForNet.Native
             return await task.ConfigureAwait(false);
         }
 
-
-
         internal override int BindSimple(SafeHandle ld, string who, string password)
         {
-            LdapConnect(ld);
             return NativeMethodsWindows.ldap_bind_s(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
         }
 
         internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password)
         {
-            LdapConnect(ld);
             return await Task.Factory.StartNew(() =>
             {
                 var result = IntPtr.Zero;
