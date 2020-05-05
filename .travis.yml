@@ -1,6 +1,6 @@
 language: csharp
 mono: none
-dotnet: 3.1.201
+dotnet: 2.1.805
 dist: bionic
 sudo: false
 addons:
@@ -24,11 +24,12 @@ addons:
       - openssl
       - slapd
       - krb5-kdc-ldap
-      - dotnet-sdk-2.1
+      - dotnet-sdk-3.1.201
   homebrew:
     packages:
       - openssl
       - openldap
+      - dotnet-sdk
     update: true
 before_script:
   - mkdir -p /tmp/slapd/certs
