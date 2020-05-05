@@ -19,10 +19,10 @@ namespace LdapForNet.Native
 
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            const int VERIFY_DEPTH = 6;
+            const int verifyDepth = 6;
             var certData = MarshalUtils.ByteArrayToGnuTlsDatum(certificate.Export(X509ContentType.Cert));
-            var certs = Marshal.AllocHGlobal(IntPtr.Size * VERIFY_DEPTH);
-            for (var i = 0; i < VERIFY_DEPTH; i++)
+            var certs = Marshal.AllocHGlobal(IntPtr.Size * verifyDepth);
+            for (var i = 0; i < verifyDepth; i++)
             {
                 Marshal.WriteIntPtr(certs, i * IntPtr.Size, IntPtr.Zero);
             }
@@ -31,7 +31,7 @@ namespace LdapForNet.Native
             var keyData = MarshalUtils.ByteArrayToGnuTlsDatum(privateKey.ToRsaPrivateKey());
             try
             {
-                var max = VERIFY_DEPTH;
+                var max = verifyDepth;
                 var tlsCtx = IntPtr.Zero;
                 var isServer = 0;
                 ThrowIfError(ld, ldap_set_option(new LdapHandle(IntPtr.Zero), (int)Native.LdapOption.LDAP_OPT_X_TLS_NEWCTX, ref isServer), nameof(ldap_set_option));
@@ -51,7 +51,7 @@ namespace LdapForNet.Native
                 // If there's only one cert and it's not self-signed, then we have to build the cert chain.
                 if (max == 1 && !IsSelfSigned(cert))
                 {
-                    for (var i = 1; i < VERIFY_DEPTH; i++)
+                    for (var i = 1; i < verifyDepth; i++)
                     {
                         cert = Marshal.ReadIntPtr(certs, (i - 1) * IntPtr.Size);
                         var issuer = Marshal.ReadIntPtr(certs, i * IntPtr.Size);
@@ -355,9 +355,11 @@ namespace LdapForNet.Native
             return NativeMethodsLinux.ldap_start_tls_s(ld, serverctrls, clientctrls);
         }
 
-        internal override int ldap_stop_tls_s(SafeHandle ld)
+        internal override int ldap_stop_tls_s(SafeHandle ld) => 0;
+
+        internal override void Dispose(SafeHandle ld)
         {
-            return NativeMethodsLinux.ldap_stop_tls_s(ld);
+            //no actions
         }
 
         internal override void LdapConnect(SafeHandle ld)

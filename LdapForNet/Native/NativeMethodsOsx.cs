@@ -277,5 +277,4 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_start_tls_s(SafeHandle ld, IntPtr serverctrls, IntPtr clientctrls);
     }
-
 }

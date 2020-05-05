@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
@@ -15,6 +16,8 @@ namespace LdapForNet.Native
 
     internal class LdapNativeWindows : LdapNative
     {
+        private bool _tlsStarted;
+
         internal override int TrustAllCertificates(SafeHandle ld)
         {
             var sslEnabled = 0;
@@ -215,10 +218,30 @@ namespace LdapForNet.Native
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) =>
             NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
 
-        internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls) => NativeMethodsWindows.ldap_start_tls_s(ld, serverReturnValue, message, serverctrls, clientctrls);
+        internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message,
+            IntPtr serverctrls, IntPtr clientctrls)
+        {
+            var rc =  NativeMethodsWindows.ldap_start_tls_s(ld, serverReturnValue, message, serverctrls, clientctrls); 
+            _tlsStarted = rc == (int) Native.ResultCode.Success;
+            return rc;
+        }
 
         internal override int ldap_stop_tls_s(SafeHandle ld) => NativeMethodsWindows.ldap_stop_tls_s(ld);
-
+        
+        internal override void Dispose(SafeHandle ld)
+        {
+            try
+            {
+                if (_tlsStarted)
+                {
+                    ldap_stop_tls_s(ld);
+                }
+            }
+            catch (Exception)
+            {
+                // no catch
+            }
+        }
 
         private static SEC_WINNT_AUTH_IDENTITY_EX ToNative(LdapCredential ldapCredential)
         {

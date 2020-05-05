@@ -72,7 +72,7 @@ namespace LdapForNet
         public async Task BindAsync(Native.Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             ThrowIfNotInitialized();
-            IntPtr result;
+            var result = IntPtr.Zero;
             if (authType == Native.Native.LdapAuthType.Simple)
             {
                 result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password);
@@ -80,6 +80,10 @@ namespace LdapForNet
             else if (authType == Native.Native.LdapAuthType.Anonymous)
             {
                 result = await _native.BindSimpleAsync(_ld, null, null);
+            }
+            else if (authType == Native.Native.LdapAuthType.ExternalAd)
+            {
+                _native.LdapConnect(_ld);
             }
             else if(authType != Native.Native.LdapAuthType.Unknown)
             {
@@ -108,7 +112,6 @@ namespace LdapForNet
                 Password = password
             });
         }
-
         
         public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
@@ -142,7 +145,6 @@ namespace LdapForNet
 
         private SafeHandle GetLdapHandle(bool global) => global ? new LdapHandle(IntPtr.Zero) : _ld;
 
-
         public IList<LdapEntry> Search(string @base, string filter,string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
@@ -155,7 +157,6 @@ namespace LdapForNet
                 .Select(_=>_.ToLdapEntry())
                 .ToList();
         }
-
        
         public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
@@ -213,10 +214,10 @@ namespace LdapForNet
             _native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
         }
 
-        public void SetClientCertificate(X509Certificate2 certficate)
+        public void SetClientCertificate(X509Certificate2 certificate)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.SetClientCertificate(_ld, certficate), nameof(_native.SetClientCertificate));
+            _native.ThrowIfError(_native.SetClientCertificate(_ld, certificate), nameof(_native.SetClientCertificate));
         }
 
 
@@ -225,17 +226,17 @@ namespace LdapForNet
 
         public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
 
-
         public void Dispose()
         {
+            _native.Dispose(_ld);
             _ld?.Dispose();
         }
 
+        [Obsolete]
         public IntPtr GetNativeLdapPtr()
         {
             return _ld.DangerousGetHandle();
         }
-
 
         public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
             ThrowIfResponseError(await SendRequestAsync(new DeleteRequest(dn), cancellationToken));
@@ -374,7 +375,6 @@ namespace LdapForNet
             }
         }
         
-        
         private void ThrowIfResponseError(DirectoryResponse response)
         {
             _native.ThrowIfError(_ld, (int) response.ResultCode, nameof(_native.ldap_parse_result),
@@ -383,6 +383,5 @@ namespace LdapForNet
                     [nameof(response.ErrorMessage)] = response.ErrorMessage,
                 });
         }
-        
     }
 }

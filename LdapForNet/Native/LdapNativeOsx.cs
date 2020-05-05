@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
@@ -9,6 +11,7 @@ namespace LdapForNet.Native
 {
     internal class LdapNativeOsx:LdapNative
     {
+        private readonly IList<string> _tempFiles = new List<string>();
         internal override int TrustAllCertificates(SafeHandle ld)
         {
             var value = (int)Native.LdapOption.LDAP_OPT_X_TLS_ALLOW;
@@ -18,7 +21,26 @@ namespace LdapForNet.Native
 
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            return 0;
+            var certFile = Path.GetTempFileName();
+            var keyFile = Path.GetTempFileName();
+            File.WriteAllText(certFile,CertificateToPem(certificate));
+            File.WriteAllText(keyFile,RsaKeyToPem(certificate));
+            _tempFiles.Add(certFile);
+            _tempFiles.Add(keyFile);
+            
+            var globalHandle = new LdapHandle(IntPtr.Zero);
+            ThrowIfError(ldap_set_option(globalHandle, (int)Native.LdapOption.LDAP_OPT_X_TLS_CERTFILE,certFile), nameof(ldap_set_option));
+            return ldap_set_option(globalHandle, (int)Native.LdapOption.LDAP_OPT_X_TLS_KEYFILE,keyFile);
+        }
+
+        private static string CertificateToPem(X509Certificate2 certificate) => 
+            $"-----BEGIN CERTIFICATE-----{Environment.NewLine}{Convert.ToBase64String(certificate.RawData, Base64FormattingOptions.InsertLineBreaks)}-----END CERTIFICATE-----";
+
+        private static string RsaKeyToPem(X509Certificate2 certificate)
+        {
+            var privateKey = (RSA)certificate.PrivateKey;
+            var keyData = privateKey.ToRsaPrivateKey();
+            return $"-----BEGIN RSA PRIVATE KEY-----{Environment.NewLine}{Convert.ToBase64String(keyData, Base64FormattingOptions.InsertLineBreaks)}-----END RSA PRIVATE KEY-----";
         }
 
         internal override int Init(ref IntPtr ld, string url) => NativeMethodsOsx.ldap_initialize(ref ld, url);
@@ -82,7 +104,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string userDn, string password) =>
             NativeMethodsOsx.ldap_simple_bind_s(ld, userDn, password);
 
-        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle _ld, string userDn, string password)
+        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string userDn, string password)
         {
             
             return await Task.Factory.StartNew(() =>
@@ -96,14 +118,14 @@ namespace LdapForNet.Native
                 Marshal.StructureToPtr(berval,ptr,false);
                 var msgidp = 0;
                 var result = IntPtr.Zero;
-                NativeMethodsOsx.ldap_sasl_bind(_ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
+                NativeMethodsOsx.ldap_sasl_bind(ld, userDn, null, ptr, IntPtr.Zero, IntPtr.Zero, ref msgidp);
                 Marshal.FreeHGlobal(ptr);
                 if (msgidp == -1)
                 {
                     throw new LdapException($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsOsx.ldap_sasl_bind)} returns wrong or empty result",  nameof(NativeMethodsOsx.ldap_sasl_bind), 1);
                 }
 
-                var rc = NativeMethodsOsx.ldap_result(_ld, msgidp, 0, IntPtr.Zero, ref result);
+                var rc = NativeMethodsOsx.ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
@@ -253,9 +275,25 @@ namespace LdapForNet.Native
             return NativeMethodsOsx.ldap_start_tls_s(ld, serverctrls, clientctrls);
         }
 
-        internal override int ldap_stop_tls_s(SafeHandle ld)
+        internal override int ldap_stop_tls_s(SafeHandle ld) => 0;
+
+        internal override void Dispose(SafeHandle ld)
         {
-            return 0;
+            try
+            {
+                foreach (var file in _tempFiles)
+                {
+                    if (File.Exists(file))
+                    {
+                        File.Delete(file);
+                    }
+                }
+                _tempFiles.Clear();
+            }
+            catch (Exception)
+            {
+               // no catch
+            }
         }
 
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)

@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
-
 namespace LdapForNet.Native
 {
     internal abstract class LdapNative
@@ -77,6 +76,8 @@ namespace LdapForNet.Native
         
         internal abstract int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message, IntPtr serverctrls, IntPtr clientctrls);
         internal abstract int ldap_stop_tls_s(SafeHandle ld);
+
+        internal abstract void Dispose(SafeHandle ld);
 
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
