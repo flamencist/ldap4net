@@ -29,6 +29,7 @@ addons:
     packages:
       - openssl
       - openldap
+    cask:
       - dotnet-sdk
     update: true
 before_script:
