@@ -31,8 +31,8 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_sasl_bind(SafeHandle ld, string dn, string mechanism,
             IntPtr cred, IntPtr serverctrls, IntPtr clientctrls, ref int msgidp);
-        
-        
+
+
         /// <summary>
         /// ldap_sasl_interactive_bind_s <a href="https://linux.die.net/man/3/ldap_sasl_bind_s">Documentation</a>
         /// </summary>
@@ -316,6 +316,8 @@ namespace LdapForNet.Native
         internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_abandon_ext(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
+        [DllImport(LIB_LDAP_PATH)]
+        internal static extern int ldap_start_tls_s(SafeHandle ld, IntPtr serverctrls, IntPtr clientctrls);
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_errno();
 

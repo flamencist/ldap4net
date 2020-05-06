@@ -1,9 +1,11 @@
 language: csharp
 mono: none
-dotnet: 2.1.504
-dist: trusty
-sudo: false
+dotnet: 2.1.805
+dist: bionic
 addons:
+  hosts: 
+    - example
+    - example.com
   apt:
     packages:
       - ldap-utils
@@ -21,14 +23,20 @@ addons:
       - openssl
       - slapd
       - krb5-kdc-ldap
+      - dotnet-sdk-3.1
   homebrew:
     packages:
+      - openssl
       - openldap
+    cask:
+      - dotnet-sdk
     update: true
 before_script:
-  - mkdir /tmp/slapd
+  - mkdir -p /tmp/slapd/certs
+  - cp .test_config/server.crt /tmp/slapd/certs/
+  - cp .test_config/server.key /tmp/slapd/certs/
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PATH=/usr/libexec:$PATH ; fi
-  - slapd -f .test_config/slapd."$TRAVIS_OS_NAME".conf -h ldap://localhost:4389 -d 0 &
+  - slapd -f .test_config/slapd."$TRAVIS_OS_NAME".conf -h "ldap://localhost:4389 ldaps://localhost:4636 ldapi://%2Ftmp%2Fslapd%2Fslapdunix" -d 256 &
   - sleep 6
   - ldapadd -h localhost:4389 -D cn=admin,dc=example,dc=com -w test -f .test_config/base.ldif
 install:
@@ -39,6 +47,7 @@ script:
   - dotnet pack
 deploy:
   skip_cleanup: true
+  cleanup: false
   provider: script
   script: if [ "$TRAVIS_OS_NAME" = "linux" ]; then dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg -k $NUGET_API_KEY -s $NUGET_SOURCE ; fi
   on:

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace LdapForNet.RequestHandlers
 {
-    internal class ModifyDnRequestHandler: RequestHandler
+    internal class ModifyDnRequestHandler : RequestHandler
     {
         protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
@@ -14,6 +14,7 @@ namespace LdapForNet.RequestHandlers
                 {
                     throw new ArgumentNullException(nameof(dn));
                 }
+
                 return Native.ldap_rename(handle,
                     dn,
                     modifyDnRequest.NewName,
@@ -28,7 +29,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)

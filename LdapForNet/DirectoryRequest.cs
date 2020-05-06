@@ -12,7 +12,7 @@ namespace LdapForNet
         public List<DirectoryControl> Controls { get; } = new List<DirectoryControl>();       
         public int MessageId { get; internal set; }
     }
-    
+
     public class DeleteRequest : DirectoryRequest
     {
         public DeleteRequest(string distinguishedName)
@@ -30,7 +30,43 @@ namespace LdapForNet
             LdapEntry = ldapEntry;
         }
 
-        public LdapEntry LdapEntry { get; set; }
+        public AddRequest(string distinguishedName, params DirectoryAttribute[] attributes)
+        {
+            DistinguishedName = distinguishedName;
+            foreach (var attribute in attributes)
+            {
+                Attributes.Add(attribute);
+            }
+        }
+
+        public string DistinguishedName { get; set; }
+        public SearchResultAttributeCollection Attributes { get; } = new SearchResultAttributeCollection();
+
+        public LdapEntry LdapEntry
+        {
+            get
+            {
+                return new LdapEntry
+                {
+                    Dn = DistinguishedName,
+                    Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
+                };
+            }
+            set
+            {
+                DistinguishedName = value.Dn;
+                Attributes.Clear();
+                foreach (var attribute in value.Attributes)
+                {
+                    var item = new DirectoryAttribute
+                    {
+                        Name = attribute.Key
+                    };
+                    item.AddValues(attribute.Value);
+                    Attributes.Add(item);
+                }
+            }
+        }
     }
 
     public class ModifyRequest : DirectoryRequest
@@ -39,7 +75,51 @@ namespace LdapForNet
         {
             LdapEntry = ldapModifyEntry;
         }
-        public LdapModifyEntry LdapEntry { get; set; }
+
+        public ModifyRequest(string distinguishedName, params DirectoryModificationAttribute[] attributes)
+        {
+            DistinguishedName = distinguishedName;
+            foreach (var attribute in attributes)
+            {
+                Attributes.Add(attribute);
+            }
+        }
+
+        public string DistinguishedName { get; set; }
+
+        public LdapModifyEntry LdapEntry
+        {
+            get
+            {
+                return new LdapModifyEntry
+                {
+                    Dn = DistinguishedName,
+                    Attributes = Attributes.Select(_ => new LdapModifyAttribute
+                        {
+                            Type = _.Name, Values = _.GetValues<string>().ToList(),
+                            LdapModOperation = _.LdapModOperation
+                        })
+                        .ToList()
+                };
+            }
+            set
+            {
+                DistinguishedName = value.Dn;
+                Attributes.Clear();
+                foreach (var attribute in value.Attributes)
+                {
+                    var item = new DirectoryModificationAttribute
+                    {
+                        Name = attribute.Type,
+                        LdapModOperation = attribute.LdapModOperation
+                    };
+                    item.AddValues(attribute.Values);
+                    Attributes.Add(item);
+                }
+            }
+        }
+
+        public ModifyAttributeCollection Attributes { get; } = new ModifyAttributeCollection();
     }
 
 
@@ -63,14 +143,14 @@ namespace LdapForNet
 
     public class SearchRequest : DirectoryRequest
     {
-
         private string _directoryFilter = null;
         private Native.Native.LdapSearchScope _directoryScope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
         private int _directorySizeLimit = 0;
         private TimeSpan _directoryTimeLimit = new TimeSpan(0);
 
 
-        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope, params string[] attributeList)
+        public SearchRequest(string distinguishedName, string ldapFilter, Native.Native.LdapSearchScope searchScope,
+            params string[] attributeList)
         {
             DistinguishedName = distinguishedName;
             Scope = searchScope;
@@ -95,9 +175,11 @@ namespace LdapForNet
             get => _directoryScope;
             set
             {
-                if (value < Native.Native.LdapSearchScope.LDAP_SCOPE_BASE || value > Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
+                if (value < Native.Native.LdapSearchScope.LDAP_SCOPE_BASE ||
+                    value > Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
                 {
-                    throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(Native.Native.LdapSearchScope));
+                    throw new InvalidEnumArgumentException(nameof(value), (int) value,
+                        typeof(Native.Native.LdapSearchScope));
                 }
 
                 _directoryScope = value;
@@ -179,13 +261,14 @@ namespace LdapForNet
                 {
                     tempValue[i] = _requestValue[i];
                 }
+
                 return tempValue;
             }
             set => _requestValue = value;
         }
     }
-    
-    public class CompareRequest:DirectoryRequest 
+
+    public class CompareRequest : DirectoryRequest
     {
         public CompareRequest(LdapEntry ldapEntry)
         {
@@ -193,11 +276,13 @@ namespace LdapForNet
             {
                 throw new ArgumentException("Wrong number of attributes");
             }
+
             var attribute = ldapEntry.Attributes.Single();
             if (attribute.Value.Count != 1)
             {
                 throw new ArgumentException("Wrong number of attribute values");
             }
+
             DistinguishedName = ldapEntry.Dn;
             Assertion.Name = attribute.Key;
             Assertion.Add(attribute.Value.Single());
@@ -220,6 +305,10 @@ namespace LdapForNet
         public string DistinguishedName { get; set; }
 
         public DirectoryAttribute Assertion { get; } = new DirectoryAttribute();
+    }
+
+    public class TransportLayerSecurityRequest : DirectoryRequest
+    {
     }
 
     public class AbandonRequest : DirectoryRequest

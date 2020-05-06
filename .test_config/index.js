@@ -1,4 +1,24 @@
-var ldap = require('ldapjs');
+const ldap = require('ldapjs');
+const fs = require('fs');
+const path = require('path');
+
+
+function ServerComposite(servers){
+  this.__invoke = function(funcName,args){
+    servers.forEach(function(server){
+      server[funcName].apply(server,args);
+    });
+  }
+}
+
+
+var serverOptions = {
+// This is necessary only if the server uses the self-signed certificate
+  certificate: fs.readFileSync(path.resolve(__dirname,"server.crt")),
+  key: fs.readFileSync(path.resolve(__dirname,"server.key")),
+  ca: [ fs.readFileSync(path.resolve(__dirname,"server.crt")) ],
+  rejectUnauthorized:false
+};
 
 var old = ldap.DN.prototype.format;
 ldap.DN.prototype.format = function(options){
@@ -14,8 +34,15 @@ ldap.BindRequest.prototype._parse = function(ber){
     return bindRequestOld.call(this, ber);
   }catch(e){
     this.authentication = ber.readString(0xa3);
-    this.name = "cn=digestTest,dc=example,dc=com";
-    this.credentials = "test";
+    if(this.authentication.includes("DIGEST-MD5")){
+      this.name = "cn=digestTest,dc=example,dc=com";
+      this.credentials = "test";
+    }
+    else if(this.authentication.includes("EXTERNAL")){
+      this.name = "cn=external,dc=example,dc=com";
+      this.credentials = "test";
+    }
+
     return true;
   }
 };
@@ -36,10 +63,13 @@ ldap.BindResponse.prototype._parse = function(ber) {
 };
 ///--- Shared handlers
 
+
+
 function authorize(req, res, next) {
-  /* Any user may search after bind, only cn=root has full power */
-  var isSearch = (req instanceof ldap.SearchRequest);
-  if (!req.connection.ldap.bindDN.equals('cn=admin,dc=example,dc=com'))
+  if (!req.connection.ldap.bindDN.equals('cn=admin,dc=example,dc=com')
+    && !req.connection.ldap.bindDN.equals('cn=digest,dc=example,dc=com')
+    && !req.connection.ldap.bindDN.equals('cn=external,dc=example,dc=com')
+  )
     return next(new ldap.InsufficientAccessRightsError());
 
   return next();
@@ -73,6 +103,15 @@ var db = {
         userpassword: "test",
         uid: "digestTest"
     },
+    "cn=external,dc=example,dc=com":{
+      dn: "cn=external,dc=example,dc=com",
+      cn: "external",
+      sn: "external",
+      objectClass: ["top","person","organizationalPerson","inetOrgPerson"],
+      displayName: "external user",
+      userpassword: "test",
+      uid: "external"
+    },
     "rootDse":{
       "subschemasubentry": "CN=Aggregate,CN=Schema,CN=Configuration,"+SUFFIX,
       "dsservicename": "CN=NTDS Settings,CN=Configuration,"+SUFFIX,
@@ -91,7 +130,20 @@ var db = {
       "supportedcapabilities":[]
     }
 };
-var server = ldap.createServer();
+
+
+var serverLdaps = ldap.createServer(serverOptions);
+var serverLdap = ldap.createServer();
+
+
+var server = new ServerComposite([serverLdaps, serverLdap]);
+for(let prop in serverLdap){
+  //if(serverLdap.hasOwnProperty(prop)){
+    server[prop] = function(){
+      this.__invoke(prop, arguments);
+    };
+  //}
+}
 
 
 server.bind('cn=admin, dc=example, dc=com', function(req, res, next) {
@@ -314,13 +366,18 @@ server.search(SUFFIX, authorize, function(req, res, next) {
 server.exop('1.3.6.1.4.1.4203.1.11.3', function(req, res, next) {
   console.log('name: ' + req.name);
   console.log('value: ' + req.value);
-  res.value = 'dn:cn=admin,dc=example,dc=com';
+  res.value = 'dn:'+req.connection.ldap.bindDN.toString();
   res.end();
   return next();
 });
 
 ///--- Fire it up
 
-server.listen(4389, function() {
-  console.log('LDAP server up at: %s', server.url);
+serverLdap.listen(4389, function() {
+  console.log('LDAP server up at: %s', serverLdap.url);
+});
+
+
+serverLdaps.listen(4636, function() {
+  console.log('LDAPS server up at: %s', serverLdaps.url);
 });

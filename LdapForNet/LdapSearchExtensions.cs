@@ -11,19 +11,36 @@ namespace LdapForNet
         public static IList<LdapEntry> SearchByCn(this ILdapConnection connection, string @base, string cn,
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            return connection.Search(@base, $"(cn={cn})", scope);
+            return connection.Search(@base, $"(cn={cn})", scope: scope);
         }
 
         public static LdapEntry GetRootDse(this ILdapConnection connection)
         {
-            return connection.Search(null, "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASE)
+            var result = connection.Search(null, "(objectclass=*)",
+                    new[]
+                    {
+                        "namingContexts", "subschemaSubentry", "supportedLDAPVersion", "supportedSASLMechanisms",
+                        "supportedExtension", "supportedControl", "supportedFeatures", "vendorName", "vendorVersion"
+                    }, LdapSearchScope.LDAP_SCOPE_BASE)
                 .FirstOrDefault();
+            if (result == null)
+            {
+                return null;
+            }
+
+            var rootDse = connection.Search(null, "(objectclass=*)", scope: LdapSearchScope.LDAP_SCOPE_BASE).First();
+            foreach (var attribute in rootDse.Attributes)
+            {
+                result.Attributes[attribute.Key] = attribute.Value;
+            }
+
+            return result;
         }
 
         public static async Task<IList<LdapEntry>> SearchByCnAsync(this ILdapConnection connection, string @base,
             string cn, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            return await connection.SearchAsync(@base, $"(cn={cn})", scope);
+            return await connection.SearchAsync(@base, $"(cn={cn})", scope: scope);
         }
 
         public static IList<LdapEntry> SearchByCn(this ILdapConnection connection, string cn)
@@ -40,14 +57,14 @@ namespace LdapForNet
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             var hex = HexEscaper.Escape(LdapSidConverter.ConvertToHex(sid));
-            return connection.Search(@base, $"(objectSID={hex})", scope);
+            return connection.Search(@base, $"(objectSID={hex})", scope: scope);
         }
 
         public static async Task<IList<LdapEntry>> SearchBySidAsync(this ILdapConnection connection, string @base,
             string sid, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
             var hex = HexEscaper.Escape(LdapSidConverter.ConvertToHex(sid));
-            return await connection.SearchAsync(@base, $"(objectSID={hex})", scope);
+            return await connection.SearchAsync(@base, $"(objectSID={hex})", scope: scope);
         }
 
         public static IList<LdapEntry> SearchBySid(this ILdapConnection connection, string sid)

@@ -1,4 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
+
 namespace LdapForNet.Native
 {
     public static partial class Native
@@ -28,6 +29,7 @@ namespace LdapForNet.Native
 
             /* 0x14 not defined */
             LDAP_OPT_API_FEATURE_INFO = 0x0015,
+            LDAP_OPT_SSL = 0x0a,
 
             /* 0x16 - 0x2f not defined */
             LDAP_OPT_HOST_NAME = 0x0030,
@@ -36,6 +38,9 @@ namespace LdapForNet.Native
             LDAP_OPT_DIAGNOSTIC_MESSAGE = 0x0032,
             LDAP_OPT_ERROR_STRING = LDAP_OPT_DIAGNOSTIC_MESSAGE,
             LDAP_OPT_MATCHED_DN = 0x0033,
+
+            LDAP_OPT_CLIENT_CERTIFICATE = 0x80,
+            LDAP_OPT_SERVER_CERTIFICATE = 0x81,
 
             /* 0x0034 - 0x3fff not defined */
             /* 0x0091 used by Microsoft for LDAP_OPT_AUTO_RECONNECT */
@@ -88,6 +93,8 @@ namespace LdapForNet.Native
             LDAP_OPT_X_TLS_NEWCTX = 0x600f,
             LDAP_OPT_X_TLS_CRLFILE = 0x6010, /* GNUtls only */
             LDAP_OPT_X_TLS_PACKAGE = 0x6011,
+            LDAP_OPT_X_TLS_CERT = 0x6017,
+            LDAP_OPT_X_TLS_KEY = 0x6018,
             LDAP_OPT_X_TLS_NEVER = 0,
             LDAP_OPT_X_TLS_HARD = 1,
             LDAP_OPT_X_TLS_DEMAND = 2,

@@ -14,6 +14,7 @@ namespace LdapForNet.RequestHandlers
                 {
                     throw new ArgumentNullException(nameof(dn));
                 }
+
                 return Native.ldap_delete_ext(handle,
                     dn,
                     serverControlArray, 
@@ -25,7 +26,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)

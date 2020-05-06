@@ -68,5 +68,4 @@ namespace LdapForNet
             return true;
         }
     }
-
 }

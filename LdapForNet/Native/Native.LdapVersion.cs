@@ -1,4 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
+
 namespace LdapForNet.Native
 {
     public static partial class Native

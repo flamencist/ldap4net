@@ -6,7 +6,7 @@ namespace LdapForNet.Utils
     {
         private const char Separator = '.';
         private const string Localhost = "LocalHost";
-        
+
         internal static string GetDomainFromHostname()
         {
             var hostname = Dns.GetHostEntry(Localhost).HostName.ToLowerInvariant();

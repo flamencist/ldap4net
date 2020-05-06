@@ -5,16 +5,16 @@ using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
-    internal class CompareRequestHandler:RequestHandler
+    internal class CompareRequestHandler : RequestHandler
     {
         protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is CompareRequest compareRequest)
             {
-                if (string.IsNullOrEmpty(compareRequest.DistinguishedName)||
+                if (string.IsNullOrEmpty(compareRequest.DistinguishedName) ||
                     string.IsNullOrEmpty(compareRequest.Assertion?.Name) ||
                     compareRequest.Assertion.GetRawValues().Count != 1
-                    )
+                )
                 {
                     throw new LdapException("Wrong assertion");
                 }
@@ -35,7 +35,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)

@@ -22,14 +22,13 @@ namespace LdapForNet.PS
 
         protected override void OnLdapBind(LdapConnection cn)
         {
-            
-            var entries = cn.Search(Base, Filter, ToSearchScope(Scope));
+            var entries = cn.Search(Base, Filter, scope: ToSearchScope(Scope));
             foreach (var entry in entries)
             {
                 WriteObject(entry, true);
             }
         }
-        
+
         private Native.Native.LdapSearchScope ToSearchScope(string type)
         {
             switch (type)

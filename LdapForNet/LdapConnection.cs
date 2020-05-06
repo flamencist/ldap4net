@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Native;
@@ -17,43 +18,17 @@ namespace LdapForNet
         private SafeHandle _ld;
         private bool _bound;
 
-        public void Connect(Uri uri,
-            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
+        public void Connect(string url, Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
         {
             var details = new Dictionary<string, string>
             {
-                [nameof(uri)] = uri.ToString(),
+                [nameof(url)] = url,
                 [nameof(version)] = version.ToString()
             };
             var nativeHandle = IntPtr.Zero;
 
             _native.ThrowIfError(
-                _native.Init(ref nativeHandle, uri),
-                nameof(_native.Init),
-                details
-            );
-            _ld = new LdapHandle(nativeHandle);
-            var ldapVersion = (int)version;
-
-            _native.ThrowIfError(
-                _native.ldap_set_option(_ld, (int)Native.Native.LdapOption.LDAP_OPT_PROTOCOL_VERSION, ref ldapVersion),
-                nameof(_native.ldap_set_option),
-                details
-            );
-        }
-
-        public void Connect(string hostname, int port = (int) Native.Native.LdapPort.LDAP,
-            Native.Native.LdapVersion version = Native.Native.LdapVersion.LDAP_VERSION3)
-        {
-            var details = new Dictionary<string, string>
-            {
-                [nameof(hostname)] = hostname,
-                [nameof(port)] = port.ToString(),
-                [nameof(version)] = version.ToString()
-            };
-            var nativeHandle = IntPtr.Zero;
-            _native.ThrowIfError(
-                _native.Init(ref nativeHandle, hostname, port),
+                _native.Init(ref nativeHandle, url),
                 nameof(_native.Init),
                 details
             );
@@ -72,9 +47,18 @@ namespace LdapForNet
             ThrowIfNotInitialized();
             if (authType == Native.Native.LdapAuthType.Simple)
             {
-                _native.ThrowIfError(_ld, _native.BindSimple(_ld, credential.UserName, credential.Password), nameof(_native.BindSimple));
+                _native.ThrowIfError(_ld, _native.BindSimple(_ld, credential.UserName, credential.Password),
+                    nameof(_native.BindSimple));
             }
-            else if(authType != Native.Native.LdapAuthType.Unknown)
+            else if (authType == Native.Native.LdapAuthType.Anonymous)
+            {
+                _native.BindSimple(_ld, null, null);
+            }
+            else if (authType == Native.Native.LdapAuthType.ExternalAd)
+            {
+                _native.LdapConnect(_ld);
+            }
+            else if (authType != Native.Native.LdapAuthType.Unknown)
             {
                 _native.ThrowIfError(_ld, _native.BindSasl(_ld, authType, credential), nameof(_native.BindSasl));
             }
@@ -90,12 +74,20 @@ namespace LdapForNet
         public async Task BindAsync(Native.Native.LdapAuthType authType, LdapCredential ldapCredential)
         {
             ThrowIfNotInitialized();
-            IntPtr result;
+            var result = IntPtr.Zero;
             if (authType == Native.Native.LdapAuthType.Simple)
             {
                 result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password);
             }
-            else if(authType != Native.Native.LdapAuthType.Unknown)
+            else if (authType == Native.Native.LdapAuthType.Anonymous)
+            {
+                result = await _native.BindSimpleAsync(_ld, null, null);
+            }
+            else if (authType == Native.Native.LdapAuthType.ExternalAd)
+            {
+                _native.LdapConnect(_ld);
+            }
+            else if (authType != Native.Native.LdapAuthType.Unknown)
             {
                 result = await _native.BindSaslAsync(_ld, authType, ldapCredential);
             }
@@ -123,7 +115,6 @@ namespace LdapForNet
             });
         }
 
-        
         public async Task BindAsync(string mechanism = Native.Native.LdapAuthMechanism.Kerberos, string userDn = null,
             string password = null)
         {
@@ -134,45 +125,34 @@ namespace LdapForNet
             });
         }
 
-        public void SetOption(Native.Native.LdapOption option, int value)
+        public void SetOption(Native.Native.LdapOption option, int value, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, ref value),
                 nameof(_native.ldap_set_option));
         }
 
-        public void SetOption(Native.Native.LdapOption option, string value)
+        public void SetOption(Native.Native.LdapOption option, string value, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, ref value),
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, value),
                 nameof(_native.ldap_set_option));
         }
 
-        public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr)
+        public void SetOption(Native.Native.LdapOption option, IntPtr valuePtr, bool global = false)
         {
             ThrowIfNotInitialized();
-            _native.ThrowIfError(_native.ldap_set_option(_ld, (int) option, valuePtr), nameof(_native.ldap_set_option));
+            _native.ThrowIfError(_native.ldap_set_option(GetLdapHandle(global), (int) option, valuePtr),
+                nameof(_native.ldap_set_option));
         }
 
-        public IList<LdapEntry> Search(string @base, string filter,
+        private SafeHandle GetLdapHandle(bool global) => global ? new LdapHandle(IntPtr.Zero) : _ld;
+
+        public IList<LdapEntry> Search(string @base, string filter, string[] attributes = default,
             Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
         {
-            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope));
-            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
-            {
-                ThrowIfResponseError(response);
-            }
-            return response.Entries
-                .Select(_=>_.ToLdapEntry())
-                .ToList();
-        }
-
-        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter,
-            Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
-            CancellationToken token = default)
-        {
-            var response = (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope), token);
-            if(response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            var response = (SearchResponse) SendRequest(new SearchRequest(@base, filter, scope, attributes));
+            if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
             {
                 ThrowIfResponseError(response);
             }
@@ -181,7 +161,23 @@ namespace LdapForNet
                 .Select(_ => _.ToLdapEntry())
                 .ToList();
         }
-        
+
+        public async Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default,
+            Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE,
+            CancellationToken token = default)
+        {
+            var response =
+                (SearchResponse) await SendRequestAsync(new SearchRequest(@base, filter, scope, attributes), token);
+            if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
+            {
+                ThrowIfResponseError(response);
+            }
+
+            return response.Entries
+                .Select(_ => _.ToLdapEntry())
+                .ToList();
+        }
+
         public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));
 
         public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
@@ -208,23 +204,45 @@ namespace LdapForNet
             return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
         }
 
+        public void StartTransportLayerSecurity(bool trustAll = false)
+        {
+            ThrowIfNotInitialized();
+            if (trustAll)
+            {
+                TrustAllCertificates();
+            }
 
-        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) => 
+            SendRequest(new TransportLayerSecurityRequest(), out _);
+        }
+
+        public void TrustAllCertificates()
+        {
+            _native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
+        }
+
+        public void SetClientCertificate(X509Certificate2 certificate)
+        {
+            ThrowIfNotInitialized();
+            _native.ThrowIfError(_native.SetClientCertificate(_ld, certificate), nameof(_native.SetClientCertificate));
+        }
+
+
+        public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
 
         public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
 
-
         public void Dispose()
         {
+            _native.Dispose(_ld);
             _ld?.Dispose();
         }
 
+        [Obsolete]
         public IntPtr GetNativeLdapPtr()
         {
             return _ld.DangerousGetHandle();
         }
-
 
         public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
             ThrowIfResponseError(await SendRequestAsync(new DeleteRequest(dn), cancellationToken));
@@ -233,11 +251,13 @@ namespace LdapForNet
 
         public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
             CancellationToken cancellationToken = default) =>
-            ThrowIfResponseError(await SendRequestAsync(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
+            ThrowIfResponseError(await SendRequestAsync(
+                new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn},
                 cancellationToken));
 
         public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
-            ThrowIfResponseError(SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
+            ThrowIfResponseError(
+                SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
         public void Abandon(AbandonRequest abandonRequest)
         {
@@ -328,6 +348,8 @@ namespace LdapForNet
                     return new CompareRequestHandler();
                 case ExtendedRequest _:
                     return new ExtendedRequestHandler();
+                case TransportLayerSecurityRequest _:
+                    return new TransportLayerSecurityRequestHandler();
                 case AbandonRequest _:
                     return new AbandonRequestHandler();
                 default:
@@ -417,8 +439,5 @@ namespace LdapForNet
                     [nameof(response.ErrorMessage)] = response.ErrorMessage,
                 });
         }
-
-
-        
     }
 }
