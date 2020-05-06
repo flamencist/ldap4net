@@ -2,7 +2,6 @@ language: csharp
 mono: none
 dotnet: 2.1.805
 dist: bionic
-sudo: false
 addons:
   hosts: 
     - example
@@ -48,6 +47,7 @@ script:
   - dotnet pack
 deploy:
   skip_cleanup: true
+  cleanup: false
   provider: script
   script: if [ "$TRAVIS_OS_NAME" = "linux" ]; then dotnet nuget push ./LdapForNet/bin/Debug/LdapForNet*.nupkg -k $NUGET_API_KEY -s $NUGET_SOURCE ; fi
   on:
