@@ -41,6 +41,7 @@ using (var cn = new LdapConnection())
 	* [Connect SSL (with self signed certificate)](#connect-ssl-with-self-signed-certificate)
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
+	* [Bind Anonymous](#bind-anonymous)
 	* [Bind DIGEST-MD5](#bind-digest-md5)
 	* [Bind SASL EXTERNAL (Client certificate)](#bind-sasl-external-client-certificate)
 	* [Bind SASL EXTERNAL (Client certificate & Active Directory)](#bind-sasl-external-client-certificate--active-directory)
@@ -200,6 +201,19 @@ using (var cn = new LdapConnection())
 	cn.Connect();
 	// bind using kerberos credential cache file
 	cn.BindAsync().Wait();
+	...
+}
+
+```
+
+### Bind Anonymous
+
+
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind(LdapAuthType.Anonymous, new LdapCredential());
 	...
 }
 

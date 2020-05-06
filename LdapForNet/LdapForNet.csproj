@@ -15,7 +15,8 @@
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
     <PackageReleaseNotes>
-      - add external authentication mechanism
+      - support sasl external authentication mechanism
+      - support anonymous authentication mechanism
       - support binary values in add\modify operations
       - support tls\ssl
     </PackageReleaseNotes>
