@@ -3,7 +3,7 @@ using LdapForNet.Asn1;
 
 namespace LdapForNet.Utils
 {
-    internal static  class RSAExtensions
+    internal static  class RsaExtensions
     {
         public static byte[] ToRsaPrivateKey(this RSA rsa)
         {
