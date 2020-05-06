@@ -99,7 +99,7 @@ namespace LdapForNetTests
         }
 
         [Fact]
-        public void LdapConnection_Bind_Using_Sasl_External_Via_Tls()
+        public void LdapConnection_Bind_Using_Sasl_External_Via_Ssl()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -140,6 +140,33 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
+                connection.Bind(LdapAuthType.Simple, new LdapCredential
+                {
+                    UserName = Config.LdapUserDn,
+                    Password = Config.LdapPassword
+                });
+                var entries = connection.Search(Config.RootDn,
+                    $"(&(objectclass=top)(cn={Config.LdapDigestMd5UserName}))");
+                Assert.True(entries.Count == 1);
+                Assert.Equal("cn=digestTest,dc=example,dc=com", entries[0].Dn);
+                Assert.Equal(Config.LdapDigestMd5UserName, entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+        
+        [Fact]
+        public void LdapConnection_Connect_Tls()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                //todo setup tls/ssl for ldap server on OSX
+                return;
+            }
+
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHostName, Config.LdapPort, LdapSchema.LDAP);
+                connection.StartTransportLayerSecurity(true);
                 connection.Bind(LdapAuthType.Simple, new LdapCredential
                 {
                     UserName = Config.LdapUserDn,
