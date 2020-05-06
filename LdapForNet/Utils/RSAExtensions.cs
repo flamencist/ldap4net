@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using LdapForNet.Asn1;
 
 namespace LdapForNet.Utils
 {
@@ -37,22 +36,6 @@ namespace LdapForNet.Utils
 
                 return stream.GetBuffer();
             }
-            
-            /*var writer = new AsnWriter(AsnEncodingRules.DER);
-            writer.PushSequence();
-
-            writer.WriteInteger(0);
-            writer.WriteKeyParameterInteger(rsaParameters.Modulus);
-            writer.WriteKeyParameterInteger(rsaParameters.Exponent);
-            writer.WriteKeyParameterInteger(rsaParameters.D);
-            writer.WriteKeyParameterInteger(rsaParameters.P);
-            writer.WriteKeyParameterInteger(rsaParameters.Q);
-            writer.WriteKeyParameterInteger(rsaParameters.DP);
-            writer.WriteKeyParameterInteger(rsaParameters.DQ);
-            writer.WriteKeyParameterInteger(rsaParameters.InverseQ);
-
-            writer.PopSequence();
-            return writer.Encode();*/
 #endif
         }
         
