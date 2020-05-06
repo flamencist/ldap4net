@@ -37,9 +37,14 @@ using (var cn = new LdapConnection())
 * [Installation](#installation)
 * [API](#api)
 	* [Connect](#connect)
+	* [Connect TLS](#connect-tls)
+	* [Connect SSL (with self signed certificate)](#connect-ssl-with-self-signed-certificate)
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
 	* [Bind DIGEST-MD5](#bind-digest-md5)
+	* [Bind SASL EXTERNAL (Client certificate)](#bind-sasl-external-client-certificate)
+	* [Bind SASL EXTERNAL (Client certificate & Active Directory)](#bind-sasl-external-client-certificate--active-directory)
+	* [Bind SASL EXTERNAL (Unix Socket)](#bind-sasl-external-unix-socket)
 	* [Bind SASL proxy](#bind-sasl-proxy)
 	* [Search](#search)
 	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
@@ -49,8 +54,11 @@ using (var cn = new LdapConnection())
 	* [SearchBySid](#searchbysid)
 	* [SetOption](#setoption)
 	* [Add](#add)
+	* [Add Binary Values](#add-binary-values)
 	* [AddAsync](#addAsync)
 	* [Modify](#modify)
+	* [Modify Binary Values](#modify-binary-values)
+	* [Reset password](#reset-password)
 	* [ModifyAsync](#modifyAsync)
 	* [Delete](#delete)
 	* [DeleteAsync](#deleteAsync)
@@ -70,11 +78,16 @@ using (var cn = new LdapConnection())
 * OSX
 * Windows
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
+
+## Features:
+* Supported TLS\SSL
+* Supported Unicode\Binary values
 * Supported authentications:
-	- Simple \ Basic
+	- Simple \ Basic \ Anonymous
 	- SASL:
 		- GSSAPI \ Kerberos V5 \ Negotiate 
 		- [DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
+		- [EXTERNAL](https://ldapwiki.com/wiki/SASL%20EXTERNAL)
 	- [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 
 ## Installation
@@ -129,6 +142,30 @@ using (var cn = new LdapConnection())
 
 ```
 
+### Connect TLS
+```cs
+using (var cn = new LdapConnection())
+{
+	// connect use hostname and port
+	cn.Connect("dc.example.com",389);
+	//set true if use self signed certificate for developing purpose
+ 	cn.StartTransportLayerSecurity(true); 
+	....
+}
+
+```
+
+### Connect SSL (with self signed certificate)
+```cs
+using (var cn = new LdapConnection())
+{
+	cn.Connect("dc.example.com", 636, LdapSchema.LDAPS);
+	cn.TrustAllCertificates();
+	....
+}
+
+```
+
 ### Bind
 
 
@@ -174,13 +211,60 @@ using (var cn = new LdapConnection())
 ```cs
 using (var cn = new LdapConnection())
 {
-    connection.Connect();
+    cn.Connect();
 
-    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    cn.Bind(LdapAuthType.Digest, new LdapCredential
     {
         UserName = "username",
         Password = "clearTextPassword"
     });
+	...
+}
+
+```
+
+### Bind SASL EXTERNAL (Client certificate)
+[About client certificate authentication in openldap](https://jpmens.net/pages/ldap-external/)
+
+```cs
+using (var cn = new LdapConnection())
+{
+    cn.Connect("dc.example.com",636,LdapSchema.LDAPS);
+    var cert = new X509Certificate2("yourcert.pfx", "yourstrongpassword",
+        X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+    cn.SetClientCertificate(cert);
+
+    cn.Bind(LdapAuthType.External, new LdapCredential());
+	...
+}
+
+```
+
+### Bind SASL EXTERNAL (Client certificate & Active Directory)
+[About client certificate authentication](https://techcommunity.microsoft.com/t5/iis-support-blog/client-certificate-authentication-part-1/ba-p/324623#) 
+
+```cs
+using (var cn = new LdapConnection())
+{
+    cn.Connect("dc.example.com",636,LdapSchema.LDAPS);
+    var cert = new X509Certificate2("yourcert.pfx", "yourstrongpassword",
+        X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+    cn.SetClientCertificate(cert);
+
+    cn.Bind(LdapAuthType.ExternalAd, new LdapCredential());
+	...
+}
+
+```
+
+### Bind SASL EXTERNAL (Unix Socket)
+```cs
+using (var cn = new LdapConnection())
+{
+    cn.ConnectI("/tmp/yoursocketfile.unix");
+    cn.Bind(LdapAuthType.External, new LdapCredential());
 	...
 }
 
@@ -403,10 +487,28 @@ using (var cn = new LdapConnection())
    }
    ```
 
+### Add Binary Values
+
+```cs
+   using (var cn = new LdapConnection())
+   {
+   	cn.Connect();
+   	cn.Bind();
+   	var image = new DirectoryAttribute
+    {
+        Name = "jpegPhoto"
+    };
+    image.Add(new byte[]{1,2,3,4});
+    directoryEntry.Attributes.Add(image);
+    var response = (AddResponse)connection.SendRequest(new AddRequest("cn=test,dc=example,dc=com", image));
+   }
+   ```
+
+
 ### AddAsync
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -428,7 +530,7 @@ using (var cn = new LdapConnection())
 ### Modify
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -465,6 +567,49 @@ using (var cn = new LdapConnection())
 	}
 	});
 }
+```
+
+
+### Modify Binary Values
+
+```c#
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	cn.Bind();
+	var image = new DirectoryModificationAttribute
+    {
+        LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+        Name = "jpegPhoto
+    };
+    image.Add(new byte[]{ 5, 6, 7, 8});
+    var response = (ModifyResponse)connection.SendRequest(new ModifyRequest("cn=test,dc=example,dc=com", image));
+}
+```
+
+### Reset password
+
+Microsoft Active Directory
+
+```c#
+ using(var connection = new LdapConnection())
+ {
+      // need use ssl/tls for reset password
+      connection.Connect("dc.example.com", 636, LdapSchema.LDAPS);
+      connection.Bind();
+
+      var attribute = new DirectoryModificationAttribute()
+      {
+          Name = "unicodePwd",
+          LdapModOperation = Native.LdapModOperation.LDAP_MOD_REPLACE
+      };
+
+      string password = "\"strongPassword\"";
+      byte[] encodedBytes = System.Text.Encoding.Unicode.GetBytes(password);
+      attribute.Add<byte[]>(encodedBytes);
+
+      var response = (ModifyResponse)connection.SendRequest(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", attribute));
+  }
 ```
 
 ### ModifyAsync
