@@ -101,6 +101,10 @@ namespace LdapForNetTests
         [Fact]
         public void LdapConnection_Bind_Using_Sasl_External_Via_Tls()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return;
+            }
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
