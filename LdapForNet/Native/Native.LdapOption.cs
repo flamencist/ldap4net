@@ -1,4 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
+
 namespace LdapForNet.Native
 {
     public static partial class Native
@@ -92,7 +93,7 @@ namespace LdapForNet.Native
             LDAP_OPT_X_TLS_NEWCTX = 0x600f,
             LDAP_OPT_X_TLS_CRLFILE = 0x6010, /* GNUtls only */
             LDAP_OPT_X_TLS_PACKAGE = 0x6011,
-            LDAP_OPT_X_TLS_CERT	= 0x6017,
+            LDAP_OPT_X_TLS_CERT = 0x6017,
             LDAP_OPT_X_TLS_KEY = 0x6018,
             LDAP_OPT_X_TLS_NEVER = 0,
             LDAP_OPT_X_TLS_HARD = 1,

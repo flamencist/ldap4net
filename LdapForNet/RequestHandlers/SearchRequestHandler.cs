@@ -8,16 +8,17 @@ namespace LdapForNet.RequestHandlers
     internal class SearchRequestHandler : RequestHandler
     {
         private readonly SearchResponse _response = new SearchResponse();
+
         public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is SearchRequest searchRequest)
             {
                 var attributes = GetAttributesPtr(searchRequest);
-                var searchTimeLimit = (int)(searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
+                var searchTimeLimit = (int) (searchRequest.TimeLimit.Ticks / TimeSpan.TicksPerSecond);
                 var res = Native.Search(
                     handle,
                     searchRequest.DistinguishedName,
-                    (int)searchRequest.Scope,
+                    (int) searchRequest.Scope,
                     searchRequest.Filter,
                     attributes,
                     searchRequest.AttributesOnly ? 1 : 0,
@@ -33,7 +34,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
@@ -53,10 +55,11 @@ namespace LdapForNet.RequestHandlers
                     return LdapResultCompleteStatus.Unknown;
             }
         }
-        
+
         private IEnumerable<DirectoryEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
         {
-            for (var entry = Native.ldap_first_entry(ld, msg); entry != IntPtr.Zero;
+            for (var entry = Native.ldap_first_entry(ld, msg);
+                entry != IntPtr.Zero;
                 entry = Native.ldap_next_entry(ld, entry))
             {
                 yield return new DirectoryEntry
@@ -66,7 +69,7 @@ namespace LdapForNet.RequestHandlers
                 };
             }
         }
-        
+
         private SearchResultAttributeCollection GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
         {
             var attributes = new SearchResultAttributeCollection();
@@ -78,7 +81,7 @@ namespace LdapForNet.RequestHandlers
                 if (vals != IntPtr.Zero)
                 {
                     var attrName = Encoder.Instance.PtrToString(attr);
-                    if (attrName != null)    
+                    if (attrName != null)
                     {
                         var directoryAttribute = new DirectoryAttribute
                         {
@@ -87,6 +90,7 @@ namespace LdapForNet.RequestHandlers
                         directoryAttribute.AddValues(MarshalUtils.BerValArrayToByteArrays(vals));
                         attributes.Add(directoryAttribute);
                     }
+
                     Native.ldap_value_free_len(vals);
                 }
 
@@ -95,18 +99,17 @@ namespace LdapForNet.RequestHandlers
 
             return attributes;
         }
-        
+
         private string GetLdapDn(SafeHandle ld, IntPtr entry)
         {
             var ptr = Native.ldap_get_dn(ld, entry);
             var dn = Encoder.Instance.PtrToString(ptr);
-            Native.ldap_memfree(ptr);        
+            Native.ldap_memfree(ptr);
             return dn;
         }
 
         private static IntPtr GetAttributesPtr(SearchRequest searchRequest)
         {
-
             var attributeCount = searchRequest.Attributes?.Count ?? 0;
             var searchAttributes = IntPtr.Zero;
             if (searchRequest.Attributes == null || attributeCount == 0)
@@ -134,9 +137,8 @@ namespace LdapForNet.RequestHandlers
             {
                 Marshal.FreeHGlobal(tempPtr);
             }
+
             Marshal.FreeHGlobal(attributes);
         }
-
-
     }
 }

@@ -4,7 +4,8 @@ using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
-    internal class ExtendedRequestHandler:RequestHandler{
+    internal class ExtendedRequestHandler : RequestHandler
+    {
         public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is ExtendedRequest extendedRequest)
@@ -18,7 +19,7 @@ namespace LdapForNet.RequestHandlers
                     berValuePtr = MarshalUtils.ByteArrayToBerValue(val);
                 }
 
-                var result =  Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
+                var result = Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
                     ref messageId);
                 MarshalUtils.BerValFree(berValuePtr);
                 return result;
@@ -27,7 +28,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
@@ -52,14 +54,16 @@ namespace LdapForNet.RequestHandlers
                             if (berval.bv_len != 0 && berval.bv_val != IntPtr.Zero)
                             {
                                 value = new byte[berval.bv_len];
-                                Marshal.Copy(berval.bv_val,value,0,berval.bv_len);
+                                Marshal.Copy(berval.bv_val, value, 0, berval.bv_len);
                             }
+
                             Native.ldap_memfree(requestValue);
                         }
                     }
+
                     response = new ExtendedResponse
                     {
-                        ResultCode = (Native.Native.ResultCode)rc,
+                        ResultCode = (Native.Native.ResultCode) rc,
                         ResponseName = name,
                         ResponseValue = value
                     };

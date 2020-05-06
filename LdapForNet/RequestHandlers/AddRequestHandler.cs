@@ -19,14 +19,14 @@ namespace LdapForNet.RequestHandlers
 
                 var attrs = addRequest.Attributes.Select(ToLdapMod).ToList();
 
-                var ptr = MarshalUtils.AllocHGlobalIntPtrArray(addRequest.Attributes.Count+1); 
-                MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
+                var ptr = MarshalUtils.AllocHGlobalIntPtrArray(addRequest.Attributes.Count + 1);
+                MarshalUtils.StructureArrayToPtr(attrs, ptr, true);
 
-                var result =  Native.ldap_add_ext(handle,
+                var result = Native.ldap_add_ext(handle,
                     addRequest.DistinguishedName,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero ,
+                    ptr,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
                     ref messageId
                 );
 
@@ -42,10 +42,10 @@ namespace LdapForNet.RequestHandlers
             }
 
             return 0;
-
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
@@ -58,16 +58,18 @@ namespace LdapForNet.RequestHandlers
             }
         }
 
-        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute) => ToLdapMod(attribute, LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_ADD);
+        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute) =>
+            ToLdapMod(attribute, LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_ADD);
 
-        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute, Native.Native.LdapModOperation operation)
+        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute,
+            Native.Native.LdapModOperation operation)
         {
             var modValue = attribute.GetValues<byte[]>().ToList() ?? new List<byte[]>();
             var modValuePtr = MarshalUtils.AllocHGlobalIntPtrArray(modValue.Count + 1);
-            MarshalUtils.ByteArraysToBerValueArray(modValue.Select(_=>_ ?? new byte[0]).ToArray(), modValuePtr);
+            MarshalUtils.ByteArraysToBerValueArray(modValue.Select(_ => _ ?? new byte[0]).ToArray(), modValuePtr);
             return new Native.Native.LDAPMod
             {
-                mod_op = (int)operation | (int)LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_BVALUES,
+                mod_op = (int) operation | (int) LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_BVALUES,
                 mod_type = Encoder.Instance.StringToPtr(attribute.Name),
                 mod_vals_u = new Native.Native.LDAPMod.mod_vals
                 {

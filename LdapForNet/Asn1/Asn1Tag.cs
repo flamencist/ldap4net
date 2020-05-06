@@ -25,7 +25,7 @@ namespace LdapForNet.Asn1
         /// <summary>
         ///   The tag class to which this tag belongs.
         /// </summary>
-        internal TagClass TagClass => (TagClass)(_controlFlags & ClassMask);
+        internal TagClass TagClass => (TagClass) (_controlFlags & ClassMask);
 
         /// <summary>
         ///   Indicates if the tag represents a constructed encoding (<c>true</c>), or
@@ -44,7 +44,7 @@ namespace LdapForNet.Asn1
 
         private Asn1Tag(byte controlFlags, int tagValue)
         {
-            _controlFlags = (byte)(controlFlags & ControlMask);
+            _controlFlags = (byte) (controlFlags & ControlMask);
             TagValue = tagValue;
         }
 
@@ -61,10 +61,10 @@ namespace LdapForNet.Asn1
         ///   <paramref name="universalTagNumber"/> is not a known value.
         /// </exception>
         internal Asn1Tag(UniversalTagNumber universalTagNumber, bool isConstructed = false)
-            : this(isConstructed ? ConstructedMask : (byte)0, (int)universalTagNumber)
+            : this(isConstructed ? ConstructedMask : (byte) 0, (int) universalTagNumber)
         {
             // T-REC-X.680-201508 sec 8.6 (Table 1)
-            const UniversalTagNumber ReservedIndex = (UniversalTagNumber)15;
+            const UniversalTagNumber ReservedIndex = (UniversalTagNumber) 15;
 
             if (universalTagNumber < UniversalTagNumber.EndOfContents ||
                 universalTagNumber > UniversalTagNumber.RelativeObjectIdentifierIRI ||
@@ -94,7 +94,7 @@ namespace LdapForNet.Asn1
         ///   This constructor allows for the creation undefined UNIVERSAL class tags.
         /// </remarks>
         internal Asn1Tag(TagClass tagClass, int tagValue, bool isConstructed = false)
-            : this((byte)((byte)tagClass | (isConstructed ? ConstructedMask : 0)), tagValue)
+            : this((byte) ((byte) tagClass | (isConstructed ? ConstructedMask : 0)), tagValue)
         {
             if (tagClass < TagClass.Universal || tagClass > TagClass.Private)
             {
@@ -117,7 +117,7 @@ namespace LdapForNet.Asn1
         /// </returns>
         public Asn1Tag AsConstructed()
         {
-            return new Asn1Tag((byte)(_controlFlags | ConstructedMask), TagValue);
+            return new Asn1Tag((byte) (_controlFlags | ConstructedMask), TagValue);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace LdapForNet.Asn1
         /// </returns>
         public Asn1Tag AsPrimitive()
         {
-            return new Asn1Tag((byte)(_controlFlags & ~ConstructedMask), TagValue);
+            return new Asn1Tag((byte) (_controlFlags & ~ConstructedMask), TagValue);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace LdapForNet.Asn1
 
             byte first = source[bytesConsumed];
             bytesConsumed++;
-            uint tagValue = (uint)(first & TagNumberMask);
+            uint tagValue = (uint) (first & TagNumberMask);
 
             if (tagValue == TagNumberMask)
             {
@@ -197,7 +197,7 @@ namespace LdapForNet.Asn1
                     }
 
                     current = source[bytesConsumed];
-                    byte currentValue = (byte)(current & ValueMask);
+                    byte currentValue = (byte) (current & ValueMask);
                     bytesConsumed++;
 
                     // If TooBigToShift is shifted left 7, the content bit shifts out.
@@ -219,8 +219,7 @@ namespace LdapForNet.Asn1
                         bytesConsumed = 0;
                         return false;
                     }
-                }
-                while ((current & ContinuationFlag) == ContinuationFlag);
+                } while ((current & ContinuationFlag) == ContinuationFlag);
 
                 // This encoding is only valid for tag values greater than 30.
                 // (T-REC-X.690-201508 sec 8.1.2.3, 8.1.2.4)
@@ -239,7 +238,7 @@ namespace LdapForNet.Asn1
             }
 
             Debug.Assert(bytesConsumed > 0);
-            tag = new Asn1Tag(first, (int)tagValue);
+            tag = new Asn1Tag(first, (int) tagValue);
             return true;
         }
 
@@ -296,13 +295,13 @@ namespace LdapForNet.Asn1
 
             if (spaceRequired == 1)
             {
-                byte value = (byte)(_controlFlags | TagValue);
+                byte value = (byte) (_controlFlags | TagValue);
                 destination[0] = value;
                 bytesWritten = 1;
                 return true;
             }
 
-            byte firstByte = (byte)(_controlFlags | TagNumberMask);
+            byte firstByte = (byte) (_controlFlags | TagNumberMask);
             destination[0] = firstByte;
 
             int remaining = TagValue;
@@ -319,7 +318,7 @@ namespace LdapForNet.Asn1
                 }
 
                 Debug.Assert(segment <= byte.MaxValue);
-                destination[idx] = (byte)segment;
+                destination[idx] = (byte) segment;
                 remaining >>= 7;
                 idx--;
             }
@@ -488,7 +487,7 @@ namespace LdapForNet.Asn1
 
             if (TagClass == TagClass.Universal)
             {
-                classAndValue = ((UniversalTagNumber)TagValue).ToString();
+                classAndValue = ((UniversalTagNumber) TagValue).ToString();
             }
             else
             {

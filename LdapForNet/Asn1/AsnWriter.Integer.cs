@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
+
 // ReSharper disable InconsistentNaming
 
 namespace LdapForNet.Asn1
@@ -176,7 +177,7 @@ namespace LdapForNet.Asn1
         {
             if (value >= 0)
             {
-                WriteNonNegativeIntegerCore(tag, (ulong)value);
+                WriteNonNegativeIntegerCore(tag, (ulong) value);
                 return;
             }
 
@@ -186,15 +187,15 @@ namespace LdapForNet.Asn1
                 valueLength = 1;
             else if (value >= short.MinValue)
                 valueLength = 2;
-            else if (value >= unchecked((long)0xFFFFFFFF_FF800000))
+            else if (value >= unchecked((long) 0xFFFFFFFF_FF800000))
                 valueLength = 3;
             else if (value >= int.MinValue)
                 valueLength = 4;
-            else if (value >= unchecked((long)0xFFFFFF80_00000000))
+            else if (value >= unchecked((long) 0xFFFFFF80_00000000))
                 valueLength = 5;
-            else if (value >= unchecked((long)0xFFFF8000_00000000))
+            else if (value >= unchecked((long) 0xFFFF8000_00000000))
                 valueLength = 6;
-            else if (value >= unchecked((long)0xFF800000_00000000))
+            else if (value >= unchecked((long) 0xFF800000_00000000))
                 valueLength = 7;
             else
                 valueLength = 8;
@@ -208,7 +209,7 @@ namespace LdapForNet.Asn1
 
             do
             {
-                _buffer[idx] = (byte)remaining;
+                _buffer[idx] = (byte) remaining;
                 remaining >>= 8;
                 idx--;
             } while (idx >= _offset);
@@ -260,7 +261,7 @@ namespace LdapForNet.Asn1
 
             do
             {
-                _buffer[idx] = (byte)remaining;
+                _buffer[idx] = (byte) remaining;
                 remaining >>= 8;
                 idx--;
             } while (idx >= _offset);
@@ -320,9 +321,9 @@ namespace LdapForNet.Asn1
             // T-REC-X.690-201508 sec 8.3.2
             if (value.Length > 1)
             {
-                ushort bigEndianValue = (ushort)(value[0] << 8 | value[1]);
+                ushort bigEndianValue = (ushort) (value[0] << 8 | value[1]);
                 const ushort RedundancyMask = 0b1111_1111_1000_0000;
-                ushort masked = (ushort)(bigEndianValue & RedundancyMask);
+                ushort masked = (ushort) (bigEndianValue & RedundancyMask);
 
                 // If the first 9 bits are all 0 or are all 1, the value is invalid.
                 if (masked == 0 || masked == RedundancyMask)

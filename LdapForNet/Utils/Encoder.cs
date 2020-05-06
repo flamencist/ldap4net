@@ -15,14 +15,17 @@ namespace LdapForNet.Utils
             {
                 return new UnixEncoder();
             }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 return new UnixEncoder();
             }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return new WindowsEncoder();
             }
+
             throw new PlatformNotSupportedException();
         }
 
@@ -34,7 +37,7 @@ namespace LdapForNet.Utils
         public abstract string PtrToString(IntPtr ptr);
     }
 
-    internal class WindowsEncoder : Encoder 
+    internal class WindowsEncoder : Encoder
     {
         public override IntPtr StringToPtr(string str) => Marshal.StringToHGlobalUni(str);
 

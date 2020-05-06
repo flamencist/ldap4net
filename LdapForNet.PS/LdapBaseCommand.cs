@@ -46,11 +46,11 @@ namespace LdapForNet.PS
                 {
                     cn.Connect(Port, GetLdapVersion());
                 }
-                else if(!string.IsNullOrEmpty(HostName))
+                else if (!string.IsNullOrEmpty(HostName))
                 {
                     cn.Connect(HostName, Port, version: GetLdapVersion());
                 }
-                
+
                 cn.Bind(ToAuthType(Auth), new LdapCredential
                 {
                     UserName = UserName,
@@ -79,10 +79,9 @@ namespace LdapForNet.PS
 
         private Native.Native.LdapVersion GetLdapVersion()
         {
-            return (Native.Native.LdapVersion)Enum.Parse(typeof(Native.Native.LdapVersion),LdapVersion.ToString());
+            return (Native.Native.LdapVersion) Enum.Parse(typeof(Native.Native.LdapVersion), LdapVersion.ToString());
         }
 
         protected abstract void OnLdapBind(LdapConnection ldapConnection);
-
     }
 }

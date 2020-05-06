@@ -17,12 +17,17 @@ namespace LdapForNet
         void SetOption(LdapOption option, int value, bool global = false);
         void SetOption(LdapOption option, string value, bool global = false);
         void SetOption(LdapOption option, IntPtr valuePtr, bool global = false);
-        IList<LdapEntry> Search(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
-        Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default, LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE,  CancellationToken token = default);
+
+        IList<LdapEntry> Search(string @base, string filter, string[] attributes = default,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE);
+
+        Task<IList<LdapEntry>> SearchAsync(string @base, string filter, string[] attributes = default,
+            LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE, CancellationToken token = default);
+
         void Add(LdapEntry entry);
         void Modify(LdapModifyEntry entry);
         void Delete(string dn);
-        void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
+        void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);

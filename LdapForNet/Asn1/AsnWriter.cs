@@ -11,6 +11,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security.Cryptography;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
@@ -23,7 +24,7 @@ namespace LdapForNet.Asn1
     {
         private byte[] _buffer;
         private int _offset;
-        private Stack<(Asn1Tag,int,UniversalTagNumber)> _nestingStack;
+        private Stack<(Asn1Tag, int, UniversalTagNumber)> _nestingStack;
 
         /// <summary>
         ///   The <see cref="AsnEncodingRules"/> in use by this writer.
@@ -291,7 +292,7 @@ namespace LdapForNet.Asn1
             {
                 // Pre-allocate the pending data since we know how much.
                 EnsureWriteCapacity(1 + length);
-                _buffer[_offset] = (byte)length;
+                _buffer[_offset] = (byte) length;
                 _offset++;
                 return;
             }
@@ -301,7 +302,7 @@ namespace LdapForNet.Asn1
 
             // Pre-allocate the pending data since we know how much.
             EnsureWriteCapacity(lengthLength + 1 + length);
-            _buffer[_offset] = (byte)(MultiByteMarker | lengthLength);
+            _buffer[_offset] = (byte) (MultiByteMarker | lengthLength);
 
             // No minus one because offset didn't get incremented yet.
             int idx = _offset + lengthLength;
@@ -310,7 +311,7 @@ namespace LdapForNet.Asn1
 
             do
             {
-                _buffer[idx] = (byte)remaining;
+                _buffer[idx] = (byte) remaining;
                 remaining >>= 8;
                 idx--;
             } while (remaining > 0);
@@ -336,7 +337,6 @@ namespace LdapForNet.Asn1
             return 4;
         }
 
-      
 
         // T-REC-X.690-201508 sec 8.1.5
         private void WriteEndOfContents()
@@ -352,7 +352,7 @@ namespace LdapForNet.Asn1
 
             if (_nestingStack == null)
             {
-                _nestingStack = new Stack<(Asn1Tag,int,UniversalTagNumber)>();
+                _nestingStack = new Stack<(Asn1Tag, int, UniversalTagNumber)>();
             }
 
             Debug.Assert(tag.IsConstructed);
@@ -381,7 +381,7 @@ namespace LdapForNet.Asn1
             }
 
             _nestingStack.Pop();
-            
+
             // BER could use the indefinite encoding that CER does.
             // But since the definite encoding form is easier to read (doesn't require a contextual
             // parser to find the end-of-contents marker) some ASN.1 readers (including the previous
@@ -405,7 +405,7 @@ namespace LdapForNet.Asn1
             // Best case, length fits in the compact byte
             if (shiftSize == 0)
             {
-                _buffer[lenOffset] = (byte)containedLength;
+                _buffer[lenOffset] = (byte) containedLength;
                 return;
             }
 
@@ -441,7 +441,7 @@ namespace LdapForNet.Asn1
 
         private static void CheckUniversalTag(Asn1Tag tag, UniversalTagNumber universalTagNumber)
         {
-            if (tag.TagClass == TagClass.Universal && tag.TagValue != (int)universalTagNumber)
+            if (tag.TagClass == TagClass.Universal && tag.TagValue != (int) universalTagNumber)
             {
                 throw new ArgumentException(
                     SR.Cryptography_Asn_UniversalValueIsFixed,

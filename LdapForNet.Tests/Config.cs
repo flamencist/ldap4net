@@ -14,10 +14,13 @@ namespace LdapForNetTests
         public const string LdapUserDn = "cn=admin,dc=example,dc=com";
         public const string LdapDigestMd5UserName = "digestTest";
         public const string LdapExternalDn = "cn=external,dc=example,dc=com";
-        public const string LdapDigestMd5ProxyDn= "cn=digesttestproxy,dc=example,dc=com";
+        public const string LdapDigestMd5ProxyDn = "cn=digesttestproxy,dc=example,dc=com";
         public const string LdapPassword = "test";
         public static string ClientCertPfxPath => GetLocation("client.pfx");
-        internal static string GetExeDirectory() => new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
+
+        internal static string GetExeDirectory() =>
+            new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
+
         internal static string GetLocation(string filename) => Path.Combine(GetExeDirectory(), filename);
     }
 }

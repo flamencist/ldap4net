@@ -12,7 +12,8 @@ namespace LdapForNet.RequestHandlers
             return Native.ldap_start_tls_s(handle, ref returnValue, ref message, IntPtr.Zero, IntPtr.Zero);
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             throw new NotImplementedException();
         }

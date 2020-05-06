@@ -26,7 +26,7 @@ namespace LdapForNet.Native
                 {
                     return LdapAuthType.Negotiate;
                 }
-                
+
                 if (Digest.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
                 {
                     return LdapAuthType.Digest;
@@ -36,12 +36,12 @@ namespace LdapForNet.Native
                 {
                     return LdapAuthType.External;
                 }
-                
+
                 if (Anonymous.Equals(mechanism, StringComparison.OrdinalIgnoreCase))
                 {
                     return LdapAuthType.Anonymous;
                 }
-                
+
                 return LdapAuthType.Unknown;
             }
 
@@ -97,19 +97,23 @@ namespace LdapForNet.Native
         public enum LdapAuthType
         {
             Anonymous = 12,
+
             //Basic = 1,
             Simple = 10,
             Negotiate = 2,
-            GssApi=11,
+            GssApi = 11,
             ExternalAd = 9,
+
             //Ntlm = 3,
             Digest = 4,
+
             //Sicily = 5,
             //Dpa = 6,
             //Msn = 7,
             External = 8,
+
             //Kerberos = 9,
-            Unknown=0
+            Unknown = 0
         }
     }
 }

@@ -8,7 +8,6 @@ namespace LdapForNet.Utils
 {
     internal static class MarshalUtils
     {
-        
         internal static List<string> PtrToStringArray(IntPtr ptr)
         {
             return GetPointerArray(ptr)
@@ -39,16 +38,17 @@ namespace LdapForNet.Utils
             for (var i = 0; i < sourceData.Length; i++)
             {
                 var berPtr = ByteArrayToBerValue(sourceData[i]);
-                Marshal.WriteIntPtr(ptr,i*IntPtr.Size,berPtr);
+                Marshal.WriteIntPtr(ptr, i * IntPtr.Size, berPtr);
             }
-            Marshal.WriteIntPtr(ptr, sourceData.Length*IntPtr.Size,IntPtr.Zero);
+
+            Marshal.WriteIntPtr(ptr, sourceData.Length * IntPtr.Size, IntPtr.Zero);
         }
 
         internal static IntPtr ByteArrayToBerValue(byte[] bytes)
         {
             var berPtr = Marshal.AllocHGlobal(Marshal.SizeOf<Native.Native.berval>());
             var valPtr = Marshal.AllocHGlobal(bytes.Length);
-            Marshal.Copy(bytes,0,valPtr,bytes.Length);
+            Marshal.Copy(bytes, 0, valPtr, bytes.Length);
             Marshal.StructureToPtr(new Native.Native.berval
             {
                 bv_val = valPtr,
@@ -56,12 +56,12 @@ namespace LdapForNet.Utils
             }, berPtr, true);
             return berPtr;
         }
-        
+
         internal static IntPtr ByteArrayToGnuTlsDatum(byte[] bytes)
         {
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeMethodsLinux.gnutls_datum_t>());
             var valPtr = Marshal.AllocHGlobal(bytes.Length);
-            Marshal.Copy(bytes,0,valPtr,bytes.Length);
+            Marshal.Copy(bytes, 0, valPtr, bytes.Length);
             Marshal.StructureToPtr(new NativeMethodsLinux.gnutls_datum_t
             {
                 data = valPtr,
@@ -69,7 +69,7 @@ namespace LdapForNet.Utils
             }, ptr, true);
             return ptr;
         }
-        
+
         internal static void TlsDatumFree(IntPtr datum)
         {
             if (datum != IntPtr.Zero)
@@ -98,20 +98,19 @@ namespace LdapForNet.Utils
             }
         }
 
-        
 
         internal static void StringArrayToPtr(IEnumerable<string> array, IntPtr ptr)
         {
             var ptrArray = array.Select(Encoder.Instance.StringToPtr).ToArray();
-            Marshal.Copy(ptrArray,0,ptr,ptrArray.Length);
+            Marshal.Copy(ptrArray, 0, ptr, ptrArray.Length);
         }
-        
-        internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) 
+
+        internal static void StructureArrayToPtr<T>(IEnumerable<T> array, IntPtr ptr, bool endNull = false)
         {
             var ptrArray = array.Select(structure =>
             {
                 var structPtr = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
-                Marshal.StructureToPtr(structure,structPtr,false);
+                Marshal.StructureToPtr(structure, structPtr, false);
                 return structPtr;
             }).ToList();
             if (endNull)
@@ -119,7 +118,7 @@ namespace LdapForNet.Utils
                 ptrArray.Add(IntPtr.Zero);
             }
 
-            Marshal.Copy(ptrArray.ToArray(),0,ptr,ptrArray.Count);  
+            Marshal.Copy(ptrArray.ToArray(), 0, ptr, ptrArray.Count);
         }
 
         internal static IntPtr BytesToPtr(byte[] bytes)
@@ -128,8 +127,9 @@ namespace LdapForNet.Utils
             {
                 return IntPtr.Zero;
             }
+
             var ptr = Marshal.AllocHGlobal(bytes.Length);
-            Marshal.Copy(bytes,0,ptr,bytes.Length);
+            Marshal.Copy(bytes, 0, ptr, bytes.Length);
             return ptr;
         }
 
@@ -140,8 +140,9 @@ namespace LdapForNet.Utils
                 var intPtrArray = Marshal.AllocHGlobal(IntPtr.Size * size);
                 for (var i = 0; i < size; i++)
                 {
-                    Marshal.WriteIntPtr(intPtrArray, IntPtr.Size * i,IntPtr.Zero);
+                    Marshal.WriteIntPtr(intPtrArray, IntPtr.Size * i, IntPtr.Zero);
                 }
+
                 return intPtrArray;
             }
         }
@@ -159,7 +160,6 @@ namespace LdapForNet.Utils
                     tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
                 }
             }
-
         }
     }
 }

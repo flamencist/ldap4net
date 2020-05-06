@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 // ReSharper disable InconsistentNaming
+
 namespace LdapForNet.Asn1
 {
     /// <summary>

@@ -16,12 +16,18 @@ namespace LdapForNet
 
         public static LdapEntry GetRootDse(this ILdapConnection connection)
         {
-            var result =  connection.Search(null, "(objectclass=*)", new [] {"namingContexts", "subschemaSubentry", "supportedLDAPVersion", "supportedSASLMechanisms", "supportedExtension" ,"supportedControl" ,"supportedFeatures", "vendorName","vendorVersion"}, LdapSearchScope.LDAP_SCOPE_BASE)
+            var result = connection.Search(null, "(objectclass=*)",
+                    new[]
+                    {
+                        "namingContexts", "subschemaSubentry", "supportedLDAPVersion", "supportedSASLMechanisms",
+                        "supportedExtension", "supportedControl", "supportedFeatures", "vendorName", "vendorVersion"
+                    }, LdapSearchScope.LDAP_SCOPE_BASE)
                 .FirstOrDefault();
             if (result == null)
             {
                 return null;
             }
+
             var rootDse = connection.Search(null, "(objectclass=*)", scope: LdapSearchScope.LDAP_SCOPE_BASE).First();
             foreach (var attribute in rootDse.Attributes)
             {

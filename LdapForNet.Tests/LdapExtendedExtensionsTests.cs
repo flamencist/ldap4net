@@ -25,7 +25,7 @@ namespace LdapForNetTests
                 {
                     "u:admin",
                     $"dn:{Config.LdapUserDn}"
-                }, _=> _.Equals(authorizationId, StringComparison.OrdinalIgnoreCase) );
+                }, _ => _.Equals(authorizationId, StringComparison.OrdinalIgnoreCase));
             }
         }
     }
