@@ -99,7 +99,7 @@ namespace LdapForNetTests
         }
 
         [Fact]
-        public void LdapConnection_Bind_Using_Sasl_External_Via_Ssl()
+        public void LdapConnection_Bind_Using_Sasl_External_Via_Client_Certificate()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -165,7 +165,7 @@ namespace LdapForNetTests
 
             using (var connection = new LdapConnection())
             {
-                connection.Connect(Config.LdapHostName, Config.LdapPort, LdapSchema.LDAP);
+                connection.Connect(Config.LdapHostName, Config.LdapPort);
                 connection.StartTransportLayerSecurity(true);
                 connection.Bind(LdapAuthType.Simple, new LdapCredential
                 {
@@ -325,10 +325,10 @@ namespace LdapForNetTests
 
             AddLdapEntry();
             ModifyLdapEntry();
+            ModifyBinaryValues();
             DeleteLdapEntry();
         }
-
-
+        
         [Fact]
         public async Task LdapConnection_Add_Modify_Delete_Async()
         {
@@ -498,7 +498,6 @@ namespace LdapForNetTests
             }
         }
 
-
         [Fact]
         public void LdapConnection_Rename_Entry_Dn()
         {
@@ -533,14 +532,13 @@ namespace LdapForNetTests
             }
         }
 
-
         private void AddLdapEntry()
         {
             using (var connection = new LdapConnection())
             {
                 connection.Connect(Config.LdapHost, Config.LdapPort);
                 connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
-                connection.Add(new LdapEntry
+                var ldapEntry = new LdapEntry
                 {
                     Dn = $"cn=test,{Config.RootDn}",
                     Attributes = new Dictionary<string, List<string>>
@@ -551,7 +549,17 @@ namespace LdapForNetTests
                         {"givenname", new List<string> {"винстон"}},
                         {"description", new List<string> {"test_value"}}
                     }
-                });
+                };
+                var directoryEntry = ldapEntry.ToDirectoryEntry();
+                var image = new DirectoryAttribute
+                {
+                    Name = "jpegPhoto"
+                };
+                image.Add(new byte[]{1,2,3,4});
+                directoryEntry.Attributes.Add(image);
+                var response = (AddResponse)connection.SendRequest(new AddRequest(directoryEntry.Dn, directoryEntry.Attributes.ToArray()));
+                Assert.True(response.ResultCode == 0);
+                
                 var entries = connection.Search(Config.RootDn, "(&(objectclass=top)(cn=test))");
                 Assert.True(entries.Count == 1);
                 _testOutputHelper.WriteLine(entries[0].Dn);
@@ -561,7 +569,6 @@ namespace LdapForNetTests
                 Assert.True(GetAttributeValue(entries[0].Attributes, "objectClass").Any());
             }
         }
-
 
         private static void ModifyLdapEntry()
         {
@@ -608,6 +615,29 @@ namespace LdapForNetTests
                 Assert.Equal("Winston", entries[0].Attributes["sn"][0]);
                 Assert.Equal("數字", entries[0].Attributes["sn"][1]);
                 Assert.False(entries[0].Attributes.ContainsKey("description"));
+            }
+        }
+        
+        private static void ModifyBinaryValues()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                var image = new DirectoryModificationAttribute
+                {
+                    LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+                    Name = "jpegPhoto"
+                };
+                image.Add(new byte[]{5,6,7,8});
+                var response = (ModifyResponse)connection.SendRequest(new ModifyRequest($"cn=test,{Config.RootDn}", image));
+                Assert.True(response.ResultCode == 0);
+
+                var actual = (SearchResponse)connection.SendRequest(new SearchRequest(Config.RootDn,"(&(objectclass=top)(cn=test))",LdapSearchScope.LDAP_SCOPE_SUBTREE));
+                var entries = actual.Entries;
+                Assert.True(entries.Count == 1);
+                Assert.Equal($"cn=test,{Config.RootDn}", entries[0].Dn);
+                Assert.Equal(new byte[]{5,6,7,8}, entries[0].Attributes["jpegPhoto"].GetValues<byte[]>().First());
             }
         }
 

@@ -64,7 +64,7 @@ namespace LdapForNet.RequestHandlers
         private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute,
             Native.Native.LdapModOperation operation)
         {
-            var modValue = attribute.GetValues<byte[]>().ToList() ?? new List<byte[]>();
+            var modValue = attribute.GetValues<byte[]>()?.ToList() ?? new List<byte[]>();
             var modValuePtr = MarshalUtils.AllocHGlobalIntPtrArray(modValue.Count + 1);
             MarshalUtils.ByteArraysToBerValueArray(modValue.Select(_ => _ ?? new byte[0]).ToArray(), modValuePtr);
             return new Native.Native.LDAPMod

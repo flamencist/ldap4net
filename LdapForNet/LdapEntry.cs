@@ -10,6 +10,22 @@ namespace LdapForNet
     {
         public string Dn { get; set; }
         public Dictionary<string, List<string>> Attributes { get; set; }
+
+        public DirectoryEntry ToDirectoryEntry()
+        {
+            var directoryEntry = new DirectoryEntry {Dn = Dn, Attributes = new SearchResultAttributeCollection()};
+            foreach (var attr in Attributes)
+            {
+                var item = new DirectoryAttribute
+                {
+                    Name = attr.Key
+                };
+                item.AddValues(attr.Value);
+                directoryEntry.Attributes.Add(item);
+            }
+
+            return directoryEntry;
+        }
     }
 
     public class DirectoryEntry
