@@ -100,7 +100,7 @@ namespace LdapForNetTests
             {
                 connection.Connect(Config.LdapHostName, Config.LdapsPort, LdapSchema.LDAPS);
                 connection.TrustAllCertificates();
-                var cert = new X509Certificate2(Config.ClientCertPfxPath);
+                var cert = new X509Certificate2(Config.ClientCertPfxPath, "test");
 
                 connection.SetClientCertificate(cert);
                 
