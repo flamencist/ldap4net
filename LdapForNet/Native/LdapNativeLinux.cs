@@ -409,8 +409,6 @@ namespace LdapForNet.Native
         {
             //no such method in openldap client library
         }
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsLinux.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
 
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsLinux.ldap_controls_free(ctrls);
         internal override int ldap_control_free(IntPtr control) => NativeMethodsLinux.ldap_control_free(control);

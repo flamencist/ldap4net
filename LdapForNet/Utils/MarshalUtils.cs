@@ -105,8 +105,6 @@ namespace LdapForNet.Utils
             Marshal.Copy(ptrArray, 0, ptr, ptrArray.Length);
         }
 
-        internal static void StructureArrayToPtr<T>(IEnumerable<T> array, IntPtr ptr, bool endNull = false)
-
         internal static IntPtr StructureArrayToPtr<T>(T[] array)
         {
             var ptr = AllocHGlobalIntPtrArray(array.Length + 1);

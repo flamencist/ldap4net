@@ -111,7 +111,6 @@ namespace LdapForNet.Native
 
         internal abstract void Dispose(SafeHandle ld);
 
-        internal void ThrowIfError(int res, string method, IDictionary<string, string> details = default)
         internal abstract void ldap_controls_free(IntPtr ctrls);
         internal abstract int ldap_control_free(IntPtr control);
         internal abstract int ldap_create_sort_control(SafeHandle handle, IntPtr keys, byte critical, ref IntPtr control);

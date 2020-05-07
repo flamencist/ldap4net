@@ -5,11 +5,12 @@ namespace LdapForNet.RequestHandlers
 {
     internal class TransportLayerSecurityRequestHandler : RequestHandler
     {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControls, IntPtr clientControls,
+            ref int messageId)
         {
             var returnValue = 0;
             var message = IntPtr.Zero;
-            return Native.ldap_start_tls_s(handle, ref returnValue, ref message, IntPtr.Zero, IntPtr.Zero);
+            return Native.ldap_start_tls_s(handle, ref returnValue, ref message, serverControls, clientControls);
         }
 
         public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,

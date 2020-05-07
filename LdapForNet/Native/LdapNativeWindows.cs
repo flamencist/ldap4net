@@ -1,20 +1,17 @@
 using System;
 using System.Linq;
-using System.Net;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using LdapForNet.Utils;
 
 namespace LdapForNet.Native
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate bool VERIFYSERVERCERT(IntPtr Connection, IntPtr pServerCert);
+    internal delegate bool VERIFYSERVERCERT(IntPtr connection, IntPtr pServerCert);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate bool QUERYCLIENTCERT(IntPtr Connection, IntPtr trusted_CAs, ref IntPtr certificateHandle);
+    internal delegate bool QUERYCLIENTCERT(IntPtr connection, IntPtr trustedCAs, ref IntPtr certificateHandle);
 
     internal class LdapNativeWindows : LdapNative
     {
@@ -49,21 +46,30 @@ namespace LdapForNet.Native
         }
 
         internal override int Init(ref IntPtr ld, string url)
-        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
-        internal override int Init(ref IntPtr ld, string hostname, int port)
         {
-            var urls = url.Split(' ').Select(_ => new Uri(_)).ToList();
-            var schema = urls.Any(_ => _.IsLdaps()) ? Native.LdapSchema.LDAPS : Native.LdapSchema.LDAP;
-            var hostnames = string.Join(" ", urls.Select(_ => _.ToHostname()));
+            if (string.IsNullOrEmpty(url))
+            {
+                Init(out ld, null, Native.LdapSchema.LDAP);
+            }
+            else
+            {
+                var urls = url.Split(' ').Select(_ => new Uri(_)).ToList();
+                var schema = urls.Any(_ => _.IsLdaps()) ? Native.LdapSchema.LDAPS : Native.LdapSchema.LDAP;
+                var hostnames = string.Join(" ", urls.Select(_ => _.ToHostname()));
 
-            Init(out ld, hostnames, schema);
+                Init(out ld, hostnames, schema);
+            }
+            
             if (ld == IntPtr.Zero)
             {
                 return -1;
             }
 
+
             return (int) Native.ResultCode.Success;
         }
+        
+        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
 
         private static void Init(out IntPtr ld, string hostnames, Native.LdapSchema schema)
         {
@@ -186,10 +192,9 @@ namespace LdapForNet.Native
 
         internal override int LdapGetLastError(SafeHandle ld) => NativeMethodsWindows.LdapGetLastError();
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
         internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp,
             ref IntPtr serverctrlsp, int freeit) =>
-            NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
+            NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
 
         internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message) =>
             NativeMethodsWindows.ldap_first_entry(ld, message);
@@ -257,7 +262,7 @@ namespace LdapForNet.Native
         }
 
         internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
+            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data, freeIt);
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsWindows.ldap_controls_free(ctrls);
         internal override int ldap_control_free(IntPtr control) => NativeMethodsWindows.ldap_control_free(control);
 
@@ -319,10 +324,6 @@ namespace LdapForNet.Native
 
         internal override bool BerScanfSupports(char fmt) => 
             _supportedFormats.Contains(fmt);
-        
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid,
-            ref IntPtr data, byte freeIt) =>
-            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
 
         internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message,
             IntPtr serverctrls, IntPtr clientctrls)

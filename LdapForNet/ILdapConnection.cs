@@ -30,7 +30,6 @@ namespace LdapForNet
         void Delete(string dn);
         void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
         void Abandon(AbandonRequest abandonRequest);
-        void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);

@@ -326,9 +326,6 @@ namespace LdapForNet.Native
                 // no catch
             }
         }
-
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsOsx.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data,freeIt);
         
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsOsx.ldap_controls_free(ctrls);
         internal override int ldap_control_free(IntPtr control) => NativeMethodsOsx.ldap_control_free(control);

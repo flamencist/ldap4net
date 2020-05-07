@@ -691,9 +691,9 @@ namespace LdapForNet
 
                 var critical = IsCritical;
                 var ld = IntPtr.Zero;
-                LdapNative.Instance.Init(ref ld, null, 389);
-                var ldaphandle = new LdapHandle(ld);
-                var error = LdapNative.Instance.ldap_create_sort_control(ldaphandle, memHandle, critical ? (byte)1 : (byte)0, ref control);
+                LdapNative.Instance.Init(ref ld, null);
+                var ldapHandle = new LdapHandle(ld);
+                var error = LdapNative.Instance.ldap_create_sort_control(ldapHandle, memHandle, critical ? (byte)1 : (byte)0, ref control);
                 
                 LdapNative.Instance.ThrowIfError(error,nameof(LdapNative.Instance.ldap_create_sort_control));
 
