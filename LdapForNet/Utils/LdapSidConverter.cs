@@ -17,9 +17,10 @@ namespace LdapForNet.Utils
             {
                 throw new ArgumentException($"Sid is wrong format. Sid: {sid}");
             }
+
             //"S-1-5-21-2127521184-1604012920-1887927527-72713"
             var sidVersion = byte.Parse(parts[1]).ToString("X"); //01
-            var subAuthoirityCount = ((byte)(parts.GetUpperBound(0) - 2)).ToString("X"); //05
+            var subAuthoirityCount = ((byte) (parts.GetUpperBound(0) - 2)).ToString("X"); //05
             var securityNtAuthority = parts[2]; // 0x00 00 00 00 00 05
 
             var builder = new StringBuilder();
@@ -32,17 +33,19 @@ namespace LdapForNet.Utils
                 var temp = Convert.ToInt64(parts[i]).ToString("X");
                 builder.Append(EndianReverse(temp.PadLeft(SubAuthorityLength, '0')));
             }
+
             return builder.ToString();
         }
 
         private static string EndianReverse(string hex)
         {
             var reversed = new char[hex.Length];
-            for (var i = hex.Length-1; i > 0; i= i-2)
+            for (var i = hex.Length - 1; i > 0; i = i - 2)
             {
-                reversed[hex.Length - i - 1] = hex[i-1];
-                reversed[hex.Length - i ] = hex[i];
+                reversed[hex.Length - i - 1] = hex[i - 1];
+                reversed[hex.Length - i] = hex[i];
             }
+
             return new string(reversed);
         }
     }

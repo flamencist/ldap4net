@@ -16,6 +16,13 @@ variables:
 
 
 steps:
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      $file = "$env:windir\System32\drivers\etc\hosts"
+      "127.0.0.1 example" | Add-Content -PassThru $file
+      Get-Content -Path $file
 - task: NuGetToolInstaller@1
 - task: Npm@1
   inputs:

@@ -1,6 +1,7 @@
 #! /bin/bash
 DIRNAME="$( cd "$(dirname "$0")" ; pwd -P )"
 TMPDIR="/tmp/slapd"
+LDAPI_PATH="%2Ftmp%2Fslapd%2Fslapdunix"
 
 if [ ! -d "${TMPDIR}" ]
 then
@@ -9,7 +10,10 @@ else
   rm -rf "${TMPDIR}"
   mkdir -p "${TMPDIR}"
 fi
+mkdir "${TMPDIR}/certs"
+cp "${DIRNAME}/server.crt" "${TMPDIR}/certs/"
+cp "${DIRNAME}/server.key" "${TMPDIR}/certs/"
 
-slapd -f "${DIRNAME}/slapd.linux.conf" -h ldap://localhost:4389 -d 256 &
+slapd -f "${DIRNAME}/slapd.linux.conf" -h "ldap://localhost:4389 ldaps://localhost:4636 ldapi://${LDAPI_PATH}" -d 256 &
 sleep 6
 ldapadd -h localhost:4389 -D cn=admin,dc=example,dc=com -w test -f "${DIRNAME}/base.ldif"

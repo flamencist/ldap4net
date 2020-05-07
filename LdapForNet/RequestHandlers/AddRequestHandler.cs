@@ -12,27 +12,21 @@ namespace LdapForNet.RequestHandlers
         {
             if (request is AddRequest addRequest)
             {
-                var entry = addRequest.LdapEntry;
-                if (string.IsNullOrWhiteSpace(entry.Dn))
+                if (string.IsNullOrWhiteSpace(addRequest.DistinguishedName))
                 {
-                    throw new ArgumentNullException(nameof(entry.Dn));
+                    throw new ArgumentNullException(nameof(addRequest.DistinguishedName));
                 }
 
-                if (entry.Attributes == null)
-                {
-                    entry.Attributes = new Dictionary<string, List<string>>();
-                }
+                var attrs = addRequest.Attributes.Select(ToLdapMod).ToList();
 
-                var attrs = entry.Attributes.Select(ToLdapMod).ToList();
+                var ptr = MarshalUtils.AllocHGlobalIntPtrArray(addRequest.Attributes.Count + 1);
+                MarshalUtils.StructureArrayToPtr(attrs, ptr, true);
 
-                var ptr = MarshalUtils.AllocHGlobalIntPtrArray(entry.Attributes.Count+1); 
-                MarshalUtils.StructureArrayToPtr(attrs,ptr, true);
-
-                var result =  Native.ldap_add_ext(handle,
-                    addRequest.LdapEntry.Dn,
-                    ptr,                
-                    IntPtr.Zero, 
-                    IntPtr.Zero ,
+                var result = Native.ldap_add_ext(handle,
+                    addRequest.DistinguishedName,
+                    ptr,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
                     ref messageId
                 );
 
@@ -48,10 +42,10 @@ namespace LdapForNet.RequestHandlers
             }
 
             return 0;
-
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
@@ -63,26 +57,20 @@ namespace LdapForNet.RequestHandlers
                     return LdapResultCompleteStatus.Unknown;
             }
         }
-        
-        private static Native.Native.LDAPMod ToLdapMod(KeyValuePair<string, List<string>> attribute)
-        {
-            return ToLdapMod(new LdapModifyAttribute
-            {
-                Type = attribute.Key,
-                LdapModOperation = LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_ADD,
-                Values = attribute.Value
-            });
-        }
 
-        private static Native.Native.LDAPMod ToLdapMod(LdapModifyAttribute attribute)
+        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute) =>
+            ToLdapMod(attribute, LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_ADD);
+
+        private static Native.Native.LDAPMod ToLdapMod(DirectoryAttribute attribute,
+            Native.Native.LdapModOperation operation)
         {
-            var modValue = attribute.Values ?? new List<string>();
+            var modValue = attribute.GetValues<byte[]>()?.ToList() ?? new List<byte[]>();
             var modValuePtr = MarshalUtils.AllocHGlobalIntPtrArray(modValue.Count + 1);
-            MarshalUtils.ByteArraysToBerValueArray(modValue.Select(GetModValue).ToArray(), modValuePtr);
+            MarshalUtils.ByteArraysToBerValueArray(modValue.Select(_ => _ ?? new byte[0]).ToArray(), modValuePtr);
             return new Native.Native.LDAPMod
             {
-                mod_op = (int)attribute.LdapModOperation | (int)LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_BVALUES,
-                mod_type = Encoder.Instance.StringToPtr(attribute.Type),
+                mod_op = (int) operation | (int) LdapForNet.Native.Native.LdapModOperation.LDAP_MOD_BVALUES,
+                mod_type = Encoder.Instance.StringToPtr(attribute.Name),
                 mod_vals_u = new Native.Native.LDAPMod.mod_vals
                 {
                     modv_bvals = modValuePtr
@@ -90,9 +78,5 @@ namespace LdapForNet.RequestHandlers
                 mod_next = IntPtr.Zero
             };
         }
-
-        private static byte[] GetModValue(string str) => string.IsNullOrEmpty(str) ? new byte[0] : Encoder.Instance.GetBytes(str);
-
-
     }
 }

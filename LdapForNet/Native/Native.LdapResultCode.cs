@@ -53,4 +53,4 @@ namespace LdapForNet.Native
             Other = 80
         }
     }
-}    
+}

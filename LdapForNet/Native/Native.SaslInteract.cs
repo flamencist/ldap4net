@@ -38,6 +38,5 @@ namespace LdapForNet.Native
             SASL_CB_GETREALM = 0x4008,
             SASL_CB_PROXY_POLICY = 0x8001,
         }
-        
     }
 }

@@ -9,8 +9,12 @@ namespace LdapForNetTests
 {
     public class LdapExtendedExtensionsTests
     {
+        /// <summary>
+        /// https://github.com/delphij/openldap/blob/master/clients/tools/ldapwhoami.c
+        /// </summary>
+        /// <returns></returns>
         [Fact]
-        public async Task LdapConnection_GetRootDse_Returns_Server_Information()
+        public async Task LdapConnection_Extended_Operation_WhoAmI_Async()
         {
             using (var connection = new LdapConnection())
             {
@@ -21,7 +25,7 @@ namespace LdapForNetTests
                 {
                     "u:admin",
                     $"dn:{Config.LdapUserDn}"
-                }, _=> _.Equals(authorizationId, StringComparison.OrdinalIgnoreCase) );
+                }, _ => _.Equals(authorizationId, StringComparison.OrdinalIgnoreCase));
             }
         }
     }

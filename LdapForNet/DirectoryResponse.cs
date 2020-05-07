@@ -9,7 +9,7 @@ namespace LdapForNet
 
         public virtual string ErrorMessage { get; internal set; }
     }
-    
+
     public class SearchResponse : DirectoryResponse
     {
         public List<DirectoryEntry> Entries { get; internal set; } = new List<DirectoryEntry>();
@@ -17,24 +17,20 @@ namespace LdapForNet
 
     public class AddResponse : DirectoryResponse
     {
-        
     }
-    
+
     public class ModifyResponse : DirectoryResponse
     {
-        
     }
-    
+
     public class ModifyDNResponse : DirectoryResponse
     {
-        
     }
-    
+
     public class DeleteResponse : DirectoryResponse
     {
-        
     }
-    
+
     public class ExtendedResponse : DirectoryResponse
     {
         private byte[] _value;
@@ -64,6 +60,5 @@ namespace LdapForNet
 
     public class CompareResponse : DirectoryResponse
     {
-        
     }
 }

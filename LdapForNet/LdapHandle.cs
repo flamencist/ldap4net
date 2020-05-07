@@ -17,7 +17,7 @@ namespace LdapForNet
             return LdapNative.Instance.ldap_unbind_s(handle) == (int) Native.Native.ResultCode.Success;
         }
     }
-    
+
     internal sealed class HGlobalMemHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         internal HGlobalMemHandle(IntPtr value) : base(true)

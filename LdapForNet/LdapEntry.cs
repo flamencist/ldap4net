@@ -3,14 +3,29 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace LdapForNet
 {
     public class LdapEntry
     {
         public string Dn { get; set; }
-        public Dictionary<string,List<string>> Attributes { get; set; }
+        public Dictionary<string, List<string>> Attributes { get; set; }
+
+        public DirectoryEntry ToDirectoryEntry()
+        {
+            var directoryEntry = new DirectoryEntry {Dn = Dn, Attributes = new SearchResultAttributeCollection()};
+            foreach (var attr in Attributes)
+            {
+                var item = new DirectoryAttribute
+                {
+                    Name = attr.Key
+                };
+                item.AddValues(attr.Value);
+                directoryEntry.Attributes.Add(item);
+            }
+
+            return directoryEntry;
+        }
     }
 
     public class DirectoryEntry
@@ -23,7 +38,7 @@ namespace LdapForNet
             return new LdapEntry
             {
                 Dn = Dn,
-                Attributes = Attributes.ToDictionary(_=>_.Name,_=>_.GetValues<string>().ToList())
+                Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
             };
         }
     }
@@ -38,7 +53,9 @@ namespace LdapForNet
     {
         public string Type { get; set; }
         public List<string> Values { get; set; }
-        public Native.Native.LdapModOperation LdapModOperation { get; set; } = Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
+
+        public Native.Native.LdapModOperation LdapModOperation { get; set; } =
+            Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
     }
 
     public class DirectoryAttribute
@@ -61,6 +78,11 @@ namespace LdapForNet
                 return _values.Select(_ => _ as T);
             }
 
+            if (type == typeof(byte[]) && valuesType == typeof(sbyte[]))
+            {
+                return _values.Select(_ => _ as T);
+            }
+
             if (type == typeof(string))
             {
                 return _values.Select(_ => Utils.Encoder.Instance.GetString((byte[]) _))
@@ -73,7 +95,8 @@ namespace LdapForNet
                     .Select(_ => _ as T);
             }
 
-            throw new NotSupportedException($"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
+            throw new NotSupportedException(
+                $"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
         }
 
         internal List<object> GetRawValues() => _values;
@@ -93,7 +116,7 @@ namespace LdapForNet
         private void ThrowIfWrongType<T>() where T : class, IEnumerable
         {
             var type = typeof(T);
-            if (type != typeof(string) && type != typeof(byte[]))
+            if (type != typeof(string) && type != typeof(byte[]) && type != typeof(sbyte[]))
             {
                 throw new NotSupportedException(
                     $"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
@@ -106,15 +129,37 @@ namespace LdapForNet
         }
     }
 
-    public class SearchResultAttributeCollection : KeyedCollection<string,DirectoryAttribute>
+    public class DirectoryModificationAttribute : DirectoryAttribute
     {
-        internal SearchResultAttributeCollection() { }
+        public Native.Native.LdapModOperation LdapModOperation { get; set; } =
+            Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
+    }
+
+    public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
+    {
+        internal SearchResultAttributeCollection()
+        {
+        }
 
         public ICollection<string> AttributeNames => Dictionary.Keys;
-        
+
         protected override string GetKeyForItem(DirectoryAttribute item)
         {
             return item.Name;
+        }
+    }
+
+    public class ModifyAttributeCollection : KeyedCollection<string, DirectoryModificationAttribute>
+    {
+        internal ModifyAttributeCollection()
+        {
+        }
+
+        public ICollection<string> AttributeNames => Dictionary.Keys;
+
+        protected override string GetKeyForItem(DirectoryModificationAttribute item)
+        {
+            return item.Name + item.LdapModOperation.ToString();
         }
     }
 }

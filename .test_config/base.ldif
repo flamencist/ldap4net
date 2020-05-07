@@ -39,4 +39,15 @@ objectClass: inetOrgPerson
 displayName: DigestMd5 proxy user
 userPassword: test
 uid: digestTestProxy
-authzFrom: dn:cn=digestTest,dc=example,dc=com
+authzFrom: dn.regex:cn=(digestTest|external),dc=example,dc=com
+
+# External user
+dn: cn=external,dc=example,dc=com
+cn: external
+sn: external
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+displayName: external user
+uid: external

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <AssemblyName>LdapForNet.Tests</AssemblyName>
     <RootNamespace>LdapForNetTests</RootNamespace>
@@ -15,5 +15,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LdapForNet\LdapForNet.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="client.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

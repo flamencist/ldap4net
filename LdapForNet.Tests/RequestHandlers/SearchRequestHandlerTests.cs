@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using LdapForNet;
 using LdapForNet.Native;
 using LdapForNet.RequestHandlers;
@@ -25,19 +24,19 @@ namespace LdapForNetTests.RequestHandlers
             var ldapSearchScope = Native.LdapSearchScope.LDAP_SCOPE_SUBTREE;
             var ldapFilter = "(objectclass=*)";
 
-            native.Setup(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
+            native.Setup(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int) ldapSearchScope, ldapFilter,
                     It.IsAny<IntPtr>(), It.IsAny<int>(),
+                    // ReSharper disable once AccessToModifiedClosure
                     It.IsAny<IntPtr>(), It.IsAny<IntPtr>(), It.IsAny<int>(), It.IsAny<int>(), ref messageId))
                 .Returns(20);
 
-            
-            var res = requestHandler.SendRequest(new LdapHandle(IntPtr.Zero), 
+
+            var res = requestHandler.SendRequest(new LdapHandle(IntPtr.Zero),
                 new SearchRequest(dn, ldapFilter, ldapSearchScope), ref messageId);
-            Assert.Equal(20,res);
-            native.Verify(_=>_.Search(It.IsAny<LdapHandle>(), dn, (int)ldapSearchScope, ldapFilter,
-                IntPtr.Zero, (int)Native.LdapSearchAttributesOnly.False,
-                IntPtr.Zero, IntPtr.Zero, 0, (int)Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
-            
+            Assert.Equal(20, res);
+            native.Verify(_ => _.Search(It.IsAny<LdapHandle>(), dn, (int) ldapSearchScope, ldapFilter,
+                IntPtr.Zero, (int) Native.LdapSearchAttributesOnly.False,
+                IntPtr.Zero, IntPtr.Zero, 0, (int) Native.LdapSizeLimit.LDAP_NO_LIMIT, ref messageId), Times.Once);
         }
 
         [Fact]
@@ -49,12 +48,12 @@ namespace LdapForNetTests.RequestHandlers
             var ldapHandle = new LdapHandle(IntPtr.Zero);
             var entry = new IntPtr(1);
             var dn = "cn=admin,dc=example,dc=com";
-            var attribute = new KeyValuePair<string, byte[][]>("cn",new[] { Encoder.Instance.GetBytes("admin") });
+            var attribute = new KeyValuePair<string, byte[][]>("cn", new[] {Encoder.Instance.GetBytes("admin")});
             var attributeNamePtr = Encoder.Instance.StringToPtr(attribute.Key);
             var dnPtr = Encoder.Instance.StringToPtr(dn);
-            var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size*(attribute.Value.Length+1));
+            var valuesPtr = Marshal.AllocHGlobal(IntPtr.Size * (attribute.Value.Length + 1));
             MarshalUtils.ByteArraysToBerValueArray(attribute.Value, valuesPtr);
-            
+
             native.Setup(_ => _.ldap_first_entry(ldapHandle, msg))
                 .Returns(entry);
             native.Setup(_ => _.ldap_next_entry(ldapHandle, msg))
@@ -71,22 +70,23 @@ namespace LdapForNetTests.RequestHandlers
                 .Returns(valuesPtr);
             native.Setup(_ => _.ldap_value_free_len(It.IsAny<IntPtr>()))
                 .Callback((IntPtr ptr) => Marshal.FreeHGlobal(ptr));
-            
+
             var status = requestHandler.Handle(ldapHandle,
                 Native.LdapResultType.LDAP_RES_SEARCH_ENTRY, msg, out _);
-            Assert.Equal(LdapResultCompleteStatus.Partial,status);
-            
-            status =  requestHandler.Handle(ldapHandle,
+            Assert.Equal(LdapResultCompleteStatus.Partial, status);
+
+            status = requestHandler.Handle(ldapHandle,
                 Native.LdapResultType.LDAP_RES_SEARCH_RESULT, msg, out var actual);
-            Assert.Equal(LdapResultCompleteStatus.Complete,status);
+            Assert.Equal(LdapResultCompleteStatus.Complete, status);
             Assert.IsType<SearchResponse>(actual);
             var searchResult = actual as SearchResponse;
             Assert.NotNull(searchResult);
             Assert.Single(searchResult.Entries);
-            Assert.Equal(dn,searchResult.Entries[0].Dn);
+            Assert.Equal(dn, searchResult.Entries[0].Dn);
             Assert.Single(searchResult.Entries[0].Attributes);
             Assert.True(searchResult.Entries[0].Attributes.Contains(attribute.Key));
-            Assert.Equal(attribute.Value[0], searchResult.Entries[0].Attributes[attribute.Key].GetValues<byte[]>().First());
+            Assert.Equal(attribute.Value[0],
+                searchResult.Entries[0].Attributes[attribute.Key].GetValues<byte[]>().First());
         }
 
         private static SearchRequestHandler CreateRequestHandler(IMock<LdapNative> native)

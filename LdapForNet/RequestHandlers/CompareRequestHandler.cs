@@ -5,16 +5,16 @@ using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
-    internal class CompareRequestHandler:RequestHandler
+    internal class CompareRequestHandler : RequestHandler
     {
         public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             if (request is CompareRequest compareRequest)
             {
-                if (string.IsNullOrEmpty(compareRequest.DistinguishedName)||
+                if (string.IsNullOrEmpty(compareRequest.DistinguishedName) ||
                     string.IsNullOrEmpty(compareRequest.Assertion?.Name) ||
                     compareRequest.Assertion.GetRawValues().Count != 1
-                    )
+                )
                 {
                     throw new LdapException("Wrong assertion");
                 }
@@ -26,8 +26,9 @@ namespace LdapForNet.RequestHandlers
                 {
                     berValuePtr = MarshalUtils.ByteArrayToBerValue(binaryValue);
                 }
-                
-                var result = Native.Compare(handle,compareRequest.DistinguishedName, compareRequest.Assertion.Name, stringValue, berValuePtr, IntPtr.Zero, IntPtr.Zero, ref messageId);
+
+                var result = Native.Compare(handle, compareRequest.DistinguishedName, compareRequest.Assertion.Name,
+                    stringValue, berValuePtr, IntPtr.Zero, IntPtr.Zero, ref messageId);
                 MarshalUtils.BerValFree(berValuePtr);
                 return result;
             }
@@ -35,7 +36,8 @@ namespace LdapForNet.RequestHandlers
             return 0;
         }
 
-        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType, IntPtr msg, out DirectoryResponse response)
+        public override LdapResultCompleteStatus Handle(SafeHandle handle, Native.Native.LdapResultType resType,
+            IntPtr msg, out DirectoryResponse response)
         {
             response = default;
             switch (resType)
