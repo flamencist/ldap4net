@@ -105,7 +105,7 @@ using (var cn = new LdapConnection())
 
 ### Connect
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	// connect use Domain Controller host from computer hostname and default port 389
@@ -117,7 +117,7 @@ using (var cn = new LdapConnection())
 ```
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	// connect use hostname and port
@@ -127,7 +127,7 @@ using (var cn = new LdapConnection())
 
 ```
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	// connect with URI
@@ -137,7 +137,7 @@ using (var cn = new LdapConnection())
 
 ```
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	// connect with ldap version 2
@@ -148,7 +148,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Connect TLS
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	// connect use hostname and port
@@ -161,7 +161,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Connect SSL (with self signed certificate)
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect("dc.example.com", 636, LdapSchema.LDAPS);
@@ -174,7 +174,7 @@ using (var cn = new LdapConnection())
 ### Bind
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -186,7 +186,7 @@ using (var cn = new LdapConnection())
 ```
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect("ldap.forumsys.com");
@@ -199,7 +199,7 @@ using (var cn = new LdapConnection())
 
 ### BindAsync
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -213,7 +213,7 @@ using (var cn = new LdapConnection())
 ### Bind Anonymous
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -226,7 +226,7 @@ using (var cn = new LdapConnection())
 ### Bind DIGEST-MD5
 [About DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     cn.Connect();
@@ -244,7 +244,7 @@ using (var cn = new LdapConnection())
 ### Bind SASL EXTERNAL (Client certificate)
 [About client certificate authentication in openldap](https://jpmens.net/pages/ldap-external/)
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     cn.Connect("dc.example.com",636,LdapSchema.LDAPS);
@@ -262,7 +262,7 @@ using (var cn = new LdapConnection())
 ### Bind SASL EXTERNAL (Client certificate & Active Directory)
 [About client certificate authentication](https://techcommunity.microsoft.com/t5/iis-support-blog/client-certificate-authentication-part-1/ba-p/324623#) 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     cn.Connect("dc.example.com",636,LdapSchema.LDAPS);
@@ -278,7 +278,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL EXTERNAL (Unix Socket)
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     cn.ConnectI("/tmp/yoursocketfile.unix");
@@ -292,7 +292,7 @@ using (var cn = new LdapConnection())
 [About SASL auhtorization proxy](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 
 Works on UNIX systems
-```cs
+```c#
 
 using (var cn = new LdapConnection())
 {
@@ -310,7 +310,7 @@ using (var cn = new LdapConnection())
 ```
 
 Works on UNIX systems
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     connection.Connect();
@@ -327,7 +327,7 @@ using (var cn = new LdapConnection())
 ```
 
 Works on UNIX systems
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     connection.Connect();
@@ -342,7 +342,7 @@ using (var cn = new LdapConnection())
 ```
 
 Works on Windows system
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
     connection.Connect();
@@ -359,7 +359,7 @@ using (var cn = new LdapConnection())
 
 ### Search
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -370,7 +370,7 @@ using (var cn = new LdapConnection())
 ```
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -382,7 +382,7 @@ using (var cn = new LdapConnection())
 
 ### Search (attributes with binary values)
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -395,7 +395,7 @@ using (var cn = new LdapConnection())
 
 ### Search (retrieve concrete list of attributes)
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -407,7 +407,7 @@ using (var cn = new LdapConnection())
 
 ### SearchAsync
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -420,7 +420,7 @@ using (var cn = new LdapConnection())
 ### SearchByCn  
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -431,7 +431,7 @@ using (var cn = new LdapConnection())
 ```
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -446,7 +446,7 @@ using (var cn = new LdapConnection())
 ### SearchBySid  
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -457,7 +457,7 @@ using (var cn = new LdapConnection())
 ```
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -473,7 +473,7 @@ using (var cn = new LdapConnection())
 ### SetOption
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -486,40 +486,40 @@ using (var cn = new LdapConnection())
 ### Add
    
    
-   ```cs
-   using (var cn = new LdapConnection())
-   {
-   	cn.Connect();
-   	cn.Bind();
-   	cn.Add(new LdapEntry
-   	{
-   	Dn = "cn=test,dc=example,dc=com",
-   	Attributes = new Dictionary<string, List<string>>
-   	{
-   	    {"sn", new List<string> {"Winston"}},
-   	    {"objectclass", new List<string> {"inetOrgPerson"}},
-   	    {"givenName", new List<string> {"your_name"}},
-   	    {"description", new List<string> {"your_description"}}
-   	}
-   	});
-   }
-   ```
+```c#
+using (var cn = new LdapConnection())
+{
+    cn.Connect();
+    cn.Bind();
+    cn.Add(new LdapEntry
+    {
+    Dn = "cn=test,dc=example,dc=com",
+    Attributes = new Dictionary<string, List<string>>
+    {
+        {"sn", new List<string> {"Winston"}},
+        {"objectclass", new List<string> {"inetOrgPerson"}},
+        {"givenName", new List<string> {"your_name"}},
+        {"description", new List<string> {"your_description"}}
+    }
+    });
+}
+```
 
 ### Add Binary Values
 
-```cs
-   using (var cn = new LdapConnection())
-   {
-   	cn.Connect();
-   	cn.Bind();
-   	var image = new DirectoryAttribute
+```c#
+using (var cn = new LdapConnection())
+{
+    cn.Connect();
+    cn.Bind();
+    var image = new DirectoryAttribute
     {
         Name = "jpegPhoto"
     };
     image.Add(new byte[]{1,2,3,4});
     directoryEntry.Attributes.Add(image);
     var response = (AddResponse)connection.SendRequest(new AddRequest("cn=test,dc=example,dc=com", image));
-   }
+}
    ```
 
 
@@ -596,8 +596,8 @@ using (var cn = new LdapConnection())
 	cn.Connect();
 	cn.Bind();
 	var image = new DirectoryModificationAttribute
-    {
-        LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+	{
+	    LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
         Name = "jpegPhoto
     };
     image.Add(new byte[]{ 5, 6, 7, 8});
@@ -610,30 +610,30 @@ using (var cn = new LdapConnection())
 Microsoft Active Directory
 
 ```c#
- using(var connection = new LdapConnection())
- {
+using (var cn = new LdapConnection())
+{
       // need use ssl/tls for reset password
-      connection.Connect("dc.example.com", 636, LdapSchema.LDAPS);
-      connection.Bind();
-
+      cn.Connect("dc.example.com", 636, LdapSchema.LDAPS);
+      cn.Bind();
+    
       var attribute = new DirectoryModificationAttribute()
       {
           Name = "unicodePwd",
           LdapModOperation = Native.LdapModOperation.LDAP_MOD_REPLACE
       };
-
+    
       string password = "\"strongPassword\"";
       byte[] encodedBytes = System.Text.Encoding.Unicode.GetBytes(password);
       attribute.Add<byte[]>(encodedBytes);
-
-      var response = (ModifyResponse)connection.SendRequest(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", attribute));
-  }
+    
+      var response = (ModifyResponse)cn.SendRequest(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", attribute));
+}
 ```
 
 ### ModifyAsync
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -675,7 +675,7 @@ using (var cn = new LdapConnection())
 ### Delete
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -687,7 +687,7 @@ using (var cn = new LdapConnection())
 ### DeleteAsync
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -699,7 +699,7 @@ using (var cn = new LdapConnection())
 ### Rename
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -711,7 +711,7 @@ using (var cn = new LdapConnection())
 ### RenameAsync
 
 
-```cs
+```c#
 using (var cn = new LdapConnection())
 {
 	cn.Connect();
@@ -753,53 +753,26 @@ Inspired by .NET Framework LdapConnection.SendRequest
 ### GetRootDse
 Information about server https://ldapwiki.com/wiki/RootDSE
 
-```cs
+```c#
 
- using (var cn = new LdapConnection())
- {
- 	cn.Connect();
- 	cn.Bind();
-	var rootDse =  connection.GetRootDse();
- }
+using (var cn = new LdapConnection())
+{
+    cn.Connect();
+    cn.Bind();
+    var rootDse =  connection.GetRootDse();
+}
 ```
 
 ### WhoAmI
 Returns authorization id of user https://ldapwiki.com/wiki/Who%20Am%20I%20Extended%20Operation
 
-```cs
-
- using (var cn = new LdapConnection())
- {
- 	cn.Connect();
- 	cn.Bind();
-	var authzId = connection.WhoAmI().Result;
- }
-```
-
-### GetNativeLdapPtr
-
-For own implementations or not implemented OpenLdap functions use ```GetNativeLdapPtr```. It's provided pointer to native structure LDAP. So we can use this pointer in own implementations.
-For example, implement "DIGEST-MD5" authentication 
-
-```cs
-using static LdapForNet.Native.Native;
+```c#
 
 using (var cn = new LdapConnection())
 {
-	cn.Connect();
-	var ld = cn.GetNativeLdapPtr();
-	var defaults = new LdapSaslDefaults { 
-		mech = "DIGEST-MD5",
-		passwd="password",
-        	authcid="user",
-        	realm="realm.com",
-        	authzid="user"
-	};
-	var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(defaults));
-            Marshal.StructureToPtr(defaults, ptr, false);
-	int rc = ldap_sasl_interactive_bind_s( ld, null,defaults.mech, IntPtr.Zero, IntPtr.Zero,
-                (uint)LdapInteractionFlags.LDAP_SASL_QUIET, (l, flags, d, interact) => (int)LdapResultCode.LDAP_SUCCESS, ptr);
-...
+    cn.Connect();
+    cn.Bind();
+    var authzId = connection.WhoAmI().Result;
 }
 ```
 

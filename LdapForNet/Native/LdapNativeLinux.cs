@@ -21,11 +21,7 @@ namespace LdapForNet.Native
         {
             const int verifyDepth = 6;
             var certData = MarshalUtils.ByteArrayToGnuTlsDatum(certificate.Export(X509ContentType.Cert));
-            var certs = Marshal.AllocHGlobal(IntPtr.Size * verifyDepth);
-            for (var i = 0; i < verifyDepth; i++)
-            {
-                Marshal.WriteIntPtr(certs, i * IntPtr.Size, IntPtr.Zero);
-            }
+            var certs = MarshalUtils.AllocHGlobalIntPtrArray(verifyDepth);
 
             var privateKey = (RSA) certificate.PrivateKey;
 
