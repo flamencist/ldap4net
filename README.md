@@ -296,9 +296,9 @@ Works on UNIX systems
 
 using (var cn = new LdapConnection())
 {
-    connection.Connect();
+    cn.Connect();
 
-    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    cn.Bind(LdapAuthType.Digest, new LdapCredential
     {
         UserName = "username",
         Password = "clearTextPassword",
@@ -313,9 +313,9 @@ Works on UNIX systems
 ```c#
 using (var cn = new LdapConnection())
 {
-    connection.Connect();
+    cn.Connect();
 
-    connection.Bind(LdapAuthType.Digest, new LdapCredential
+    cn.Bind(LdapAuthType.Digest, new LdapCredential
     {
         UserName = "username",
         Password = "clearTextPassword",
@@ -330,9 +330,9 @@ Works on UNIX systems
 ```c#
 using (var cn = new LdapConnection())
 {
-    connection.Connect();
+    cn.Connect();
 
-    connection.Bind(LdapAuthType.GssApi, new LdapCredential
+    cn.Bind(LdapAuthType.GssApi, new LdapCredential
     {
         AuthorizationId = "u:admin" 
     });
@@ -345,9 +345,9 @@ Works on Windows system
 ```c#
 using (var cn = new LdapConnection())
 {
-    connection.Connect();
+    cn.Connect();
 
-    connection.Bind(LdapAuthType.Negotiate, new LdapCredential
+    cn.Bind(LdapAuthType.Negotiate, new LdapCredential
     {
         UserName = "username",
         Password = "clearTextPassword"
@@ -593,12 +593,12 @@ using (var cn = new LdapConnection())
 ```c#
 using (var cn = new LdapConnection())
 {
-	cn.Connect();
-	cn.Bind();
-	var image = new DirectoryModificationAttribute
-	{
-	    LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
-        Name = "jpegPhoto
+    cn.Connect();
+    cn.Bind();
+    var image = new DirectoryModificationAttribute
+    {
+        LdapModOperation = LdapModOperation.LDAP_MOD_REPLACE,
+        Name = "jpegPhoto"
     };
     image.Add(new byte[]{ 5, 6, 7, 8});
     var response = (ModifyResponse)connection.SendRequest(new ModifyRequest("cn=test,dc=example,dc=com", image));
