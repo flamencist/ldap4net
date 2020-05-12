@@ -179,8 +179,8 @@ namespace LdapForNet.Native
         }
 
         
-        [DllImport(LIB_LDAP_PATH,EntryPoint = "ldap_parse_referenceW", CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp);
+        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_parse_referenceW", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ldap_parse_reference([In] SafeHandle ld,[In] IntPtr reference, ref IntPtr referralsp);
         
         [DllImport(LIB_LDAP_PATH, CharSet = CharSet.Unicode,CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_count_entries(SafeHandle ld, IntPtr message);

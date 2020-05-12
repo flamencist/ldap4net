@@ -66,7 +66,7 @@ namespace LdapForNet.Native
         internal abstract string GetAdditionalErrorInfo(SafeHandle ld);
         internal abstract int LdapGetLastError(SafeHandle ld);
 
-        internal abstract int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp,
+        internal abstract int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref IntPtr referralsp,
             ref IntPtr serverctrlsp, int freeit);
 
         internal abstract IntPtr ldap_first_entry(SafeHandle ld, IntPtr message);

@@ -218,7 +218,7 @@ namespace LdapForNet.Native
             return err;
         }
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp,
+        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref IntPtr referralsp,
             ref IntPtr serverctrlsp, int freeit) =>
             NativeMethodsOsx.ldap_parse_reference(ld, reference, ref referralsp, ref serverctrlsp, freeit);
 
