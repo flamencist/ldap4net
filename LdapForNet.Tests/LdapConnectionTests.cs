@@ -354,11 +354,11 @@ namespace LdapForNetTests
             using (var connection = new LdapConnection())
             {
                 var results = new List<DirectoryEntry>();
-                connection.Connect("ad_server.dc.local",389);
-                connection.Bind(LdapAuthType.Digest, new LdapCredential 
-                { 
-                    UserName="flamencist",
-                    Password="***REMOVED***"
+                connection.Connect();
+                connection.Bind(LdapAuthType.Simple, new LdapCredential
+                {
+                    UserName = Config.LdapUserDn,
+                    Password = Config.LdapPassword
                 });
                 var directoryRequest = new SearchRequest("DC=dc,DC=local", "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
                 var pageSize = 3;
