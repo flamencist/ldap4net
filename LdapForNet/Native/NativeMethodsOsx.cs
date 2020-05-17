@@ -147,7 +147,7 @@ namespace LdapForNet.Native
 
         
         [DllImport(LIB_LDAP_PATH)]
-        internal static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp, ref IntPtr serverctrlsp, int freeit);
+        internal static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit);
         
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_count_entries(SafeHandle ld, IntPtr message);

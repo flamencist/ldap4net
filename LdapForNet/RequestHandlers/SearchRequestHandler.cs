@@ -153,19 +153,19 @@ namespace LdapForNet.RequestHandlers
         
         private LdapSearchResultReference GetLdapReference(SafeHandle ld, IntPtr msg)
         {
-            string[] refs = null;
             var ctrls = IntPtr.Zero;
 
             try
             {
-                var rc = Native.ldap_parse_reference(ld, msg, ref refs, ref ctrls, 0);
+                var referencePtr = IntPtr.Zero;
+                var rc = Native.ldap_parse_reference(ld, msg, ref referencePtr, ref ctrls, 0);
                 Native.ThrowIfError(ld, rc, nameof(Native.ldap_parse_reference));
-                if (refs != null)
+                var arr = MarshalUtils.GetPointerArray(referencePtr);
+                var uris = arr.Select(_ => new Uri(Encoder.Instance.PtrToString(_))).ToArray();
+                if (uris.Any())
                 {
-                    var uris = refs.Select(_ => new Uri(_)).ToArray();
-                    return new LdapSearchResultReference(uris,null);
+                    return new LdapSearchResultReference(uris, null);
                 }
-
             }
             finally
             {

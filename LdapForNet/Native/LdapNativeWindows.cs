@@ -20,22 +20,22 @@ namespace LdapForNet.Native
         internal override int TrustAllCertificates(SafeHandle ld)
         {
             var sslEnabled = 0;
-            ThrowIfError(ldap_get_option(ld, (int) Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
+            ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
                 nameof(ldap_get_option));
             if (sslEnabled == 0)
             {
                 sslEnabled = 1;
-                ThrowIfError(ldap_set_option(ld, (int) Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
+                ThrowIfError(ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
                     nameof(ldap_set_option));
             }
 
-            return ldap_set_option(ld, (int) Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE,
+            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE,
                 Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
         }
 
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
-            return ldap_set_option(ld, (int) Native.LdapOption.LDAP_OPT_CLIENT_CERTIFICATE,
+            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_CLIENT_CERTIFICATE,
                 Marshal.GetFunctionPointerForDelegate<QUERYCLIENTCERT>(
                     // ReSharper disable once RedundantAssignment
                     (IntPtr connection, IntPtr trustedCAs, ref IntPtr certificateHandle) =>
@@ -59,30 +59,30 @@ namespace LdapForNet.Native
 
                 Init(out ld, hostnames, schema);
             }
-            
+
             if (ld == IntPtr.Zero)
             {
                 return -1;
             }
 
 
-            return (int) Native.ResultCode.Success;
+            return (int)Native.ResultCode.Success;
         }
-        
-        private readonly char[] _supportedFormats = {'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
+
+        private readonly char[] _supportedFormats = { 'a', 'O', 'b', 'e', 'i', 'B', 'n', 't', 'v', 'V', 'x', '{', '}', '[', ']', 's', 'o', 'A', 'm' };
 
         private static void Init(out IntPtr ld, string hostnames, Native.LdapSchema schema)
         {
             ld = schema == Native.LdapSchema.LDAPS
-                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int) Native.LdapPort.LDAPS, 1)
-                : NativeMethodsWindows.ldap_init(hostnames, (int) Native.LdapPort.LDAP);
+                ? NativeMethodsWindows.ldap_sslinit(hostnames, (int)Native.LdapPort.LDAPS, 1)
+                : NativeMethodsWindows.ldap_init(hostnames, (int)Native.LdapPort.LDAP);
         }
 
         internal override void LdapConnect(SafeHandle ld)
         {
             var timeout = new LDAP_TIMEVAL
             {
-                tv_sec = (int) (TimeSpan.FromMinutes(10).Ticks / TimeSpan.TicksPerSecond)
+                tv_sec = (int)(TimeSpan.FromMinutes(10).Ticks / TimeSpan.TicksPerSecond)
             };
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout), nameof(NativeMethodsWindows.ldap_connect));
         }
@@ -136,7 +136,7 @@ namespace LdapForNet.Native
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
-                    ThrowIfError((int) rc, nameof(NativeMethodsWindows.ldap_bind));
+                    ThrowIfError((int)rc, nameof(NativeMethodsWindows.ldap_bind));
                 }
 
                 return result;
@@ -192,9 +192,8 @@ namespace LdapForNet.Native
 
         internal override int LdapGetLastError(SafeHandle ld) => NativeMethodsWindows.LdapGetLastError();
 
-        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref string[] referralsp,
-            ref IntPtr serverctrlsp, int freeit) =>
-            NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
+        internal override int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref IntPtr referralsp,
+            ref IntPtr serverctrlsp, int freeit) => NativeMethodsWindows.ldap_parse_reference(ld, reference, ref referralsp);
 
         internal override IntPtr ldap_first_entry(SafeHandle ld, IntPtr message) =>
             NativeMethodsWindows.ldap_first_entry(ld, message);

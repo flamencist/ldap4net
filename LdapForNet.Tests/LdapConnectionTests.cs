@@ -348,6 +348,48 @@ namespace LdapForNetTests
         }
 
         [Fact]
+        public void LdapConnection_With_VlvRequestResponse_Control_Search_Return_LdapEntries_List()
+        {
+            var cts = new CancellationTokenSource();
+            using (var connection = new LdapConnection())
+            {
+                var results = new List<DirectoryEntry>();
+                connection.Connect("ad_server.dc.local",389);
+                connection.Bind(LdapAuthType.Digest, new LdapCredential 
+                { 
+                    UserName="flamencist",
+                    Password="***REMOVED***"
+                });
+                var directoryRequest = new SearchRequest("DC=dc,DC=local", "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
+                var pageSize = 3;
+
+                var vlvRequestControl = new VlvRequestControl(0, pageSize - 1, 1);
+                directoryRequest.Controls.Add(new SortRequestControl("cn", false));
+                directoryRequest.Controls.Add(vlvRequestControl);
+
+                while (true)
+                {
+                    var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                    results.AddRange(response.Entries);
+                    var vlvResponseControl = (VlvResponseControl)response.Controls.Single(_ => _.GetType() == typeof(VlvResponseControl));
+                    vlvRequestControl.Offset += pageSize;
+                    if(vlvRequestControl.Offset > vlvResponseControl.ContentCount)
+                    {
+                        break;
+                    }
+                }
+
+
+
+                var entries = results.Select(_ => _.ToLdapEntry()).ToList();
+                Assert.Single(entries);
+                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
+                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
+                Assert.True(entries[0].Attributes["objectClass"].Any());
+            }
+        }
+
+        [Fact]
         public void LdapConnection_Search_Return_LdapEntries_With_Concrete_Attributes()
         {
             using (var connection = new LdapConnection())

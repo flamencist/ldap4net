@@ -919,7 +919,7 @@ namespace LdapForNet
                 values[i] = objList[i];
             }
 
-            _directoryControlValue = BerConverter.Encode(seq.ToString(), values);
+            _directoryControlValue = BerConverter.Encode(seq.ToString(), objList.ToArray());
             return base.GetValue();
         }
     }
