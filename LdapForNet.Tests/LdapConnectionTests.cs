@@ -350,21 +350,20 @@ namespace LdapForNetTests
         [Fact]
         public void LdapConnection_With_VlvRequestResponse_Control_Search_Return_LdapEntries_List()
         {
-            var cts = new CancellationTokenSource();
             using (var connection = new LdapConnection())
             {
                 var results = new List<DirectoryEntry>();
-                connection.Connect();
+                connection.Connect(Config.LdapHost, Config.LdapPort);
                 connection.Bind(LdapAuthType.Simple, new LdapCredential
                 {
                     UserName = Config.LdapUserDn,
                     Password = Config.LdapPassword
                 });
-                var directoryRequest = new SearchRequest("DC=dc,DC=local", "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
+                var directoryRequest = new SearchRequest(Config.RootDn, "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
                 var pageSize = 3;
 
                 var vlvRequestControl = new VlvRequestControl(0, pageSize - 1, 1);
-                directoryRequest.Controls.Add(new SortRequestControl("cn", false));
+                directoryRequest.Controls.Add(new SortRequestControl("dnQualifier", false));
                 directoryRequest.Controls.Add(vlvRequestControl);
 
                 while (true)
@@ -378,14 +377,9 @@ namespace LdapForNetTests
                         break;
                     }
                 }
-
-
-
+                
                 var entries = results.Select(_ => _.ToLdapEntry()).ToList();
-                Assert.Single(entries);
-                Assert.Equal(Config.LdapUserDn, entries[0].Dn);
-                Assert.Equal("admin", entries[0].Attributes["cn"][0]);
-                Assert.True(entries[0].Attributes["objectClass"].Any());
+                Assert.NotEmpty(entries);
             }
         }
 
