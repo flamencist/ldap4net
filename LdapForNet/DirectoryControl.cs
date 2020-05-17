@@ -924,6 +924,9 @@ namespace LdapForNet
         }
     }
 
+    /// <summary>
+    /// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ldap/searching-with-the-ldap-vlv-control
+    /// </summary>
     public class VlvResponseControl : DirectoryControl
     {
         private byte[] _context;
