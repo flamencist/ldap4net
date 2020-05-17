@@ -99,7 +99,7 @@ namespace LdapForNet
                 $"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
         }
 
-        public List<object> GetRawValues() => _values;
+        internal List<object> GetRawValues() => _values;
 
         public void Add<T>(T value) where T : class, IEnumerable
         {
