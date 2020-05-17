@@ -101,13 +101,13 @@ namespace LdapForNet
 
         internal List<object> GetRawValues() => _values;
 
-        internal void Add<T>(T value) where T : class, IEnumerable
+        public void Add<T>(T value) where T : class, IEnumerable
         {
             ThrowIfWrongType<T>();
             _values.Add(value);
         }
 
-        internal void AddValues<T>(IEnumerable<T> values) where T : class, IEnumerable
+        public void AddValues<T>(IEnumerable<T> values) where T : class, IEnumerable
         {
             ThrowIfWrongType<T>();
             _values.AddRange(values);
