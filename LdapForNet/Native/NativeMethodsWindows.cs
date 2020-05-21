@@ -104,11 +104,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_set_optionW", CharSet = CharSet.Unicode,
             CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_set_option(SafeHandle ld, int option, IntPtr invalue);
-
-        [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_get_optionW", CharSet = CharSet.Unicode,
-            CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int ldap_get_option(SafeHandle ld, int option, ref string value);
-
+        
         [DllImport(LIB_LDAP_PATH, EntryPoint = "ldap_get_optionW", CharSet = CharSet.Unicode,
             CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ldap_get_option(SafeHandle ld, int option, ref IntPtr value);

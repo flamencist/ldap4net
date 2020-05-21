@@ -147,7 +147,15 @@ namespace LdapForNet.Native
 
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref string value)
-            => NativeMethodsWindows.ldap_get_option(ld, option, ref value);
+        {
+	        IntPtr outValue = default;
+            var rc = NativeMethodsWindows.ldap_get_option(ld, option, ref outValue);
+            if (rc == (int) Native.ResultCode.Success && outValue != IntPtr.Zero)
+            {
+	            value = Encoder.Instance.PtrToString(outValue);
+            }
+            return rc;
+        }
 
         internal override int ldap_get_option(SafeHandle ld, int option, ref IntPtr value)
             => NativeMethodsWindows.ldap_get_option(ld, option, ref value);

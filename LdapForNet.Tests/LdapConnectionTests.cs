@@ -532,6 +532,38 @@ namespace LdapForNetTests
             }
         }
 
+        [Theory]
+        [InlineData(LdapOption.LDAP_OPT_PROTOCOL_VERSION,  (int)3)]
+        [InlineData(LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE, "Success")]
+        [MemberData(nameof(LdapOptionData))]
+        public void LdapConnection_GetOption_Returns_Option_Value(LdapOption ldapOption, object expected)
+        {
+	        using (var connection = new LdapConnection())
+	        {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                object actual = default;
+                switch (expected)
+                {
+	                case int _:
+		                actual = connection.GetOption<int>(ldapOption);
+		                break;
+	                case string _:
+		                actual = connection.GetOption<string>(ldapOption);
+		                break;
+	                case IntPtr _:
+		                actual = connection.GetOption<IntPtr>(ldapOption);
+		                break;
+                }
+
+                Assert.Equal(expected, actual);
+	        }
+        }
+
+        public static IEnumerable<object[]> LdapOptionData => new List<object[]>
+        {
+            new object[]{ LdapOption.LDAP_OPT_RESULT_CODE, IntPtr.Zero }
+        };
+
         private void AddLdapEntry()
         {
             using (var connection = new LdapConnection())
