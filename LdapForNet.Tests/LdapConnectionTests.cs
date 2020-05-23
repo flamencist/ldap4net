@@ -534,7 +534,7 @@ namespace LdapForNetTests
 
         [Theory]
         [InlineData(LdapOption.LDAP_OPT_PROTOCOL_VERSION,  (int)3)]
-        [InlineData(LdapOption.LDAP_OPT_HOST_NAME, "example")]
+        [InlineData(LdapOption.LDAP_OPT_HOST_NAME, "example:389")]
         [MemberData(nameof(LdapOptionData))]
         public void LdapConnection_GetOption_Returns_Option_Value(LdapOption ldapOption, object expected)
         {
