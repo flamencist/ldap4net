@@ -197,8 +197,6 @@ namespace LdapForNetTests
         }
 
         [Theory]
-        //[InlineData("n", null)]
-        //[InlineData("n", new byte[0])]
         [InlineData("{", new byte[] {1})]
         [InlineData("}", new byte[] {1})]
         [InlineData("{}{}{}{}{}{}{}", new byte[] {48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0})]
