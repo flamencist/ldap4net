@@ -168,8 +168,8 @@ namespace LdapForNetTests
                 "{BB}", new byte[] {48,10,3,3,7,1,1,3,3,7,15,1},
                 new object[] {new byte[] {1, 0, 0, 0, 0, 0, 0, 0, 1}, new byte[] {1, 1, 1, 1, 0, 0, 0, 0, 1}}
             };
-            yield return new object[]
-                {"{vv}", new byte[] {48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0}, new object[] {null, null}};
+            /*yield return new object[]
+                {"{vv}", new byte[] {48, 132, 0, 0, 0, 9, 4, 3, 97, 98, 99, 4, 0, 4, 0}, new object[] {null, null}};*/
             /*yield return new object[]
                 {"{vv}", new byte[] {48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0}, new object[] {new[] {"\x01"}, null}};*/
             /*yield return new object[]
