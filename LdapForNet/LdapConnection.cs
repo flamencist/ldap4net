@@ -328,14 +328,14 @@ namespace LdapForNet
             while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
                 var resType = _native.ldap_result(_ld, messageId, 0, IntPtr.Zero, ref msg);
-                ThrowIfResultError(directoryRequest, resType);
+                ThrowIfResultError(directoryRequest, resType, response);
 
                 status = requestHandler.Handle(_ld, resType, msg, out response);
                 response.MessageId = messageId;
 
                 if (status == LdapResultCompleteStatus.Unknown)
                 {
-                    throw new LdapException($"Unknown search type {resType}", nameof(_native.ldap_result), 1);
+                    throw new LdapOperationException(response, $"Unknown search type {resType}", nameof(_native.ldap_result), 1);
                 }
                 
                 if (status == LdapResultCompleteStatus.Complete)
@@ -363,15 +363,19 @@ namespace LdapForNet
             return requestHandler;
         }
 
-        private void ThrowIfResultError(DirectoryRequest directoryRequest, Native.Native.LdapResultType resType)
+        private void ThrowIfResultError(DirectoryRequest directoryRequest, Native.Native.LdapResultType resType, DirectoryResponse directoryResponse)
         {
             switch (resType)
             {
                 case Native.Native.LdapResultType.LDAP_ERROR:
-                    _native.ThrowIfError(_native.LdapGetLastError(_ld), directoryRequest.GetType().Name);
+	                var error = _native.LdapGetLastError(_ld);
+	                if (error != (int)Native.Native.ResultCode.Success)
+	                {
+		                throw new LdapOperationException(directoryResponse, _native.LdapError2String(error), directoryRequest.GetType().Name, error);
+	                }
                     break;
                 case Native.Native.LdapResultType.LDAP_TIMEOUT:
-                    throw new LdapException("Timeout exceeded", nameof(_native.ldap_result), 1);
+                    throw new LdapOperationException(directoryResponse,"Timeout exceeded", nameof(_native.ldap_result), 1);
             }
         }
 
