@@ -534,7 +534,7 @@ namespace LdapForNetTests
 
         [Theory]
         [InlineData(LdapOption.LDAP_OPT_PROTOCOL_VERSION,  (int)3)]
-        [InlineData(LdapOption.LDAP_OPT_DIAGNOSTIC_MESSAGE, "Success")]
+        [InlineData(LdapOption.LDAP_OPT_HOST_NAME, "example")]
         [MemberData(nameof(LdapOptionData))]
         public void LdapConnection_GetOption_Returns_Option_Value(LdapOption ldapOption, object expected)
         {
@@ -544,14 +544,20 @@ namespace LdapForNetTests
                 object actual = default;
                 switch (expected)
                 {
-	                case int _:
+	                case int val:
+                        connection.SetOption(ldapOption, val);
 		                actual = connection.GetOption<int>(ldapOption);
 		                break;
-	                case string _:
-		                actual = connection.GetOption<string>(ldapOption);
+	                case string val:
+		                connection.SetOption(ldapOption, val);
+                        actual = connection.GetOption<string>(ldapOption);
 		                break;
-	                case IntPtr _:
-		                actual = connection.GetOption<IntPtr>(ldapOption);
+	                case IntPtr val:
+		                var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+                        Marshal.WriteIntPtr(ptr, val);
+		                connection.SetOption(ldapOption, ptr);
+                        Marshal.FreeHGlobal(ptr);
+                        actual = connection.GetOption<IntPtr>(ldapOption);
 		                break;
                 }
 
