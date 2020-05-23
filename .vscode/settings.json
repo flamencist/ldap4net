@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "lber.h": "c",
+        "lber_types.h": "c",
+        "stdlib.h": "c"
+    }
+}

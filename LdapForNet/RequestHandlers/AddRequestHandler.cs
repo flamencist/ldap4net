@@ -8,7 +8,7 @@ namespace LdapForNet.RequestHandlers
 {
     internal class AddRequestHandler : RequestHandler
     {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is AddRequest addRequest)
             {
@@ -22,11 +22,11 @@ namespace LdapForNet.RequestHandlers
                 var ptr = MarshalUtils.AllocHGlobalIntPtrArray(addRequest.Attributes.Count + 1);
                 MarshalUtils.StructureArrayToPtr(attrs, ptr, true);
 
-                var result = Native.ldap_add_ext(handle,
+                var result =  Native.ldap_add_ext(handle,
                     addRequest.DistinguishedName,
-                    ptr,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
+                    ptr,                
+                    serverControlArray, 
+                    clientControlArray ,
                     ref messageId
                 );
 

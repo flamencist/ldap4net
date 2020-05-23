@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -29,7 +30,8 @@ namespace LdapForNet
         void Add(LdapEntry entry);
         void Modify(LdapModifyEntry entry);
         void Delete(string dn);
-        void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn);
+        void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
+        void Abandon(AbandonRequest abandonRequest);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);

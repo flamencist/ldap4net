@@ -4,9 +4,8 @@ using LdapForNet.Utils;
 
 namespace LdapForNet.RequestHandlers
 {
-    internal class ExtendedRequestHandler : RequestHandler
-    {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+    internal class ExtendedRequestHandler:RequestHandler{
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is ExtendedRequest extendedRequest)
             {
@@ -19,7 +18,7 @@ namespace LdapForNet.RequestHandlers
                     berValuePtr = MarshalUtils.ByteArrayToBerValue(val);
                 }
 
-                var result = Native.ldap_extended_operation(handle, name, berValuePtr, IntPtr.Zero, IntPtr.Zero,
+                var result =  Native.ldap_extended_operation(handle, name, berValuePtr, serverControlArray, clientControlArray,
                     ref messageId);
                 MarshalUtils.BerValFree(berValuePtr);
                 return result;

@@ -7,7 +7,7 @@ namespace LdapForNet.RequestHandlers
 {
     internal class CompareRequestHandler : RequestHandler
     {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is CompareRequest compareRequest)
             {
@@ -26,9 +26,8 @@ namespace LdapForNet.RequestHandlers
                 {
                     berValuePtr = MarshalUtils.ByteArrayToBerValue(binaryValue);
                 }
-
-                var result = Native.Compare(handle, compareRequest.DistinguishedName, compareRequest.Assertion.Name,
-                    stringValue, berValuePtr, IntPtr.Zero, IntPtr.Zero, ref messageId);
+                
+                var result = Native.Compare(handle,compareRequest.DistinguishedName, compareRequest.Assertion.Name, stringValue, berValuePtr, serverControlArray, clientControlArray, ref messageId);
                 MarshalUtils.BerValFree(berValuePtr);
                 return result;
             }

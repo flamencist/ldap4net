@@ -7,9 +7,10 @@ namespace LdapForNet
 {
     public abstract class DirectoryRequest
     {
-        internal DirectoryRequest()
-        {
-        }
+        internal DirectoryRequest(){}
+        
+        public List<DirectoryControl> Controls { get; } = new List<DirectoryControl>();       
+        public int MessageId { get; internal set; }
     }
 
     public class DeleteRequest : DirectoryRequest
@@ -223,15 +224,16 @@ namespace LdapForNet
         }
 
         public bool AttributesOnly { get; set; }
+
+        public Action<SearchResponse> OnPartialResult { get; set; }
+
     }
 
     public class ExtendedRequest : DirectoryRequest
     {
         private byte[] _requestValue = null;
 
-        public ExtendedRequest()
-        {
-        }
+        public ExtendedRequest() { }
 
         public ExtendedRequest(string requestName)
         {
@@ -307,5 +309,14 @@ namespace LdapForNet
 
     public class TransportLayerSecurityRequest : DirectoryRequest
     {
+    }
+
+    public class AbandonRequest : DirectoryRequest
+    {
+        public AbandonRequest(int messageId)
+        {
+            MessageId = messageId;
+        }
+
     }
 }

@@ -105,7 +105,14 @@ namespace LdapForNet.Utils
             Marshal.Copy(ptrArray, 0, ptr, ptrArray.Length);
         }
 
-        internal static void StructureArrayToPtr<T>(IEnumerable<T> array, IntPtr ptr, bool endNull = false)
+        internal static IntPtr StructureArrayToPtr<T>(T[] array)
+        {
+            var ptr = AllocHGlobalIntPtrArray(array.Length + 1);
+            StructureArrayToPtr(array, ptr, true);
+            return ptr;
+        }
+
+        internal static void StructureArrayToPtr<T>(IEnumerable<T> array,IntPtr ptr, bool endNull = false) 
         {
             var ptrArray = array.Select(structure =>
             {
@@ -159,6 +166,37 @@ namespace LdapForNet.Utils
                     count++;
                     tempPtr = Marshal.ReadIntPtr(array, count * IntPtr.Size);
                 }
+            }
+        }
+
+        internal static IEnumerable<byte> GetBytes(IntPtr ptr)
+        {
+            var @byte = Marshal.ReadByte(ptr);
+            var i = 0;
+            while (@byte != 0)
+            {
+                yield return @byte;
+                i++;
+                @byte = Marshal.ReadByte(ptr, i);
+            }
+        }
+
+        internal static IntPtr WriteIntPtrArray(IntPtr[] array)
+        {
+            var destination = AllocHGlobalIntPtrArray(array.Length + 1);
+            Marshal.Copy(array, 0, destination, array.Length);
+            return destination;
+        }
+
+        internal static void FreeIntPtrArray(IntPtr array)
+        {
+            if (array != IntPtr.Zero)
+            {
+                foreach (var ptr in GetPointerArray(array))
+                {
+                    Marshal.FreeHGlobal(ptr);
+                }
+                Marshal.FreeHGlobal(array);
             }
         }
     }

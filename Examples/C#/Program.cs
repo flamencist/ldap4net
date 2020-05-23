@@ -87,7 +87,24 @@ namespace LdapExample
                 }
                 else
                 {
-                    entries = await cn.SearchAsync(@base, filter);
+                    var rootDse = cn.GetRootDse();
+                    PrintEntry(rootDse);
+                    var searchRequest = new SearchRequest(@base, filter,
+                        LdapSearchScope.LDAP_SCOPE_SUBTREE)
+                    {
+                        AttributesOnly = false,
+                        TimeLimit = TimeSpan.Zero,
+                        Controls =
+                        {
+                            new PageResultRequestControl(500)
+                            {
+                                IsCritical = true
+                            }
+                            
+                        }
+                    };
+                    var searchResponse = ((SearchResponse) (await cn.SendRequestAsync(searchRequest)));
+                    entries = searchResponse.Entries.Select(_=>_.ToLdapEntry()).ToList();
                 }
                 foreach (var ldapEntry in entries)
                 {

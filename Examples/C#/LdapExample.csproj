@@ -12,6 +12,6 @@
     <None Remove="packages\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="LdapForNet" Version="2.2.0" />
+    <ProjectReference Include="..\..\LdapForNet\LdapForNet.csproj" />
   </ItemGroup>
 </Project>

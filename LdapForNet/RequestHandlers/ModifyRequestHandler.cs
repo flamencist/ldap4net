@@ -8,7 +8,7 @@ namespace LdapForNet.RequestHandlers
 {
     internal class ModifyRequestHandler : RequestHandler
     {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is ModifyRequest modifyRequest)
             {
@@ -26,8 +26,8 @@ namespace LdapForNet.RequestHandlers
                 var result = Native.ldap_modify_ext(handle,
                     modifyRequest.DistinguishedName,
                     ptr,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
+                    serverControlArray, 
+                    clientControlArray,
                     ref messageId
                 );
                 attrs.ForEach(_ =>

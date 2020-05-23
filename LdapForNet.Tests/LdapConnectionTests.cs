@@ -203,6 +203,48 @@ namespace LdapForNetTests
                 Assert.Equal($"dn:{Config.LdapDigestMd5ProxyDn}", authzId);
             }
         }
+        
+        [Fact]
+        public void LdapConnection_With_VlvRequestResponse_Control_Search_Return_LdapEntries_List()
+        {
+	        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+	        {
+		        //todo setup ldap server with vlv support on OSX
+		        return;
+	        }
+
+            using (var connection = new LdapConnection())
+            {
+                var results = new List<DirectoryEntry>();
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthType.Simple, new LdapCredential
+                {
+                    UserName = Config.LdapUserDn,
+                    Password = Config.LdapPassword
+                });
+                var directoryRequest = new SearchRequest(Config.RootDn, "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
+                var pageSize = 3;
+
+                var vlvRequestControl = new VlvRequestControl(0, pageSize - 1, 1);
+                directoryRequest.Controls.Add(new SortRequestControl("dnQualifier", false));
+                directoryRequest.Controls.Add(vlvRequestControl);
+
+                while (true)
+                {
+                    var response = (SearchResponse)connection.SendRequest(directoryRequest);
+                    results.AddRange(response.Entries);
+                    var vlvResponseControl = (VlvResponseControl)response.Controls.Single(_ => _.GetType() == typeof(VlvResponseControl));
+                    vlvRequestControl.Offset += pageSize;
+                    if(vlvRequestControl.Offset > vlvResponseControl.ContentCount)
+                    {
+                        break;
+                    }
+                }
+                
+                var entries = results.Select(_ => _.ToLdapEntry()).ToList();
+                Assert.NotEmpty(entries);
+            }
+        }
 
         [Fact]
         public void LdapConnection_Search_Return_LdapEntries_With_Concrete_Attributes()
@@ -409,7 +451,6 @@ namespace LdapForNetTests
                 Assert.True(result.ResultCode == ResultCode.CompareFalse, result.ResultCode.ToString());
             }
         }
-
 
         private async Task ModifyLdapEntryAsync()
         {

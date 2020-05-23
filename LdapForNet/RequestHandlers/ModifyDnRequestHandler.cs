@@ -5,7 +5,7 @@ namespace LdapForNet.RequestHandlers
 {
     internal class ModifyDnRequestHandler : RequestHandler
     {
-        public override int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        protected override int SendRequest(SafeHandle handle, DirectoryRequest request, IntPtr serverControlArray, IntPtr clientControlArray, ref int messageId)
         {
             if (request is ModifyDNRequest modifyDnRequest)
             {
@@ -18,12 +18,12 @@ namespace LdapForNet.RequestHandlers
                 return Native.ldap_rename(handle,
                     dn,
                     modifyDnRequest.NewName,
-                    modifyDnRequest.NewParentDistinguishedName,
-                    modifyDnRequest.DeleteOldRdn ? 1 : 0,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
+                    modifyDnRequest.NewParentDistinguishedName ,    
+                    modifyDnRequest.DeleteOldRdn?1:0,
+                    serverControlArray, 
+                    clientControlArray, 
                     ref messageId
-                );
+                );  
             }
 
             return 0;

@@ -68,10 +68,42 @@ namespace LdapForNet.Native
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public class berval
+        public sealed class berval
         {
             public int bv_len = 0;
             public IntPtr bv_val = IntPtr.Zero;
         }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        internal sealed class LdapControl
+        {
+            public IntPtr ldctl_oid = IntPtr.Zero;
+            public berval ldctl_value = null;
+            public bool ldctl_iscritical = false;
+
+            public LdapControl() { }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal sealed class SafeBerval
+        {
+            public int bv_len = 0;
+            public IntPtr bv_val = IntPtr.Zero;
+
+            ~SafeBerval()
+            {
+                if (bv_val != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(bv_val);
+                }
+            }
+        }
+
+        internal enum BerElementOption
+        {
+            LBER_USE_DER = 0x01
+        }
     }
+    
+    
 }

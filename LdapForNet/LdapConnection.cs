@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -303,6 +304,11 @@ namespace LdapForNet
             ThrowIfResponseError(
                 SendRequest(new ModifyDNRequest(dn, newParent, newRdn) {DeleteOldRdn = isDeleteOldRdn}));
 
+        public void Abandon(AbandonRequest abandonRequest)
+        {
+            ThrowIfNotInitialized();
+            SendRequest(abandonRequest, out _);
+        }
 
         public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
             ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
@@ -315,6 +321,9 @@ namespace LdapForNet
             var status = LdapResultCompleteStatus.Unknown;
             var msg = Marshal.AllocHGlobal(IntPtr.Size);
 
+            directoryRequest.MessageId = messageId;
+            token.Register(() => Abandon(new AbandonRequest(messageId)));
+
             DirectoryResponse response = default;
             while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
             {
@@ -322,17 +331,23 @@ namespace LdapForNet
                 ThrowIfResultError(directoryRequest, resType);
 
                 status = requestHandler.Handle(_ld, resType, msg, out response);
+                response.MessageId = messageId;
 
                 if (status == LdapResultCompleteStatus.Unknown)
                 {
                     throw new LdapException($"Unknown search type {resType}", nameof(_native.ldap_result), 1);
                 }
-
+                
                 if (status == LdapResultCompleteStatus.Complete)
                 {
-                    var res = ParseResultError(msg, out var errorMessage, out _);
+                    var responseReferral = new Uri[0];
+                    var responseControl = new DirectoryControl[0];
+                    var res = ParseResultError(msg, out var errorMessage, out var matchedDn,ref responseReferral,ref responseControl);
                     response.ResultCode = (Native.Native.ResultCode) res;
                     response.ErrorMessage = errorMessage;
+                    response.Referral = responseReferral;
+                    response.Controls = responseControl;
+                    response.MatchedDN = matchedDn;
                 }
             }
 
@@ -380,6 +395,8 @@ namespace LdapForNet
                     return new ExtendedRequestHandler();
                 case TransportLayerSecurityRequest _:
                     return new TransportLayerSecurityRequestHandler();
+                case AbandonRequest _:
+                    return new AbandonRequestHandler();
                 default:
                     throw new LdapException("Not supported operation of request: " + request?.GetType());
             }
@@ -387,29 +404,59 @@ namespace LdapForNet
 
         private void ThrowIfParseResultError(IntPtr msg)
         {
-            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage);
+            var responseReferral = new Uri[0];
+            var responseControl = new DirectoryControl[0];
+            var res = ParseResultError(msg, out var errorMessage, out var matchedMessage, ref responseReferral, ref responseControl);
             _native.ThrowIfError(_ld, res, nameof(_native.ldap_parse_result), new Dictionary<string, string>
             {
                 [nameof(errorMessage)] = errorMessage,
                 [nameof(matchedMessage)] = matchedMessage
             });
         }
-
-        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedMessage)
+        
+        private int ParseResultError(IntPtr msg, out string errorMessage, out string matchedDn, ref Uri[] responseReferral, ref DirectoryControl[] responseControl)
         {
-            var matchedMessagePtr = IntPtr.Zero;
+            var matchedDnPtr = IntPtr.Zero;
             var errorMessagePtr = IntPtr.Zero;
-            var res = 0;
+            var rc = 0;
             var referrals = IntPtr.Zero;
             var serverctrls = IntPtr.Zero;
-            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref res, ref matchedMessagePtr,
-                ref errorMessagePtr,
+            _native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref rc, ref matchedDnPtr, ref errorMessagePtr,
                 ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
             errorMessage = Encoder.Instance.PtrToString(errorMessagePtr);
-            matchedMessage = Encoder.Instance.PtrToString(matchedMessagePtr);
-
-            return res;
+            matchedDn = Encoder.Instance.PtrToString(matchedDnPtr);
+            if (referrals != IntPtr.Zero)
+            {
+                
+            }
+            
+            if (serverctrls != IntPtr.Zero)
+            {
+                responseControl = MarshalUtils.GetPointerArray(serverctrls)
+                    .Select(ConstructControl)
+                    .ToArray();
+            }
+            
+            return rc;
         }
+        
+        private DirectoryControl ConstructControl(IntPtr controlPtr)
+        {
+            var control = new Native.Native.LdapControl();
+            Marshal.PtrToStructure(controlPtr, control);
+
+            var controlType = Encoder.Instance.PtrToString(control.ldctl_oid);
+
+            var bytes = new byte[control.ldctl_value.bv_len];
+            Marshal.Copy(control.ldctl_value.bv_val, bytes, 0, control.ldctl_value.bv_len);
+
+            var criticality = control.ldctl_iscritical;
+
+            return new DirectoryControl(controlType, bytes, criticality, true);
+        }
+
+
+
 
         private void ThrowIfNotInitialized()
         {
@@ -427,7 +474,8 @@ namespace LdapForNet
                 throw new LdapException($"Not bound. Please invoke {nameof(Bind)} method before.");
             }
         }
-
+        
+        
         private void ThrowIfResponseError(DirectoryResponse response)
         {
             _native.ThrowIfError(_ld, (int) response.ResultCode, nameof(_native.ldap_parse_result),
