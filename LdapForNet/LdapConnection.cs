@@ -146,6 +146,51 @@ namespace LdapForNet
                 nameof(_native.ldap_set_option));
         }
 
+        public T GetOption<T>(Native.Native.LdapOption option)
+        {
+	        ThrowIfNotInitialized();
+	        ThrowIfWrongOutputType<T>();
+
+            var type = typeof(T);
+	        object output = default;
+	        var rc = -1;
+	        var ldapHandle = GetLdapHandle(false);
+
+	        if (type == typeof(string))
+	        {
+		        string value = default;
+		        rc = _native.ldap_get_option(ldapHandle, (int)option, ref value);
+		        output = value;
+	        }
+
+	        if (type == typeof(int))
+	        {
+		        int value = default;
+		        rc = _native.ldap_get_option(ldapHandle, (int)option, ref value);
+                output = value;
+	        }
+
+	        if (type == typeof(IntPtr))
+	        {
+		        IntPtr value = default;
+		        rc = _native.ldap_get_option(ldapHandle, (int)option, ref value);
+                output = value;
+	        }
+
+            _native.ThrowIfError(rc, nameof(_native.ldap_get_option));
+	        return (T) output;
+        }
+
+        private static void ThrowIfWrongOutputType<T>()
+        {
+	        var type = typeof(T);
+	        if (type != typeof(string) && type != typeof(int) && type != typeof(IntPtr))
+	        {
+		        throw new ArgumentException(
+			        $"The type {type} of return value is not valid. Valid types: {nameof(String)}, {nameof(Int32)}, {nameof(IntPtr)}");
+            }
+        }
+
         private SafeHandle GetLdapHandle(bool global) => global ? new LdapHandle(IntPtr.Zero) : _ld;
 
         public IList<LdapEntry> Search(string @base, string filter, string[] attributes = default,
