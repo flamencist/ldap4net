@@ -207,6 +207,12 @@ namespace LdapForNetTests
         [Fact]
         public void LdapConnection_With_VlvRequestResponse_Control_Search_Return_LdapEntries_List()
         {
+	        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+	        {
+		        //todo setup ldap server with vlv support on OSX
+		        return;
+	        }
+
             using (var connection = new LdapConnection())
             {
                 var results = new List<DirectoryEntry>();
