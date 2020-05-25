@@ -14,10 +14,7 @@ namespace LdapForNet.Native
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_initialize(ref IntPtr ld, string uri);
-
-        [DllImport(LIB_LDAP_PATH)]
-        internal static extern int ldap_connect(IntPtr ld);
-
+        
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_tls_inplace(SafeHandle ld);
 
@@ -142,11 +139,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH)]
         private static extern IntPtr ldap_err2string(int error);
 
-        internal static string LdapError2String(int error)
-        {
-            return Encoder.Instance.PtrToString(ldap_err2string(error));
-        }
-
+        internal static string LdapError2String(int error) => Encoder.Instance.PtrToString(ldap_err2string(error));
 
         internal static string GetAdditionalErrorInfo(SafeHandle ld)
         {
@@ -156,7 +149,6 @@ namespace LdapForNet.Native
             ldap_memfree(ptr);
             return info;
         }
-
 
         [DllImport(LIB_LDAP_PATH)]
         internal static extern int ldap_parse_reference(SafeHandle ld, IntPtr reference, ref IntPtr referralsp,
