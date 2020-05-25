@@ -104,12 +104,12 @@ using (var cn = new LdapConnection())
 		- [EXTERNAL](https://ldapwiki.com/wiki/SASL%20EXTERNAL)
 	- [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 * Supported LDAP V3 controls:
-	- PageResultRequestControl\PageResultResponseControl
-	- DirSyncRequestControl\DirSyncRequestControl
-	- SortRequestControl\SortResponseControl
-	- AsqRequestControl\AsqResponseControl
-	- DirectoryNotificationControl
-	- VlvRequestControl\VlvResponseControl
+	- [PageResultRequestControl\PageResultResponseControl](#pageresultrequestcontrolpageresultresponsecontrol-1284011355614319)
+	- [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
+	- [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
+	- [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
+	- [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
+	- [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
 
 ## Installation
 
@@ -191,7 +191,7 @@ using (var cn = new LdapConnection())
 ```c#
 using (var cn = new LdapConnection())
 {
-	cn.Timeout = new TimeSpan(0, 1 ,0); // 1 hour
+	cn.Timeout = new TimeSpan(0, 1 ,0); // 1 minute
 	....
 }
 ```
@@ -845,7 +845,7 @@ using (var cn = new LdapConnection())
 
         dirSyncRequestControl.Cookie = responseControl.Cookie;
 
-		Thread.Sleep(60*1000);
+        Thread.Sleep(60*1000);
         response = (SearchResponse)connection.SendRequest(directoryRequest);
             
         if (response.Entries.Any())
