@@ -124,7 +124,7 @@ namespace LdapForNet.Native
         /// <param name="pMessage">LDAPMessage **result</param>
         /// <returns>result type </returns>
         [DllImport(LIB_LDAP_PATH)]
-        internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,ref IntPtr pMessage);
+        internal static extern Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, LDAP_TIMEVAL timeout,ref IntPtr pMessage);
         
         
         [DllImport(LIB_LDAP_PATH)]
