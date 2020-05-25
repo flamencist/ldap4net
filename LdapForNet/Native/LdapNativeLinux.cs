@@ -144,7 +144,7 @@ namespace LdapForNet.Native
 
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
-            LdapCredential ldapCredential)
+            LdapCredential ldapCredential, LDAP_TIMEVAL timeout)
         {
             var task = Task.Factory.StartNew(() =>
             {
@@ -168,7 +168,7 @@ namespace LdapForNet.Native
 
                     ldap_msgfree(result);
 
-                    if (ldap_result(ld, msgid, 0, IntPtr.Zero, ref result) == Native.LdapResultType.LDAP_ERROR)
+                    if (ldap_result(ld, msgid, 0, timeout, ref result) == Native.LdapResultType.LDAP_ERROR)
                     {
                         ThrowIfError(rc, nameof(NativeMethodsLinux.ldap_sasl_interactive_bind));
                     }
@@ -195,7 +195,7 @@ namespace LdapForNet.Native
         internal override int BindSimple(SafeHandle ld, string userDn, string password) =>
             NativeMethodsLinux.ldap_simple_bind_s(ld, userDn, password);
 
-        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string userDn, string password)
+        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string userDn, string password, LDAP_TIMEVAL timeout)
         {
             return await Task.Factory.StartNew(() =>
             {
@@ -217,7 +217,7 @@ namespace LdapForNet.Native
                         nameof(NativeMethodsLinux.ldap_sasl_bind), 1);
                 }
 
-                var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
+                var rc = ldap_result(ld, msgidp, 0, timeout, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
@@ -282,7 +282,7 @@ namespace LdapForNet.Native
             }
         }
 
-        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,
+        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, LDAP_TIMEVAL timeout,
             ref IntPtr pMessage) =>
             NativeMethodsLinux.ldap_result(ld, msgid, all, timeout, ref pMessage);
 
@@ -401,7 +401,7 @@ namespace LdapForNet.Native
             //no actions
         }
 
-        internal override void LdapConnect(SafeHandle ld)
+        internal override void LdapConnect(SafeHandle ld, TimeSpan connectionTimeout)
         {
             //no such method in openldap client library
         }

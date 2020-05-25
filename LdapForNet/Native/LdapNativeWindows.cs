@@ -78,11 +78,11 @@ namespace LdapForNet.Native
                 : NativeMethodsWindows.ldap_init(hostnames, (int)Native.LdapPort.LDAP);
         }
 
-        internal override void LdapConnect(SafeHandle ld)
+        internal override void LdapConnect(SafeHandle ld, TimeSpan connectionTimeout)
         {
             var timeout = new LDAP_TIMEVAL
             {
-                tv_sec = (int)(TimeSpan.FromMinutes(10).Ticks / TimeSpan.TicksPerSecond)
+                tv_sec = (int)(connectionTimeout.Ticks / TimeSpan.TicksPerSecond)
             };
             ThrowIfError(NativeMethodsWindows.ldap_connect(ld, timeout), nameof(NativeMethodsWindows.ldap_connect));
         }
@@ -98,7 +98,7 @@ namespace LdapForNet.Native
             authType == Native.LdapAuthType.External ? null : ToNative(ldapCredential);
 
         internal override async Task<IntPtr> BindSaslAsync(SafeHandle ld, Native.LdapAuthType authType,
-            LdapCredential ldapCredential)
+            LdapCredential ldapCredential, LDAP_TIMEVAL timeout)
         {
             var cred = ToNative(ldapCredential);
 
@@ -118,7 +118,7 @@ namespace LdapForNet.Native
             return NativeMethodsWindows.ldap_bind_s(ld, who, password, BindMethod.LDAP_AUTH_SIMPLE);
         }
 
-        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password)
+        internal override async Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password, LDAP_TIMEVAL timeout)
         {
             return await Task.Factory.StartNew(() =>
             {
@@ -132,7 +132,7 @@ namespace LdapForNet.Native
                         nameof(NativeMethodsWindows.ldap_bind), 1);
                 }
 
-                var rc = ldap_result(ld, msgidp, 0, IntPtr.Zero, ref result);
+                var rc = ldap_result(ld, msgidp, 0, timeout, ref result);
 
                 if (rc == Native.LdapResultType.LDAP_ERROR || rc == Native.LdapResultType.LDAP_TIMEOUT)
                 {
@@ -187,7 +187,7 @@ namespace LdapForNet.Native
             NativeMethodsWindows.ldap_search_ext(ld, @base, scope, filter, attributes, attrsonly,
                 serverctrls, clientctrls, timeout, sizelimit, ref msgidp);
 
-        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,
+        internal override Native.LdapResultType ldap_result(SafeHandle ld, int msgid, int all, LDAP_TIMEVAL timeout,
             ref IntPtr pMessage) =>
             NativeMethodsWindows.ldap_result(ld, msgid, all, timeout, ref pMessage);
 
