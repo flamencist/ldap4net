@@ -36,14 +36,14 @@ namespace LdapForNet.Native
         internal abstract int TrustAllCertificates(SafeHandle ld);
         internal abstract int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate);
         internal abstract int Init(ref IntPtr ld, string url);
-        internal abstract void LdapConnect(SafeHandle ld);
+        internal abstract void LdapConnect(SafeHandle ld, TimeSpan connectionTimeout);
         internal abstract int BindSasl(SafeHandle ld, LdapAuthType authType, LdapCredential ldapCredential);
 
         internal abstract Task<IntPtr> BindSaslAsync(SafeHandle ld, LdapAuthType authType,
-            LdapCredential ldapCredential);
+            LdapCredential ldapCredential, LDAP_TIMEVAL timeout);
 
         internal abstract int BindSimple(SafeHandle ld, string who, string password);
-        internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password);
+        internal abstract Task<IntPtr> BindSimpleAsync(SafeHandle ld, string who, string password, LDAP_TIMEVAL timeout);
         internal abstract int Abandon(SafeHandle ld, int msgId, IntPtr serverctrls, IntPtr clientctrls);
         internal abstract int ldap_set_option(SafeHandle ld, int option, ref int invalue);
         internal abstract int ldap_set_option(SafeHandle ld, int option, string invalue);
@@ -56,7 +56,7 @@ namespace LdapForNet.Native
         internal abstract int Search(SafeHandle ld, string @base, int scope, string filter, IntPtr attributes,
             int attrsonly, IntPtr serverctrls, IntPtr clientctrls, int timeout, int sizelimit, ref int msgidp);
 
-        internal abstract LdapResultType ldap_result(SafeHandle ld, int msgid, int all, IntPtr timeout,
+        internal abstract LdapResultType ldap_result(SafeHandle ld, int msgid, int all, LDAP_TIMEVAL timeout,
             ref IntPtr pMessage);
 
         internal abstract int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp,

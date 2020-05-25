@@ -43,6 +43,7 @@ using (var cn = new LdapConnection())
 	* [Connect](#connect)
 	* [Connect TLS](#connect-tls)
 	* [Connect SSL (with self signed certificate)](#connect-ssl-with-self-signed-certificate)
+	* [Connect Timeout](#connect-timeout)
 	* [Bind](#bind)
 	* [BindAsync](#bindAsync)
 	* [Bind Anonymous](#bind-anonymous)
@@ -57,6 +58,7 @@ using (var cn = new LdapConnection())
 	* [SearchAsync](#searchAsync)
 	* [SearchByCn](#searchbycn)
 	* [SearchBySid](#searchbysid)
+	* [GetOption](#getoption)
 	* [SetOption](#setoption)
 	* [Add](#add)
 	* [Add Binary Values](#add-binary-values)
@@ -77,6 +79,7 @@ using (var cn = new LdapConnection())
 		* [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
 		* [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
 		* [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
+		* [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
 	* [GetRootDse](#getRootDse)
 	* [WhoAmI](#whoami)
 	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
@@ -100,6 +103,13 @@ using (var cn = new LdapConnection())
 		- [DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
 		- [EXTERNAL](https://ldapwiki.com/wiki/SASL%20EXTERNAL)
 	- [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
+* Supported LDAP V3 controls:
+	- PageResultRequestControl\PageResultResponseControl
+	- DirSyncRequestControl\DirSyncRequestControl
+	- SortRequestControl\SortResponseControl
+	- AsqRequestControl\AsqResponseControl
+	- DirectoryNotificationControl
+	- VlvRequestControl\VlvResponseControl
 
 ## Installation
 
@@ -175,6 +185,15 @@ using (var cn = new LdapConnection())
 	....
 }
 
+```
+
+### Connect Timeout
+```c#
+using (var cn = new LdapConnection())
+{
+	cn.Timeout = new TimeSpan(0, 1 ,0); // 1 hour
+	....
+}
 ```
 
 ### Bind
@@ -474,7 +493,18 @@ using (var cn = new LdapConnection())
 
 ```
 
+### GetOption
 
+```c#
+using (var cn = new LdapConnection())
+{
+	cn.Connect();
+	var ldapVersion = cn.GetOption<int>(LdapOption.LDAP_OPT_PROTOCOL_VERSION);
+	var host = cn.GetOption<string>(LdapOption.LDAP_OPT_HOST_NAME);
+	var refferals = cn.GetOption<IntPtr>(LdapOption.LDAP_OPT_REFERRALS);
+	cn.Bind();
+}
+```
 
 ### SetOption
 
@@ -692,7 +722,6 @@ using (var cn = new LdapConnection())
 
 ### DeleteAsync
 
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -704,7 +733,6 @@ using (var cn = new LdapConnection())
 
 ### Rename
 
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -715,7 +743,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### RenameAsync
-
 
 ```c#
 using (var cn = new LdapConnection())
@@ -758,7 +785,7 @@ Inspired by .NET Framework LdapConnection.SendRequest
 
 ### Ldap V3 Controls
 #### PageResultRequestControl\PageResultResponseControl [(1.2.840.113556.1.4.319)](https://ldapwiki.com/wiki/Simple%20Paged%20Results%20Control)
-```cs
+```c#
 
 using (var cn = new LdapConnection())
 {
@@ -791,7 +818,7 @@ using (var cn = new LdapConnection())
 
 #### DirSyncRequestControl\DirSyncResponseControl [(1.2.840.113556.1.4.841)](https://ldapwiki.com/wiki/Directory%20Synchronization%20Control)
 Ldap user should have ``DS-Replication-Get-Changes`` extended right (https://docs.microsoft.com/en-us/windows/win32/ad/polling-for-changes-using-the-dirsync-control)
-```cs
+```c#
 
 using (var cn = new LdapConnection())
 {
@@ -830,7 +857,7 @@ using (var cn = new LdapConnection())
 ```
 
 #### SortRequestControl\SortResponseControl [(1.2.840.113556.1.4.473\1.2.840.113556.1.4.474)](https://ldapwiki.com/wiki/Server%20Side%20Sort%20Control)
-```cs
+```c#
 
 using (var cn = new LdapConnection())
 {
@@ -845,7 +872,7 @@ using (var cn = new LdapConnection())
 ```
 
 #### AsqRequestControl\AsqResponseControl [(1.2.840.113556.1.4.1504)](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/77d880bf-aadd-4f6f-bb78-076af8e22cd8)
-```cs
+```c#
 
 // get all members of group 'Domain Admins'
 using (var connection = new LdapConnection())
@@ -860,7 +887,7 @@ using (var connection = new LdapConnection())
 ```
 
 #### DirectoryNotificationControl [(1.2.840.113556.1.4.528)](https://ldapwiki.com/wiki/LDAP_SERVER_NOTIFICATION_OID)
-```cs
+```c#
 
 //get single notification from ldap server
 var cts = new CancellationTokenSource();
@@ -885,6 +912,39 @@ using (var connection = new LdapConnection())
                 
 }
 ```
+
+#### VlvRequestControl\VlvResponseControl [(2.16.840.1.113730.3.4.9\2.16.840.1.113730.3.4.10)](https://docs.microsoft.com/en-us/windows/win32/controls/use-virtual-list-view-controls)
+
+```c#
+using (var connection = new LdapConnection())
+{
+    var results = new List<DirectoryEntry>();
+    connection.Connect();
+    connection.Bind();
+    var directoryRequest = new SearchRequest("dc=example,dc=com", "(objectClass=*)", LdapSearchScope.LDAP_SCOPE_SUB);
+    var pageSize = 3;
+
+    var vlvRequestControl = new VlvRequestControl(0, pageSize - 1, 1);
+    directoryRequest.Controls.Add(new SortRequestControl("cn", false));
+    directoryRequest.Controls.Add(vlvRequestControl);
+
+    while (true)
+    {
+        var response = (SearchResponse)connection.SendRequest(directoryRequest);
+        results.AddRange(response.Entries);
+        var vlvResponseControl = (VlvResponseControl)response.Controls.Single(_ => _.GetType() == typeof(VlvResponseControl));
+        vlvRequestControl.Offset += pageSize;
+        if(vlvRequestControl.Offset > vlvResponseControl.ContentCount)
+        {
+            break;
+        }
+    }
+                
+    var entries = results.Select(_ => _.ToLdapEntry()).ToList();
+}
+
+```
+
 ### GetRootDse
 Information about server https://ldapwiki.com/wiki/RootDSE
 

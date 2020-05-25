@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -10,7 +9,8 @@ namespace LdapForNet
 {
     public interface ILdapConnection : IDisposable
     {
-        void Connect(string url, LdapVersion version = LdapVersion.LDAP_VERSION3);
+	    TimeSpan Timeout { get; set; }
+	    void Connect(string url, LdapVersion version = LdapVersion.LDAP_VERSION3);
         void Bind(LdapAuthType authType, LdapCredential ldapCredential);
         void Bind(string mechanism = LdapAuthMechanism.GSSAPI, string userDn = null, string password = null);
         Task BindAsync(LdapAuthType authType, LdapCredential ldapCredential);
