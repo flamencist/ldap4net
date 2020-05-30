@@ -415,7 +415,8 @@ namespace LdapForNetTests
                     response.ErrorMessage);
                 Assert.Equal(ResultCode.Success, response.ResultCode);
                 Assert.NotEmpty(response.Entries);
-                var directoryAttribute = response.Entries.First().Attributes["cn"];
+                var entry = response.Entries.First();
+                var directoryAttribute = entry.Attributes["cn"];
                 var cnBinary = directoryAttribute.GetValues<byte[]>().First();
                 Assert.NotEmpty(cnBinary);
                 var actual = Encoder.Instance.GetString(cnBinary);
@@ -423,6 +424,12 @@ namespace LdapForNetTests
 
                 var cn = directoryAttribute.GetValues<string>().First();
                 Assert.Equal("admin", cn);
+                
+                var cnString = entry.GetString("cn");
+                Assert.Equal("admin", cnString);
+                
+                var cnBytes = entry.GetBytes("cn");
+                Assert.Equal(cnBinary, cnBytes);
             }
         }
 
