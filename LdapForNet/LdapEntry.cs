@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 
 namespace LdapForNet
@@ -41,6 +42,77 @@ namespace LdapForNet
                 Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
             };
         }
+        
+        public DirectoryAttribute GetAttribute(string attribute) 
+            => this.Attributes.Contains(attribute) ? this.Attributes[attribute] : null;
+
+        private static Guid? GetGuid(byte[] bytes) 
+            => bytes != null && bytes.Length == 16 ? (Guid?) new Guid(bytes) : null;
+
+        public IEnumerable<string> GetObjectClass() => this.GetStrings(LdapAttributes.ObjectClass);
+
+        public IEnumerable<string> GetSubRefs() => this.GetStrings(LdapAttributes.SubRefs);
+
+        public Guid? GetObjectGuid()
+        {
+            var objectGuid = this.GetAttribute(LdapAttributes.ObjectGuid);
+            return objectGuid != null ? GetGuid(objectGuid.GetValue<byte[]>()) : null;
+        }
+
+        public DateTime? GetWhenChanged()
+        {
+            var whenChanged = this.GetString(LdapAttributes.WhenChanged);
+            if (whenChanged != null)
+            {
+                DateTime date = DateTime.ParseExact(whenChanged, "yyyyMMddHHmmss.f'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
+                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+            }
+            return null;
+        }
+        
+        public DateTime? GetModifyTimestamp()
+        {
+            var modifyTimestamp = this.GetString(LdapAttributes.ModifyTimestamp);
+            if (modifyTimestamp != null)
+            {
+                DateTime date = DateTime.ParseExact(modifyTimestamp, "yyyyMMddHHmmss'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
+                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+            }
+            return null;
+        }
+
+        public IEnumerable<string> GetMemberOf() => this.GetStrings(LdapAttributes.MemberOf);
+
+        public UserAccountControl GetUserAccountControl()
+        {
+            var attribute = this.GetString(LdapAttributes.UserAccountControl);
+            return attribute == null ? UserAccountControl.NONE : (UserAccountControl) int.Parse(attribute);
+        }
+
+        public int GetPrimaryGroupID()
+        {
+            var attribute = this.GetString(LdapAttributes.PrimaryGroupID);
+            return attribute == null ? 0 : int.Parse(attribute);
+        }
+
+        public int GetUserPrimaryID()
+        {
+            var objectSid = this.GetAttribute(LdapAttributes.ObjectSid)?.GetValue<byte[]>();
+            if (objectSid != null)
+            {
+                return BitConverter.ToInt32(objectSid, objectSid.Length - 4); //last 4 bytes are primary group id
+            }
+
+            return -1;
+        }
+
+        public string GetString(string attributeName) => this.GetAttribute(attributeName)?.GetValue<string>();
+        
+        public byte[] GetBytes(string attributeName) => this.GetAttribute(attributeName)?.GetValue<byte[]>();
+        
+        public IEnumerable<string> GetStrings(string attributeName) => this.GetAttribute(attributeName)?.GetValues<string>()?? Enumerable.Empty<string>();
+
+        public IEnumerable<byte[]> GetByteArrays(string attributeName) => this.GetAttribute(attributeName)?.GetValues<byte[]>() ?? Enumerable.Empty<byte[]>();
     }
 
     public class LdapModifyEntry
@@ -63,6 +135,14 @@ namespace LdapForNet
         private readonly List<object> _values = new List<object>();
 
         public string Name { get; set; }
+        
+        public T GetValue<T>()
+            where T : class, IEnumerable
+        {
+            var items = this.GetValues<T>();
+            var item = items.FirstOrDefault();
+            return item == default(T) ? default : item;
+        }
 
         public IEnumerable<T> GetValues<T>() where T : class, IEnumerable
         {
