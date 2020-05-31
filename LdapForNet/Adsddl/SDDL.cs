@@ -20,135 +20,127 @@ using LdapForNet.Adsddl.utils;
 
 namespace LdapForNet.Adsddl
 {
-    /**
-     * The SECURITY_DESCRIPTOR structure defines the security attributes of an object. These attributes specify who owns the
-     * object; who can access the object and what they can do with it; what level of audit logging should be applied to the
-     * object; and what kind of restrictions apply to the use of the security descriptor.
-     *
-     * Security descriptors appear in one of two forms, absolute or self-relative.
-     *
-     * A security descriptor is said to be in absolute format if it stores all of its security information via pointer
-     * fields, as specified in the RPC representation in section 2.4.6.1.
-     *
-     * A security descriptor is said to be in self-relative format if it stores all of its security information in a
-     * contiguous block of memory and expresses all of its pointer fields as offsets from its beginning. The order of
-     * appearance of pointer target fields is not required to be in any particular order; locating the OwnerSid, GroupSid,
-     * Sacl, and/or Dacl should only be based on OffsetOwner, OffsetGroup, OffsetSacl, and/or OffsetDacl pointers found in
-     * the fixed portion of the relative security descriptor.<br>
-     *
-     * The self-relative form of the security descriptor is required if one wants to transmit the SECURITY_DESCRIPTOR
-     * structure as an opaque data structure for transmission in communication protocols over a wire, or for storage on
-     * secondary media; the absolute form cannot be transmitted because it contains pointers to objects that are generally
-     * not accessible to the recipient.
-     *
-     * When a self-relative security descriptor is transmitted over a wire, it is sent in little-endian format and requires
-     * no padding.
-     *
-     * <see href="https://msdn.microsoft.com/en-us/library/cc230366.aspx">cc230366</see>
-     */
+    /// <summary>
+    ///     The SECURITY_DESCRIPTOR structure defines the security attributes of an object. These attributes specify who owns
+    ///     the object; who can access the object and what they can do with it; what level of audit logging should be applied
+    ///     to the object; and what kind of restrictions apply to the use of the security descriptor.
+    ///     Security descriptors appear in one of two forms, absolute or self-relative.
+    ///     A security descriptor is said to be in absolute format if it stores all of its security information via pointer
+    ///     fields, as specified in the RPC representation in section 2.4.6.1.
+    ///     A security descriptor is said to be in self-relative format if it stores all of its security information in a
+    ///     contiguous block of memory and expresses all of its pointer fields as offsets from its beginning. The order of
+    ///     appearance of pointer target fields is not required to be in any particular order; locating the OwnerSid, GroupSid,
+    ///     Sacl, and/or Dacl should only be based on OffsetOwner, OffsetGroup, OffsetSacl, and/or OffsetDacl pointers found in
+    ///     the fixed portion of the relative security descriptor.
+    ///     The self-relative form of the security descriptor is required if one wants to transmit the SECURITY_DESCRIPTOR
+    ///     structure as an opaque data structure for transmission in communication protocols over a wire, or for storage
+    ///     on secondary media; the absolute form cannot be transmitted because it contains pointers to objects that are
+    ///     generally not accessible to the recipient.
+    ///     When a self-relative security descriptor is transmitted over a wire, it is sent in little-endian format and
+    ///     requires no padding.
+    ///     <see href="https://msdn.microsoft.com/en-us/library/cc230366.aspx">cc230366</see>
+    /// </summary>
     public class SDDL
     {
         /// <summary>
-        /// An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR structure.
-        /// This field MUST be set to one.
-        /// </summary>
-        private byte revision;
-
-        /// <summary>
-        /// An unsigned 16-bit field that specifies control access bit flags. The Self Relative (SR) bit MUST be set when the
-        /// security descriptor is in self-relative format.
+        ///     An unsigned 16-bit field that specifies control access bit flags. The Self Relative (SR) bit MUST be set when the
+        ///     security descriptor is in self-relative format.
         /// </summary>
         private byte[] controlFlags;
 
         /// <summary>
-        /// An unsigned 32-bit integer that specifies the offset to the SID. This SID specifies the owner of the object to
-        /// which the security descriptor is associated. This must be a valid offset if the OD flag is not set. If this field
-        /// is set to zero, the OwnerSid field MUST not be present.
-        /// </summary>
-        private long offsetOwner;
-
-        /// <summary>
-        /// An unsigned 32-bit integer that specifies the offset to the SID. This SID specifies the group of the object to
-        /// which the security descriptor is associated. This must be a valid offset if the GD flag is not set. If this field
-        /// is set to zero, the GroupSid field MUST not be present.
-        /// </summary>
-        private long offsetGroup;
-
-        /// <summary>
-        /// An unsigned 32-bit integer that specifies the offset to the ACL that contains system ACEs. Typically, the system
-        /// ACL contains auditing ACEs (such as SYSTEM_AUDIT_ACE, SYSTEM_AUDIT_CALLBACK_ACE, or
-        /// SYSTEM_AUDIT_CALLBACK_OBJECT_ACE), and at most one Label ACE. This must be a valid offset if the SP flag is set;
-        /// if the SP flag is not set, this field MUST be set to zero. If this field is set to zero, the Sacl field MUST not
-        /// be present.
-        /// </summary>
-        private long offsetSACL;
-
-        /// <summary>
-        /// An unsigned 32-bit integer that specifies the offset to the ACL that contains ACEs that control access.
-        /// Typically, the DACL contains ACEs that grant or deny access to principals or groups. This must be a valid offset
-        /// if the DP flag is set; if the DP flag is not set, this field MUST be set to zero. If this field is set to zero,
-        /// the Dacl field MUST not be present.
-        /// </summary>
-        private long offsetDACL;
-
-        /// <summary>
-        /// The SID of the owner of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
-        /// the OffsetOwner field is not zero.
-        /// </summary>
-        private SID owner;
-
-        /// <summary>
-        /// The SID of the group of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
-        /// the GroupOwner field is not zero.
-        /// </summary>
-        private SID group;
-
-        /// <summary>
-        /// The SACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the SP flag
-        /// is set.
+        ///     The SACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the SP flag
+        ///     is set.
         /// </summary>
         private ACL dacl;
 
         /// <summary>
-        /// The DACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the DP flag
-        /// is set.
+        ///     The SID of the group of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
+        ///     the GroupOwner field is not zero.
+        /// </summary>
+        private SID group;
+
+        /// <summary>
+        ///     An unsigned 32-bit integer that specifies the offset to the ACL that contains ACEs that control access.
+        ///     Typically, the DACL contains ACEs that grant or deny access to principals or groups. This must be a valid offset
+        ///     if the DP flag is set; if the DP flag is not set, this field MUST be set to zero. If this field is set to zero,
+        ///     the Dacl field MUST not be present.
+        /// </summary>
+        private long offsetDACL;
+
+        /// <summary>
+        ///     An unsigned 32-bit integer that specifies the offset to the SID. This SID specifies the group of the object to
+        ///     which the security descriptor is associated. This must be a valid offset if the GD flag is not set. If this field
+        ///     is set to zero, the GroupSid field MUST not be present.
+        /// </summary>
+        private long offsetGroup;
+
+        /// <summary>
+        ///     An unsigned 32-bit integer that specifies the offset to the SID. This SID specifies the owner of the object to
+        ///     which the security descriptor is associated. This must be a valid offset if the OD flag is not set. If this field
+        ///     is set to zero, the OwnerSid field MUST not be present.
+        /// </summary>
+        private long offsetOwner;
+
+        /// <summary>
+        ///     An unsigned 32-bit integer that specifies the offset to the ACL that contains system ACEs. Typically, the system
+        ///     ACL contains auditing ACEs (such as SYSTEM_AUDIT_ACE, SYSTEM_AUDIT_CALLBACK_ACE, or
+        ///     SYSTEM_AUDIT_CALLBACK_OBJECT_ACE), and at most one Label ACE. This must be a valid offset if the SP flag is set;
+        ///     if the SP flag is not set, this field MUST be set to zero. If this field is set to zero, the Sacl field MUST not
+        ///     be present.
+        /// </summary>
+        private long offsetSACL;
+
+        /// <summary>
+        ///     The SID of the owner of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
+        ///     the OffsetOwner field is not zero.
+        /// </summary>
+        private SID owner;
+
+        /// <summary>
+        ///     An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR structure.
+        ///     This field MUST be set to one.
+        /// </summary>
+        private byte revision;
+
+        /// <summary>
+        ///     The DACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the DP flag
+        ///     is set.
         /// </summary>
         private ACL sacl;
 
         /// <summary>
-        /// Constructor.
-        /// 
-        /// @param src source as byte array.
+        ///     Constructor.
+        ///     @param src source as byte array.
         /// </summary>
         public SDDL(byte[] src)
         {
             ByteBuffer sddlBuffer = ByteBuffer.wrap(src);
-            parse(sddlBuffer.asIntBuffer(), 0);
+            this.parse(sddlBuffer.asIntBuffer(), 0);
         }
 
         /// <summary>
-        /// Load the SDDL from the buffer returning the last SDDL segment position into the buffer.
-        /// 
-        /// @param buff source buffer.
-        /// @param start start loading position.
-        /// @return last loading position.
+        ///     Load the SDDL from the buffer returning the last SDDL segment position into the buffer.
+        ///     @param buff source buffer.
+        ///     @param start start loading position.
+        ///     @return last loading position.
         /// </summary>
         private int parse(IntBuffer buff, int start)
         {
             int pos = start;
-            
+
             // Revision (1 byte): An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR
             // structure. This field MUST be set to one.
             byte[] header = NumberFacility.getBytes(buff.get(pos));
             this.revision = header[0];
-            
+
             // Control (2 bytes): An unsigned 16-bit field that specifies control access bit flags. The Self Relative
             // (SR) bit MUST be set when the security descriptor is in self-relative format.
-            this.controlFlags = new byte[] { header[3], header[2] };
+            this.controlFlags = new[] { header[3], header[2] };
             bool[] controlFlag = NumberFacility.getBits(this.controlFlags);
 
             pos++;
-            
+
             // OffsetOwner (4 bytes): An unsigned 32-bit integer that specifies the offset to the SID. This SID
             // specifies the owner of the object to which the security descriptor is associated. This must be a valid
             // offset if the OD flag is not set. If this field is set to zero, the OwnerSid field MUST not be present.
@@ -162,7 +154,7 @@ namespace LdapForNet.Adsddl
             }
 
             pos++;
-            
+
             // OffsetGroup (4 bytes): An unsigned 32-bit integer that specifies the offset to the SID. This SID
             // specifies the group of the object to which the security descriptor is associated. This must be a valid
             // offset if the GD flag is not set. If this field is set to zero, the GroupSid field MUST not be present.
@@ -176,7 +168,7 @@ namespace LdapForNet.Adsddl
             }
 
             pos++;
-            
+
             // OffsetSacl (4 bytes): An unsigned 32-bit integer that specifies the offset to the ACL that contains
             // system ACEs. Typically, the system ACL contains auditing ACEs (such as SYSTEM_AUDIT_ACE,
             // SYSTEM_AUDIT_CALLBACK_ACE, or SYSTEM_AUDIT_CALLBACK_OBJECT_ACE), and at most one Label ACE (as specified
@@ -192,7 +184,7 @@ namespace LdapForNet.Adsddl
             }
 
             pos++;
-            
+
             // OffsetDacl (4 bytes): An unsigned 32-bit integer that specifies the offset to the ACL that contains ACEs
             // that control access. Typically, the DACL contains ACEs that grant or deny access to principals or groups.
             // This must be a valid offset if the DP flag is set; if the DP flag is not set, this field MUST be set to
@@ -205,7 +197,7 @@ namespace LdapForNet.Adsddl
             {
                 this.offsetDACL = 0;
             }
-            
+
             // OwnerSid (variable): The SID of the owner of the object. The length of the SID MUST be a multiple of 4.
             // This field MUST be present if the OffsetOwner field is not zero.
             if (this.offsetOwner > 0)
@@ -216,7 +208,7 @@ namespace LdapForNet.Adsddl
                 this.owner = new SID();
                 pos = this.owner.parse(buff, pos);
             }
-            
+
             // GroupSid (variable): The SID of the group of the object. The length of the SID MUST be a multiple of 4.
             // This field MUST be present if the GroupOwner field is not zero.
             if (this.offsetGroup > 0)
@@ -226,7 +218,7 @@ namespace LdapForNet.Adsddl
                 this.group = new SID();
                 pos = this.group.parse(buff, pos);
             }
-            
+
             // Sacl (variable): The SACL of the object. The length of the SID MUST be a multiple of 4. This field MUST
             // be present if the SP flag is set.
             if (this.offsetSACL > 0)
@@ -236,7 +228,7 @@ namespace LdapForNet.Adsddl
                 this.sacl = new ACL();
                 pos = this.sacl.parse(buff, pos);
             }
-            
+
             // Dacl (variable): The DACL of the object. The length of the SID MUST be a multiple of 4. This field MUST
             // be present if the DP flag is set.
             if (this.offsetDACL > 0)
@@ -250,62 +242,54 @@ namespace LdapForNet.Adsddl
         }
 
         /// <summary>
-        /// Gets size in terms of number of bytes.
-        /// 
-        /// @return size.
+        ///     Gets size in terms of number of bytes.
+        ///     @return size.
         /// </summary>
-        public int getSize() 
+        public int getSize()
             => 20 + (this.sacl == null ? 0 : this.sacl.getSize())
-            + (this.dacl == null ? 0 : this.dacl.getSize())
-            + (this.owner == null ? 0 : this.owner.getSize())
-            + (this.group == null ? 0 : this.group.getSize());
+                + (this.dacl == null ? 0 : this.dacl.getSize())
+                + (this.owner == null ? 0 : this.owner.getSize())
+                + (this.group == null ? 0 : this.group.getSize());
 
         /// <summary>
-        /// Get revison.
-        /// 
-        /// @return An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR structure..
+        ///     Get revison.
+        ///     @return An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR structure..
         /// </summary>
         public byte getRevision() => this.revision;
 
         /// <summary>
-        /// Gets control.
-        /// 
-        /// @return An unsigned 16-bit field that specifies control access bit flags.
+        ///     Gets control.
+        ///     @return An unsigned 16-bit field that specifies control access bit flags.
         /// </summary>
         public byte[] getControlFlags() => this.controlFlags;
 
         /// <summary>
-        /// Gets owner.
-        /// 
-        /// @return The SID of the owner of the object.
+        ///     Gets owner.
+        ///     @return The SID of the owner of the object.
         /// </summary>
         public SID getOwner() => this.owner;
 
         /// <summary>
-        /// Gets group.
-        /// 
-        /// @return The SID of the group of the object.
+        ///     Gets group.
+        ///     @return The SID of the group of the object.
         /// </summary>
         public SID getGroup() => this.group;
 
         /// <summary>
-        /// Gets DACL.
-        /// 
-        /// @return The DACL of the object.
+        ///     Gets DACL.
+        ///     @return The DACL of the object.
         /// </summary>
         public ACL getDacl() => this.dacl;
 
         /// <summary>
-        /// Gets SACL.
-        /// 
-        /// @return The SACL of the object.
+        ///     Gets SACL.
+        ///     @return The SACL of the object.
         /// </summary>
         public ACL getSacl() => this.sacl;
 
         /// <summary>
-        /// Serializes SDDL as byte array.
-        /// 
-        /// @return SDL as byte array.
+        ///     Serializes SDDL as byte array.
+        ///     @return SDL as byte array.
         /// </summary>
         public byte[] toByteArray()
         {
@@ -324,7 +308,7 @@ namespace LdapForNet.Adsddl
             // add offset owner
             buff.position(4);
 
-            int nextAvailablePosition = 20;
+            var nextAvailablePosition = 20;
 
             // add owner SID
             if (this.owner == null)
@@ -462,7 +446,7 @@ namespace LdapForNet.Adsddl
 
         public override int GetHashCode()
         {
-            int hash = 5;
+            var hash = 5;
             hash = 71 * hash + this.controlFlags.GetHashCode();
             hash = 71 * hash + this.owner.GetHashCode();
             hash = 71 * hash + this.group.GetHashCode();

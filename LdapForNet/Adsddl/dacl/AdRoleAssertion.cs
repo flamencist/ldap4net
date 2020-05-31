@@ -24,35 +24,35 @@ using System.Collections.Generic;
 
 namespace LdapForNet.Adsddl.dacl
 {
-   /**
-    * An AD role assertion represents a claim that a given principal meets all the criteria in the given {@code AceAssertion} list.
-    * These criteria are considered the requirements of a given 'role', e.g., the ability to join computers to a domain an unlimited
-    * number of times can be considered to be a role.
-    *
-    * An instance of this class can be passed to a {@linkplain DACLAssertor} to actually perform the assertion against the DACL
-    * (Discretionary Access Control List) of an AD object.
-    */
+    /// <summary>
+    ///     An AD role assertion represents a claim that a given principal meets all the criteria in the given AceAssertion
+    ///     list.
+    ///     These criteria are considered the requirements of a given 'role', e.g., the ability to join computers to a domain
+    ///     an unlimited number of times can be considered to be a role.
+    ///     An instance of this class can be passed to a DACLAssertor to actually perform the assertion against
+    ///     the DACL (Discretionary Access Control List) of an AD object.
+    /// </summary>
     public abstract class AdRoleAssertion
     {
         /// <summary>
-        /// List of AceAssertions.
+        ///     List of AceAssertions.
         /// </summary>
-        private List<AceAssertion> assertions;
+        private readonly List<AceAssertion> assertions;
 
         /// <summary>
-        /// SID of the principal (i.e., user or group) which is to be asserted.
+        ///     Whether the principal represents a group or not.
         /// </summary>
-        private SID principal;
+        private readonly bool isGroup;
 
         /// <summary>
-        /// Whether the principal represents a group or not.
+        ///     SID of the principal (i.e., user or group) which is to be asserted.
         /// </summary>
-        private bool isGroup;
+        private readonly SID principal;
 
         /// <summary>
-        /// The tokenGroup SIDs of the principal, if a user. May be null.
+        ///     The tokenGroup SIDs of the principal, if a user. May be null.
         /// </summary>
-        private List<SID> tokenGroups;
+        private readonly List<SID> tokenGroups;
 
         public AdRoleAssertion() { }
 
@@ -65,25 +65,25 @@ namespace LdapForNet.Adsddl.dacl
         }
 
         /// <summary>
-        ///  Gets the list of assertions
+        ///     Gets the list of assertions
         /// </summary>
         /// <returns>assertions</returns>
         public List<AceAssertion> GetAssertions() => this.assertions;
 
         /// <summary>
-        /// Gets the SID of the principal
+        ///     Gets the SID of the principal
         /// </summary>
         /// <returns>principal SID</returns>
         public SID GetPrincipal() => this.principal;
 
         /// <summary>
-        /// Whether the principal is a group
+        ///     Whether the principal is a group
         /// </summary>
         /// <returns>true if principal is a group, false if a user</returns>
-        public bool IsGroup() => isGroup;
+        public bool IsGroup() => this.isGroup;
 
         /// <summary>
-        ///  Gets the token group SIDs of the principal, may be null
+        ///     Gets the token group SIDs of the principal, may be null
         /// </summary>
         /// <returns>SIDs of the principal's token groups, if principal is a user</returns>
         public List<SID> GetTokenGroups() => this.tokenGroups;

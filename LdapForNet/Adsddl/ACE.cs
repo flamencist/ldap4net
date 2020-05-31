@@ -30,9 +30,9 @@ namespace LdapForNet.Adsddl
     public class ACE
     {
         /// <summary>
-        ///     AceType
+        ///     Optional application data.
         /// </summary>
-        private AceType type;
+        private byte[] applicationData;
 
         /// <summary>
         ///     AceFlag
@@ -40,9 +40,9 @@ namespace LdapForNet.Adsddl
         private List<AceFlag> flags;
 
         /// <summary>
-        ///     AceRights
+        ///     A GUID (16 bytes) that identifies the type of child object that can inherit the ACE.
         /// </summary>
-        private AceRights rights;
+        private byte[] inheritedObjectType;
 
         /// <summary>
         ///     AceObjectFlags
@@ -55,19 +55,19 @@ namespace LdapForNet.Adsddl
         private byte[] objectType;
 
         /// <summary>
-        ///     A GUID (16 bytes) that identifies the type of child object that can inherit the ACE.
+        ///     AceRights
         /// </summary>
-        private byte[] inheritedObjectType;
-
-        /// <summary>
-        ///     Optional application data.
-        /// </summary>
-        private byte[] applicationData;
+        private AceRights rights;
 
         /// <summary>
         ///     The SID of a trustee.
         /// </summary>
         private SID sid;
+
+        /// <summary>
+        ///     AceType
+        /// </summary>
+        private AceType type;
 
         /// <summary>
         ///     Creates a new ACE instance.

@@ -27,7 +27,7 @@ using LdapForNet.Adsddl.data;
 namespace LdapForNet.Adsddl.dacl
 {
     /// <summary>
-    ///     Represents an {@linkplain AdRoleAssertion} which specifies the criteria required to join or remove computers
+    ///     Represents an AdRoleAssertion which specifies the criteria required to join or remove computers
     ///     to/from an AD domain in a given container (& its children) without any restrictions. This includes the ability
     ///     to reset AD computer passwords, which is needed by some systems that manage domain joined computers.
     /// </summary>

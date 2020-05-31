@@ -22,56 +22,48 @@ using LdapForNet.Adsddl.utils;
 
 namespace LdapForNet.Adsddl
 {
-    /**
-     * The access control list (ACL) packet is used to specify a list of individual access control entries (ACEs). An ACL
-     * packet and an array of ACEs comprise a complete access control list.
-     *
-     * The individual ACEs in an ACL are numbered from 0 to n, where n+1 is the number of ACEs in the ACL. When editing an
-     * ACL, an application refers to an ACE within the ACL by the ACE index.
-     *
-     * In the absence of implementation-specific functions to access the individual ACEs, access to each ACE MUST be
-     * computed by using the AclSize and AceCount fields to parse the wire packets following the ACL to identify each
-     * ACE_HEADER, which in turn contains the information needed to obtain the specific ACEs.
-     *
-     * There are two types of ACL:
-     *
-     * - A discretionary access control list (DACL) is controlled by the owner of an object or anyone granted WRITE_DAC
-     * access
-     * to the object. It specifies the access particular users and groups can have to an object. For example, the owner of a
-     * file can use a DACL to control which users and groups can and cannot have access to the file.
-     *
-     * - A system access control list (SACL) is similar to the DACL, except that the SACL is used to audit rather than
-     * control
-     * access to an object. When an audited action occurs, the operating system records the event in the security log. Each
-     * ACE in a SACL has a header that indicates whether auditing is triggered by success, failure, or both; a SID that
-     * specifies a particular user or security group to monitor; and an access mask that lists the operations to audit.
-     *
-     * <see href="https://msdn.microsoft.com/en-us/library/cc230297.aspx">cc230297</see>
-     */
+    /// <summary>
+    ///     The access control list (ACL) packet is used to specify a list of individual access control entries (ACEs). An ACL
+    ///     packet and an array of ACEs comprise a complete access control list.
+    ///     The individual ACEs in an ACL are numbered from 0 to n, where n+1 is the number of ACEs in the ACL. When editing an
+    ///     ACL, an application refers to an ACE within the ACL by the ACE index.
+    ///     In the absence of implementation-specific functions to access the individual ACEs, access to each ACE MUST be
+    ///     computed by using the AclSize and AceCount fields to parse the wire packets following the ACL to identify each
+    ///     ACE_HEADER, which in turn contains the information needed to obtain the specific ACEs.
+    ///     There are two types of ACL:
+    ///     - A discretionary access control list (DACL) is controlled by the owner of an object or anyone granted WRITE_DAC
+    ///     access to the object. It specifies the access particular users and groups can have to an object. For example, the
+    ///     owner of
+    ///     a file can use a DACL to control which users and groups can and cannot have access to the file.
+    ///     - A system access control list (SACL) is similar to the DACL, except that the SACL is used to audit rather than
+    ///     control access to an object. When an audited action occurs, the operating system records the event in the security
+    ///     log.
+    ///     Each ACE in a SACL has a header that indicates whether auditing is triggered by success, failure, or both; a SID
+    ///     that
+    ///     specifies a particular user or security group to monitor; and an access mask that lists the operations to audit.
+    ///     <see href="https://msdn.microsoft.com/en-us/library/cc230297.aspx">cc230297</see>
+    /// </summary>
     public class ACL
     {
+        private readonly List<ACE> aces = new List<ACE>();
+
         /// <summary>
-        /// An unsigned 8-bit value that specifies the revision of the ACL. The only two legitimate forms of ACLs supported
-        /// for on-the-wire management or manipulation are type 2 and type 4. No other form is valid for manipulation on the
-        /// wire. Therefore this field MUST be set to one of the following values.
-        /// 
-        /// ACL_REVISION (0x02) - When set to 0x02, only AceTypes 0x00, 0x01, 0x02, 0x03, and 0x11 can be present in the ACL.
-        /// An AceType of 0x11 is used for SACLs but not for DACLs. For more information about ACE types.
-        /// 
-        /// ACL_REVISION_DS (0x04) - When set to 0x04, AceTypes 0x05, 0x06, 0x07, 0x08, and 0x11 are allowed. ACLs of
-        /// revision 0x04 are applicable only to directory service objects. An AceType of 0x11 is used for SACLs but not for
-        /// DACLs.
+        ///     An unsigned 8-bit value that specifies the revision of the ACL. The only two legitimate forms of ACLs supported
+        ///     for on-the-wire management or manipulation are type 2 and type 4. No other form is valid for manipulation on the
+        ///     wire. Therefore this field MUST be set to one of the following values.
+        ///     ACL_REVISION (0x02) - When set to 0x02, only AceTypes 0x00, 0x01, 0x02, 0x03, and 0x11 can be present in the ACL.
+        ///     An AceType of 0x11 is used for SACLs but not for DACLs. For more information about ACE types.
+        ///     ACL_REVISION_DS (0x04) - When set to 0x04, AceTypes 0x05, 0x06, 0x07, 0x08, and 0x11 are allowed. ACLs of
+        ///     revision 0x04 are applicable only to directory service objects. An AceType of 0x11 is used for SACLs but not for
+        ///     DACLs.
         /// </summary>
         private AclRevision revision;
 
-        private List<ACE> aces = new List<ACE>();
-
         /// <summary>
-        /// Load the ACL from the buffer returning the last ACL segment position into the buffer.
-        /// 
-        /// @param buff source buffer.
-        /// @param start start loading position.
-        /// @return last loading position.
+        ///     Load the ACL from the buffer returning the last ACL segment position into the buffer.
+        ///     @param buff source buffer.
+        ///     @param start start loading position.
+        ///     @return last loading position.
         /// </summary>
         public int parse(IntBuffer buff, int start)
         {
@@ -85,7 +77,7 @@ namespace LdapForNet.Adsddl
             bytes = NumberFacility.getBytes(buff.get(pos));
             int aceCount = NumberFacility.getInt(bytes[1], bytes[0]);
 
-            for (int i = 0; i < aceCount; i++)
+            for (var i = 0; i < aceCount; i++)
             {
                 pos++;
 
@@ -99,49 +91,41 @@ namespace LdapForNet.Adsddl
         }
 
         /// <summary>
-        /// Gets ACL revision.
-        /// 
-        /// @return revision.
+        ///     Gets ACL revision.
+        ///     @return revision.
         /// </summary>
         public AclRevision getRevision() => this.revision;
 
         /// <summary>
-        /// Gets ACL size in bytes.
-        /// 
-        /// @return ACL size in bytes.
+        ///     Gets ACL size in bytes.
+        ///     @return ACL size in bytes.
         /// </summary>
         public int getSize() => 8 + this.aces.Sum(ace => ace.getSize()); // add aces
 
         /// <summary>
-        /// Gets ACE number: an unsigned 16-bit integer that specifies the count of the number of ACE records in the ACL.
-        /// 
-        /// @return ACEs' number.
+        ///     Gets ACE number: an unsigned 16-bit integer that specifies the count of the number of ACE records in the ACL.
+        ///     @return ACEs' number.
         /// </summary>
         public int getAceCount() => this.aces.Count;
 
         /// <summary>
-        /// Gets ACL ACEs.
-        /// 
-        /// @return list of ACEs.
-        /// 
-        /// ACE
+        ///     Gets ACL ACEs.
+        ///     @return list of ACEs.
+        ///     ACE
         /// </summary>
         public List<ACE> getAces() => this.aces;
 
         /// <summary>
-        /// Gets ACL ACE at the given position.
-        /// 
-        /// @param i position.
-        /// @return ACL ACE.
-        /// 
-        /// ACE
+        ///     Gets ACL ACE at the given position.
+        ///     @param i position.
+        ///     @return ACL ACE.
+        ///     ACE
         /// </summary>
         public ACE getAce(int i) => this.aces[i];
 
         /// <summary>
-        /// Serializes to byte array.
-        /// 
-        /// @return serialized ACL.
+        ///     Serializes to byte array.
+        ///     @return serialized ACL.
         /// </summary>
         public byte[] toByteArray()
         {
@@ -195,9 +179,9 @@ namespace LdapForNet.Adsddl
                 return false;
             }
 
-            for (int i = 0; i < this.aces.Count; i++)
+            for (var i = 0; i < this.aces.Count; i++)
             {
-                if (!getAce(i).Equals(ext.getAce(i)))
+                if (!this.getAce(i).Equals(ext.getAce(i)))
                 {
                     return false;
                 }
@@ -211,7 +195,8 @@ namespace LdapForNet.Adsddl
             StringBuilder bld = new StringBuilder();
             bld.Append('P');
 
-            foreach (ACE ace in this.aces) {
+            foreach (ACE ace in this.aces)
+            {
                 bld.Append(ace);
             }
 
@@ -220,7 +205,7 @@ namespace LdapForNet.Adsddl
 
         public override int GetHashCode()
         {
-            int hash = 7;
+            var hash = 7;
             hash = 43 * hash + this.aces.GetHashCode();
             return hash;
         }

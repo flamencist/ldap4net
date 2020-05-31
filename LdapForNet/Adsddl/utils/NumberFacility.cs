@@ -53,7 +53,10 @@ namespace LdapForNet.Adsddl.utils
         public static byte[] leftTrim(byte[] bytes)
         {
             var pos = 0;
-            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++);
+            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++)
+            {
+                ;
+            }
 
             if (pos < bytes.Length)
             {

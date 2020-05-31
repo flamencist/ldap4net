@@ -18,29 +18,28 @@ using System;
 
 namespace LdapForNet.Adsddl.data
 {
-    /**
-     * An unsigned 8-bit value that specifies the revision of the ACL. The only two legitimate forms of ACLs supported for
-     * on-the-wire management or manipulation are type 2 and type 4. No other form is valid for manipulation on the wire.
-     * Therefore this field MUST be set to one of the following values.
-     *
-     * <see href="https://msdn.microsoft.com/en-us/library/cc230297.aspx">cc230297</see>
-     */
+    /// <summary>
+    ///     An unsigned 8-bit value that specifies the revision of the ACL. The only two legitimate forms of ACLs supported for
+    ///     on-the-wire management or manipulation are type 2 and type 4. No other form is valid for manipulation on the wire.
+    ///     Therefore this field MUST be set to one of the following values.
+    ///     <see href="https://msdn.microsoft.com/en-us/library/cc230297.aspx">cc230297</see>
+    /// </summary>
     public enum AclRevision : byte
     {
         /// <summary>
-        /// Unknown.
+        ///     Unknown.
         /// </summary>
         UNEXPECTED = 0x00,
 
         /// <summary>
-        /// 0x02 - When set to 0x02, only AceTypes 0x00, 0x01, 0x02, 0x03, and 0x11 can be present in the ACL. An AceType of
-        /// 0x11 is used for SACLs but not for DACLs.
+        ///     0x02 - When set to 0x02, only AceTypes 0x00, 0x01, 0x02, 0x03, and 0x11 can be present in the ACL. An AceType of
+        ///     0x11 is used for SACLs but not for DACLs.
         /// </summary>
         ACL_REVISION = 0x02,
 
         /// <summary>
-        /// 0x04 - When set to 0x04, AceTypes 0x05, 0x06, 0x07, 0x08, and 0x11 are allowed. ACLs of revision 0x04 are
-        /// applicable only to directory service objects. An AceType of 0x11 is used for SACLs but not for DACLs.
+        ///     0x04 - When set to 0x04, AceTypes 0x05, 0x06, 0x07, 0x08, and 0x11 are allowed. ACLs of revision 0x04 are
+        ///     applicable only to directory service objects. An AceType of 0x11 is used for SACLs but not for DACLs.
         /// </summary>
         ACL_REVISION_DS = 0x04
     }
@@ -48,10 +47,9 @@ namespace LdapForNet.Adsddl.data
     public static class AclRevisionExtension
     {
         /// <summary>
-        /// Parse byte value.
-        /// 
-        /// @param value byet value.
-        /// @return ACL revision.
+        ///     Parse byte value.
+        ///     @param value byet value.
+        ///     @return ACL revision.
         /// </summary>
         public static AclRevision parseValue(byte value)
         {

@@ -45,9 +45,10 @@ namespace LdapForNet.Adsddl
     public class SID
     {
         /// <summary>
-        ///     An 8-bit unsigned integer that specifies the revision level of the SID. This value MUST be set to 0x01.
+        ///     A variable length list of unsigned 32-bit integers that uniquely identifies a principal relative to the
+        ///     IdentifierAuthority.
         /// </summary>
-        private byte revision;
+        private readonly List<byte[]> subAuthorities;
 
         /// <summary>
         ///     A SID_IDENTIFIER_AUTHORITY (6 bytes) structure that indicates the authority under which the SID was created.
@@ -57,10 +58,9 @@ namespace LdapForNet.Adsddl
         private byte[] identifierAuthority;
 
         /// <summary>
-        ///     A variable length list of unsigned 32-bit integers that uniquely identifies a principal relative to the
-        ///     IdentifierAuthority.
+        ///     An 8-bit unsigned integer that specifies the revision level of the SID. This value MUST be set to 0x01.
         /// </summary>
-        private readonly List<byte[]> subAuthorities;
+        private byte revision;
 
         public SID() => this.subAuthorities = new List<byte[]>();
 

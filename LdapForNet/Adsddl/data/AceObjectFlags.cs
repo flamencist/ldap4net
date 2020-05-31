@@ -20,40 +20,40 @@ using System.Linq;
 
 namespace LdapForNet.Adsddl.data
 {
-    /**
-     * A 32-bit unsigned integer that specifies a set of bit flags that indicate whether the ObjectType and
-     * InheritedObjectType fields contain valid data. This parameter can be one or more of the following values.
-     *
-     * <see href="https://msdn.microsoft.com/en-us/library/cc230289.aspx">cc230289</see>
-     */
+    /// <summary>
+    ///     A 32-bit unsigned integer that specifies a set of bit flags that indicate whether the ObjectType and
+    ///     InheritedObjectType fields contain valid data. This parameter can be one or more of the following values.
+    ///     <see href="https://msdn.microsoft.com/en-us/library/cc230289.aspx">cc230289</see>
+    /// </summary>
     public class AceObjectFlags
     {
         /// <summary>
-        /// ACE object flag.
+        ///     ACE object flag.
         /// </summary>
         [Flags]
         public enum Flag
         {
             /// <summary>
-            /// 0x00000001 - ObjectType is valid.
+            ///     0x00000001 - ObjectType is valid.
             /// </summary>
             ACE_OBJECT_TYPE_PRESENT = 0x00000001,
 
             /// <summary>
-            /// 0x00000002 - InheritedObjectType is valid. If this value is not specified, all types of child objects can inherit the ACE.
+            ///     0x00000002 - InheritedObjectType is valid. If this value is not specified, all types of child objects can inherit
+            ///     the ACE.
             /// </summary>
             ACE_INHERITED_OBJECT_TYPE_PRESENT = 0x00000002
         }
 
         /// <summary>
-        /// Standard flags.
+        ///     Standard flags.
         /// </summary>
-        private HashSet<Flag> flags = new HashSet<Flag>();
+        private readonly HashSet<Flag> flags = new HashSet<Flag>();
 
         /// <summary>
-        /// Custom/Other flags.
+        ///     Custom/Other flags.
         /// </summary>
-        private int others = 0;
+        private int others;
 
         public AceObjectFlags(params Flag[] fls)
         {
@@ -64,15 +64,15 @@ namespace LdapForNet.Adsddl.data
 
             foreach (Flag flag in fls)
             {
-                if (!flags.Contains(flag))
+                if (!this.flags.Contains(flag))
                 {
-                    flags.Add(flag);
+                    this.flags.Add(flag);
                 }
             }
         }
 
         /// <summary>
-        ///  Parse flags given as int value.
+        ///     Parse flags given as int value.
         /// </summary>
         /// <param name="value">value flags given as int value.</param>
         /// <returns>ACE object flags.</returns>
@@ -84,10 +84,10 @@ namespace LdapForNet.Adsddl.data
 
             foreach (Flag type in Enum.GetValues(typeof(Flag)))
             {
-                if ((value & (int)type) == (int)type)
+                if ((value & (int) type) == (int) type)
                 {
                     res.flags.Add(type);
-                    res.others ^= (int)type;
+                    res.others ^= (int) type;
                 }
             }
 
@@ -95,40 +95,36 @@ namespace LdapForNet.Adsddl.data
         }
 
         /// <summary>
-        /// Gets standard ACE object flags.
-        /// 
-        /// @return stabdatd ACE object flags.
+        ///     Gets standard ACE object flags.
+        ///     @return stabdatd ACE object flags.
         /// </summary>
-        public HashSet<Flag> getFlags() => flags;
+        public HashSet<Flag> getFlags() => this.flags;
 
         /// <summary>
-        /// Adds standard ACE object flag.
-        /// 
-        /// @param flag standard ACE object flag.
-        /// @return the current ACE object flags.
+        ///     Adds standard ACE object flag.
+        ///     @param flag standard ACE object flag.
+        ///     @return the current ACE object flags.
         /// </summary>
         public AceObjectFlags addFlag(Flag flag)
         {
-            if (!flags.Contains(flag))
+            if (!this.flags.Contains(flag))
             {
-                flags.Add(flag);
+                this.flags.Add(flag);
             }
 
             return this;
         }
 
         /// <summary>
-        /// Gets custom/other ACE object flags.
-        /// 
-        /// @return custom/other ACE object flags as long value.
+        ///     Gets custom/other ACE object flags.
+        ///     @return custom/other ACE object flags as long value.
         /// </summary>
-        public long getOthers() => others;
+        public long getOthers() => this.others;
 
         /// <summary>
-        /// Sets custom/others ACE object flags.
-        /// 
-        /// @param others custom/other ACE object flags given as int value..
-        /// @return the current ACE object flags.
+        ///     Sets custom/others ACE object flags.
+        ///     @param others custom/other ACE object flags given as int value..
+        ///     @return the current ACE object flags.
         /// </summary>
         public AceObjectFlags setOthers(int others)
         {
@@ -137,9 +133,8 @@ namespace LdapForNet.Adsddl.data
         }
 
         /// <summary>
-        /// Gets custom/other ACE object flags as long value.
-        /// 
-        /// @return custom/other ACE object flags as long value.
+        ///     Gets custom/other ACE object flags as long value.
+        ///     @return custom/other ACE object flags as long value.
         /// </summary>
         public long asUInt() => this.flags.Aggregate<Flag, long>(this.others, (current, flag) => current + (long) flag);
     }
@@ -158,9 +153,10 @@ namespace LdapForNet.Adsddl.data
             {
                 flags &= ~flag;
             }
+
             return flags;
         }
-        
+
         public static bool HasAny(this AceObjectFlags.Flag flags, AceObjectFlags.Flag flag) => (flags & flag) != 0;
 
         public static bool HasNot(this AceObjectFlags.Flag flags, AceObjectFlags.Flag flag) => (flags & flag) == 0;

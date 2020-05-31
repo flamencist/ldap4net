@@ -18,54 +18,51 @@ using System.Text;
 
 namespace LdapForNet.Adsddl.utils
 {
-    /*
-    * Utility class to manage GUID.
-    * A GUID, also known as a UUID, is a 16-byte structure, intended to serve as a unique identifier for an object. There
-    * are three representations of a GUID, as described in the following sections.
-    *
-    * <see href="https://msdn.microsoft.com/en-us/library/cc230326.aspx">cc230326</see>
-    */
+    /// <summary>
+    ///     Utility class to manage GUID.
+    ///     A GUID, also known as a UUID, is a 16-byte structure, intended to serve as a unique identifier for an object. There
+    ///     are three representations of a GUID, as described in the following sections.
+    ///     <see href="https://msdn.microsoft.com/en-us/library/cc230326.aspx">cc230326</see>
+    /// </summary>
     public class GUID
     {
         /// <summary>
-        /// Gets GUID as string.
-        /// 
-        /// @param GUID GUID.
-        /// @return GUID as string.
+        ///     Gets GUID as string.
+        ///     @param GUID GUID.
+        ///     @return GUID as string.
         /// </summary>
         public static string getGuidAsString(byte[] GUID)
         {
             StringBuilder res = new StringBuilder();
 
-            res.Append(AddLeadingZero((int) GUID[3] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[2] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[1] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[0] & 0xFF));
+            res.Append(AddLeadingZero(GUID[3] & 0xFF));
+            res.Append(AddLeadingZero(GUID[2] & 0xFF));
+            res.Append(AddLeadingZero(GUID[1] & 0xFF));
+            res.Append(AddLeadingZero(GUID[0] & 0xFF));
             res.Append("-");
-            res.Append(AddLeadingZero((int) GUID[5] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[4] & 0xFF));
+            res.Append(AddLeadingZero(GUID[5] & 0xFF));
+            res.Append(AddLeadingZero(GUID[4] & 0xFF));
             res.Append("-");
-            res.Append(AddLeadingZero((int) GUID[7] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[6] & 0xFF));
+            res.Append(AddLeadingZero(GUID[7] & 0xFF));
+            res.Append(AddLeadingZero(GUID[6] & 0xFF));
             res.Append("-");
-            res.Append(AddLeadingZero((int) GUID[8] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[9] & 0xFF));
+            res.Append(AddLeadingZero(GUID[8] & 0xFF));
+            res.Append(AddLeadingZero(GUID[9] & 0xFF));
             res.Append("-");
-            res.Append(AddLeadingZero((int) GUID[10] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[11] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[12] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[13] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[14] & 0xFF));
-            res.Append(AddLeadingZero((int) GUID[15] & 0xFF));
+            res.Append(AddLeadingZero(GUID[10] & 0xFF));
+            res.Append(AddLeadingZero(GUID[11] & 0xFF));
+            res.Append(AddLeadingZero(GUID[12] & 0xFF));
+            res.Append(AddLeadingZero(GUID[13] & 0xFF));
+            res.Append(AddLeadingZero(GUID[14] & 0xFF));
+            res.Append(AddLeadingZero(GUID[15] & 0xFF));
 
             return res.ToString();
         }
 
         /// <summary>
-        /// Gets GUID as byte array.
-        /// 
-        /// @param GUID GUID.
-        /// @return GUID as byte array.
+        ///     Gets GUID as byte array.
+        ///     @param GUID GUID.
+        ///     @return GUID as byte array.
         /// </summary>
         public static byte[] getGuidAsByteArray(string GUID)
         {
@@ -75,7 +72,8 @@ namespace LdapForNet.Adsddl.utils
             buff.putLong(uuid.getMostSignificantBits());
             buff.putLong(uuid.getLeastSignificantBits());
 
-            byte[] res = {
+            byte[] res =
+            {
                 buff.get(3),
                 buff.get(2),
                 buff.get(1),
@@ -91,15 +89,12 @@ namespace LdapForNet.Adsddl.utils
                 buff.get(12),
                 buff.get(13),
                 buff.get(14),
-                buff.get(15),
+                buff.get(15)
             };
 
             return res;
         }
 
-        private static string AddLeadingZero(int k)
-        {
-            return (k <= 0xF) ? "0" + Integer.toHexString(k) : Integer.toHexString(k);
-        }
+        private static string AddLeadingZero(int k) => k <= 0xF ? "0" + Integer.toHexString(k) : Integer.toHexString(k);
     }
 }

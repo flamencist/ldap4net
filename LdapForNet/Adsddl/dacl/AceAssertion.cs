@@ -27,7 +27,7 @@ using LdapForNet.Adsddl.data;
 namespace LdapForNet.Adsddl.dacl
 {
     /// <summary>
-    ///     Represents an assertion that an {@code ACL} must contain an {@code ACE} (Access Control Entry) which meets the
+    ///     Represents an assertion that an code ACL must contain an ACE (Access Control Entry) which meets the
     ///     criteria within this class. The criteria are defined as properties of the ACE.
     ///     Special interpretation of the 'excluded flag': If this flag is specified, and an ACE contains this flag, the ACE
     ///     cannot be considered to fulfill the assertion.
@@ -35,48 +35,47 @@ namespace LdapForNet.Adsddl.dacl
     public class AceAssertion
     {
         /// <summary>
-        ///     A single AceRight.
-        /// </summary>
-        private readonly AceRights aceRight;
-
-        /// <summary>
         ///     One or more AceObjectFlags. May be null.
         /// </summary>
         private readonly AceObjectFlags aceObjectFlags;
 
         /// <summary>
-        ///     Object type GUID. Must be set if {@code Flag.ACE_OBJECT_TYPE_PRESENT} is one of the AceObjectFlags; otherwise null.
+        ///     A single AceRight.
         /// </summary>
-        private readonly string objectType;
+        private readonly AceRights aceRight;
 
         /// <summary>
-        ///     Inherited Object type GUID. Must be set if {@code Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT} is one of the
+        ///     Single AceFlag that stipulates an ACE must NOT contain it; may be null.
+        /// </summary>
+        private readonly AceFlag excludedFlag;
+
+        /// <summary>
+        ///     Inherited Object type GUID. Must be set if Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT is one of the
         ///     AceObjectFlags; otherwise null.
         /// </summary>
         private readonly string inheritedObjectType;
 
         /// <summary>
-        ///     Single AceFlag that stipulates an ACE must contain it; may be null.
+        ///     Object type GUID. Must be set if Flag.ACE_OBJECT_TYPE_PRESENT is one of the AceObjectFlags; otherwise null.
         /// </summary>
-        private AceFlag requiredFlag;
+        private readonly string objectType;
 
         /// <summary>
-        ///     Single AceFlag that stipulates an ACE must NOT contain it; may be null.
+        ///     Single AceFlag that stipulates an ACE must contain it; may be null.
         /// </summary>
-        private AceFlag excludedFlag;
+        private readonly AceFlag requiredFlag;
 
         /// <summary>
         ///     AceAssertion constructor
         /// </summary>
         /// <param name="aceRight">
-        ///     A single AceRight (e.g.: use {@code AceRights.parseValue(0x00000004)} if {@code
-        ///     AceRights.ObjectRight} enum does not contain desired right.) MUST be specified.
+        ///     A single AceRight (e.g.: use AceRights.parseValue(0x00000004) if AceRights.ObjectRight enum does not contain
+        ///     desired right.) MUST be specified.
         /// </param>
-        /// <param name="aceObjFlags">One or more {@code AceObjectFlags}, may be null.</param>
-        /// <param name="objectType">Object type GUID. Must be set if {@code Flag.ACE_OBJECT_TYPE_PRESENT} is in aceObjFlags</param>
+        /// <param name="aceObjFlags">One or more AceObjectFlags, may be null.</param>
+        /// <param name="objectType">Object type GUID. Must be set if Flag.ACE_OBJECT_TYPE_PRESENT is in aceObjFlags</param>
         /// <param name="inheritedObjectType">
-        ///     Inherited object type GUID. Must be set if {@code
-        ///     Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT} is in aceObjFlags
+        ///     Inherited object type GUID. Must be set if Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT is in aceObjFlags
         /// </param>
         /// <param name="requiredFlag">Single AceFlag that stipulates an ACE must contain it; may be null.</param>
         /// <param name="excludedFlag">Single AceFlag that stipulates an ACE must NOT contain it; may be null.</param>
@@ -116,13 +115,13 @@ namespace LdapForNet.Adsddl.dacl
         public string getInheritedObjectType() => this.inheritedObjectType;
 
         /// <summary>
-        ///     Gets single {@code AceFlag} that stipulates an ACE must contain it; may be null.
+        ///     Gets single AceFlag that stipulates an ACE must contain it; may be null.
         ///     @return Gets required flag
         /// </summary>
         public AceFlag getRequiredFlag() => this.requiredFlag;
 
         /// <summary>
-        ///     Gets single {@code AceFlag} that stipulates an ACE must NOT contain it; may be null.
+        ///     Gets single AceFlag that stipulates an ACE must NOT contain it; may be null.
         ///     @return gets excluded flag
         /// </summary>
         public AceFlag getExcludedFlag() => this.excludedFlag;
@@ -278,14 +277,15 @@ namespace LdapForNet.Adsddl.dacl
             }
 
             var rightsCode = "?";
-            foreach (AceRights.ObjectRight rightVal in Enum.GetValues(typeof(AceRights.ObjectRight))) 
+            foreach (AceRights.ObjectRight rightVal in Enum.GetValues(typeof(AceRights.ObjectRight)))
             {
-                if ((this.aceRight.asUInt() & (uint)rightVal) == (uint)rightVal)
+                if ((this.aceRight.asUInt() & (uint) rightVal) == (uint) rightVal)
                 {
                     rightsCode = rightVal.ToString();
                     break;
                 }
             }
+
             if (rightsCode.Equals("?"))
             {
                 switch ((int) this.aceRight.asUInt())

@@ -19,7 +19,7 @@ using System.Text;
 namespace LdapForNet.Adsddl.utils
 {
     /// <summary>
-    /// Utility class to be used to convert byte arrays into hexadecimal strings.
+    ///     Utility class to be used to convert byte arrays into hexadecimal strings.
     /// </summary>
     public class Hex
     {
