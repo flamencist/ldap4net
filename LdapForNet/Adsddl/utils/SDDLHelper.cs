@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using LdapForNet.Adsddl.data;
@@ -29,7 +30,7 @@ namespace LdapForNet.Adsddl.utils
         /// <summary>
         ///     User cannot change password GUID.
         /// </summary>
-        public static string UCP_OBJECT_GUID = "ab721a53-1e2f-11d0-9819-00aa0040529b";
+        public static Guid UCP_OBJECT_GUID = new Guid("ab721a53-1e2f-11d0-9819-00aa0040529b");
 
         /// <summary>
         ///     Check if user canot change password.
@@ -48,7 +49,7 @@ namespace LdapForNet.Adsddl.utils
                 if (ace.getType() == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE
                     && ace.getObjectFlags().getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
                 {
-                    if (GUID.getGuidAsString(ace.getObjectType()).Equals(UCP_OBJECT_GUID))
+                    if (ace.getObjectType() == UCP_OBJECT_GUID)
                     {
                         SID sid = ace.getSid();
                         if (sid.getSubAuthorities().Count == 1)
@@ -90,7 +91,7 @@ namespace LdapForNet.Adsddl.utils
                         || ace.getType() == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE)
                     && ace.getObjectFlags().getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
                 {
-                    if (GUID.getGuidAsString(ace.getObjectType()).Equals(UCP_OBJECT_GUID))
+                    if (ace.getObjectType() == UCP_OBJECT_GUID)
                     {
                         SID sid = ace.getSid();
                         if (sid.getSubAuthorities().Count == 1)
@@ -119,7 +120,7 @@ namespace LdapForNet.Adsddl.utils
                 // prepare aces
                 self = ACE.newInstance(type);
                 self.setObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT));
-                self.setObjectType(GUID.getGuidAsByteArray(UCP_OBJECT_GUID));
+                self.setObjectType(UCP_OBJECT_GUID);
                 self.setRights(new AceRights().addOjectRight(AceRights.ObjectRight.CR));
                 SID sid = SID.newInstance(NumberFacility.getBytes(0x000000000001, 6));
                 sid.addSubAuthority(NumberFacility.getBytes(0));
@@ -131,7 +132,7 @@ namespace LdapForNet.Adsddl.utils
             {
                 all = ACE.newInstance(type);
                 all.setObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT));
-                all.setObjectType(GUID.getGuidAsByteArray(UCP_OBJECT_GUID));
+                all.setObjectType(UCP_OBJECT_GUID);
                 all.setRights(new AceRights().addOjectRight(AceRights.ObjectRight.CR));
                 SID sid = SID.newInstance(NumberFacility.getBytes(0x000000000005, 6));
                 sid.addSubAuthority(NumberFacility.getBytes(0x0A));

@@ -20,6 +20,7 @@
 * SPDX-License-Identifier: Apache-2.0
 */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using LdapForNet.Adsddl.data;
@@ -36,13 +37,13 @@ namespace LdapForNet.Adsddl.dacl
         /// <summary>
         ///     Schema GUID of "CN=Computer,CN=Schema,CN=Configuration" objects
         /// </summary>
-        protected static string COMPUTER_SCHEMA_ID_GUID = "bf967a86-0de6-11d0-a285-00aa003049e2";
+        protected static Guid COMPUTER_SCHEMA_ID_GUID = new Guid("bf967a86-0de6-11d0-a285-00aa003049e2");
 
         /// <summary>
         ///     Schema GUID of "CN=User-Force-Change-Password,CN=Extended-Rights,CN=Configuration" extended right
         ///     (aka "reset password")
         /// </summary>
-        protected static string RESET_PASSWORD_CR_GUID = "00299570-246d-11d0-a768-00aa006e0529";
+        protected static Guid RESET_PASSWORD_CR_GUID = new Guid("00299570-246d-11d0-a768-00aa006e0529");
 
         protected static AceAssertion CREATE_COMPUTER = new AceAssertion(
             AceRights.parseValue(0x00000001),
@@ -82,7 +83,7 @@ namespace LdapForNet.Adsddl.dacl
             null,
             null,
             AceFlag.CONTAINER_INHERIT_ACE,
-            null);
+            AceFlag.NONE);
 
         protected static AceAssertion READ_PERMISSIONS = new AceAssertion(
             AceRights.parseValue(0x00020000),
@@ -98,7 +99,7 @@ namespace LdapForNet.Adsddl.dacl
             RESET_PASSWORD_CR_GUID,
             COMPUTER_SCHEMA_ID_GUID,
             AceFlag.CONTAINER_INHERIT_ACE,
-            null);
+            AceFlag.NONE);
 
         protected static readonly AceAssertion[] DOMAIN_JOIN_ASSERTIONS =
         {

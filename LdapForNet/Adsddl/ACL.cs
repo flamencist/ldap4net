@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using LdapForNet.Adsddl.data;
@@ -65,29 +66,24 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        public int parse(IntBuffer buff, int start)
+        public void parse(BinaryReader buff, long start)
         {
-            int pos = start;
+            buff.BaseStream.Seek(start, SeekOrigin.Begin);
 
             // read for Dacl
-            byte[] bytes = NumberFacility.getBytes(buff.get(pos));
-            this.revision = AclRevision.parseValue(bytes[0]);
-
-            pos++;
-            bytes = NumberFacility.getBytes(buff.get(pos));
+            byte[] bytes = NumberFacility.getBytes(buff.ReadInt32());
+            this.revision = AclRevisionExtension.parseValue(bytes[0]);
+            
+            bytes = NumberFacility.getBytes(buff.ReadInt32());
             int aceCount = NumberFacility.getInt(bytes[1], bytes[0]);
 
             for (var i = 0; i < aceCount; i++)
             {
-                pos++;
-
                 ACE ace = new ACE();
                 this.aces.Add(ace);
 
-                pos = ace.parse(buff, pos);
+                ace.parse(buff);
             }
-
-            return pos;
         }
 
         /// <summary>
@@ -131,35 +127,36 @@ namespace LdapForNet.Adsddl
         {
             int size = this.getSize();
 
-            ByteBuffer buff = ByteBuffer.allocate(size);
+            using var ms = new MemoryStream(size);
+            var buff = new BinaryWriter(ms);
 
             // add revision
-            buff.put(this.revision.getValue());
+            buff.Write((byte) this.revision);
 
             // add reserved
-            buff.put((byte) 0x00);
+            buff.Write((byte) 0x00);
 
             // add size (2 bytes reversed)
             byte[] sizeSRC = NumberFacility.getBytes(size);
-            buff.put(sizeSRC[3]);
-            buff.put(sizeSRC[2]);
+            buff.Write(sizeSRC[3]);
+            buff.Write(sizeSRC[2]);
 
             // add ace count (2 bytes reversed)
             byte[] aceCountSRC = NumberFacility.getBytes(this.getAceCount());
-            buff.put(aceCountSRC[3]);
-            buff.put(aceCountSRC[2]);
+            buff.Write(aceCountSRC[3]);
+            buff.Write(aceCountSRC[2]);
 
             // add reserved (2 bytes)
-            buff.put((byte) 0x00);
-            buff.put((byte) 0x00);
+            buff.Write((byte) 0x00);
+            buff.Write((byte) 0x00);
 
             // add aces
             foreach (ACE ace in this.aces)
             {
-                buff.put(ace.toByteArray());
+                buff.Write(ace.toByteArray());
             }
 
-            return buff.array();
+            return ms.ToArray();
         }
 
         public override bool Equals(object acl)

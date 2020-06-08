@@ -20,9 +20,12 @@
 * SPDX-License-Identifier: Apache-2.0
 */
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using LdapForNet.Adsddl.data;
 using LdapForNet.Adsddl.utils;
+using LdapForNet.Utils;
 
 namespace LdapForNet.Adsddl.dacl
 {
@@ -67,7 +70,7 @@ namespace LdapForNet.Adsddl.dacl
         /// <summary>
         ///     Pre-connected LdapContext.
         /// </summary>
-        private LdapContext ldapContext;
+        private LdapConnection ldapContext;
 
         /// <summary>
         ///     List of any unsatisfied AceAssertions after doAssert runs.
@@ -87,7 +90,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param ldapContext
         ///     the pre-connected LDAP context
         /// </summary>
-        public DACLAssertor(string searchFilter, bool searchGroups, LdapContext ldapContext)
+        public DACLAssertor(string searchFilter, bool searchGroups, LdapConnection ldapContext)
         {
             this.searchFilter = searchFilter;
             this.searchGroups = searchGroups;
@@ -160,48 +163,18 @@ namespace LdapForNet.Adsddl.dacl
         /// </summary>
         private void getDACL()
         {
-            SearchControls controls = new SearchControls();
-            controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            controls.setReturningAttributes(new[] { "name", "nTSecurityDescriptor" });
-
-            if (this.ldapContext == null)
-            {
-                throw new CommunicationException("NULL ldapContext");
-            }
-
-            this.ldapContext.setRequestControls(new[] { new SDFlagsControl(0x00000004) });
-
-            NamingEnumeration<SearchResult> results = null;
-            try
-            {
-                results = this.ldapContext.search("", this.searchFilter, controls);
-                if (!results.hasMoreElements())
+            var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "",
+                    Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE){ Attributes = {LdapAttributes.NtSecurityDescriptor}};
+                directoryRequest.Controls.Add(new SecurityDescriptorFlagControl(SecurityMasks.Owner | SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Sacl));
+                var response = (SearchResponse)this.ldapContext.SendRequest(directoryRequest);
+                var entry = response.Entries.FirstOrDefault();
+                if (entry == null)
                 {
-                    throw new NameNotFoundException("No results found for: " + this.searchFilter);
+                    throw new LdapException("Couldn't find ldap");
                 }
-
-                SearchResult res = results.next();
-                if (results.hasMoreElements())
-                {
-                    // result from search filter is not unique
-                    throw new SizeLimitExceededException("The search filter '{}' matched more than one AD object");
-                }
-
-                var descbytes = (byte[]) res.getAttributes().get("nTSecurityDescriptor").get();
+                byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);
                 SDDL sddl = new SDDL(descbytes);
                 this.dacl = sddl.getDacl();
-            }
-            finally
-            {
-                try
-                {
-                    if (results != null)
-                    {
-                        results.close();
-                    }
-                }
-                catch (NamingException e) { }
-            }
         }
 
         /// <summary>
@@ -484,25 +457,23 @@ namespace LdapForNet.Adsddl.dacl
         ///     AceObjectFlags from the AceAssertion
         ///     @return true if match, false if not
         /// </summary>
-        private bool doObjectTypesMatch(byte[] aceObjectType, string assertionObjectType,
-            AceObjectFlags assertionObjFlags)
+        private bool doObjectTypesMatch(Guid? aceObjectType, Guid? assertionObjectType, AceObjectFlags assertionObjFlags)
         {
-            var res = true;
             if (assertionObjFlags == null)
             {
-                return res;
+                return true;
             }
 
             if ((assertionObjFlags.asUInt()
                 & (uint) AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT) == (uint) AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT)
             {
-                if (aceObjectType != null && !GUID.getGuidAsString(aceObjectType).Equals(assertionObjectType))
+                if (aceObjectType != null && aceObjectType != assertionObjectType)
                 {
-                    res = false;
+                    return false;
                 }
             }
 
-            return res;
+            return true;
         }
 
         /// <summary>
@@ -517,24 +488,22 @@ namespace LdapForNet.Adsddl.dacl
         ///     AceObjectFlags from the AceAssertion
         ///     @return true if match, false if not
         /// </summary>
-        private bool doInheritedObjectTypesMatch(byte[] aceInhObjectType, string assertionInhObjectType,
-            AceObjectFlags assertionObjFlags)
+        private bool doInheritedObjectTypesMatch(Guid? aceInhObjectType, Guid? assertionInhObjectType, AceObjectFlags assertionObjFlags)
         {
-            var res = true;
             if (assertionObjFlags == null)
             {
-                return res;
+                return true;
             }
 
             if ((assertionObjFlags.asUInt() & (uint) AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT) == (uint) AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT)
             {
-                if (aceInhObjectType != null && !GUID.getGuidAsString(aceInhObjectType).Equals(assertionInhObjectType))
+                if (aceInhObjectType != null && aceInhObjectType != assertionInhObjectType)
                 {
-                    res = false;
+                    return false;
                 }
             }
 
-            return res;
+            return true;
         }
 
         /// <summary>
@@ -566,7 +535,7 @@ namespace LdapForNet.Adsddl.dacl
                     res = false;
                 }
             }
-            else if (requiredFlag != null)
+            else if (requiredFlag != AceFlag.NONE)
             {
                 // aceFlags could be null if the ACE applies to 'this object only' and has no other flags set
                 if (aceFlags == null || aceFlags.Count == 0 || !aceFlags.Contains(requiredFlag))
@@ -597,7 +566,7 @@ namespace LdapForNet.Adsddl.dacl
         private bool isAceExcluded(List<AceFlag> aceFlags, AceFlag excludedFlag, bool isDenial)
         {
             var res = false;
-            if (excludedFlag != null && !isDenial)
+            if (excludedFlag != AceFlag.NONE && !isDenial)
             {
                 // aceFlags could be null if the ACE applies to 'this object only' and has no other flags set
                 if (aceFlags != null && aceFlags.Count != 0 && aceFlags.Contains(excludedFlag))

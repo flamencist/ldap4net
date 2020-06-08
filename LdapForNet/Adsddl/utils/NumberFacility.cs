@@ -28,14 +28,14 @@ namespace LdapForNet.Adsddl.utils
         ///     @param value unsigned integer.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getUIntBytes(long value) => Arrays.copyOfRange(ByteBuffer.allocate(8).putLong(value).array(), 4, 8);
+        public static byte[] getUIntBytes(long value) => copyOfRange(BitConverter.GetBytes(value), 4, 8);
 
         /// <summary>
         ///     Gets byte array from integer.
         ///     @param value integer.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getBytes(int value) => ByteBuffer.allocate(4).putInt(value).array();
+        public static byte[] getBytes(int value) => BitConverter.GetBytes(value);
 
         /// <summary>
         ///     Gets byte array from integer.
@@ -43,7 +43,16 @@ namespace LdapForNet.Adsddl.utils
         ///     @param length array size.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getBytes(int value, int length) => ByteBuffer.allocate(length).putInt(this.value).array();
+        public static byte[] getBytes(int value, int length)
+        {
+            var arr = new byte[length];
+            var bytes = BitConverter.GetBytes(value);
+            for (int i = length-bytes.Length; i < length; i++)
+            {
+                arr[i] = bytes[i];
+            }
+            return arr;
+        }
 
         /// <summary>
         ///     Remove 0x00 bytes from left side.
@@ -53,14 +62,11 @@ namespace LdapForNet.Adsddl.utils
         public static byte[] leftTrim(byte[] bytes)
         {
             var pos = 0;
-            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++)
-            {
-                ;
-            }
+            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++) ;
 
             if (pos < bytes.Length)
             {
-                return Arrays.copyOfRange(bytes, pos, bytes.Length);
+                return copyOfRange(bytes, pos, bytes.Length);
             }
 
             return new byte[] { 0x00 };
@@ -152,14 +158,14 @@ namespace LdapForNet.Adsddl.utils
         ///     @param bytes bytes.
         ///     @return integer.
         /// </summary>
-        public static int getInt(byte[] bytes) => (int) getUInt(bytes);
+        public static int getInt(params byte[] bytes) => (int) getUInt(bytes);
 
         /// <summary>
         ///     Gets unsigned integer value corresponding to the given bytes.
         ///     @param bytes bytes.
         ///     @return unsigned integer.
         /// </summary>
-        public static long getUInt(byte[] bytes)
+        public static long getUInt(params byte[] bytes)
         {
             if (bytes.Length > 4)
             {
@@ -177,6 +183,17 @@ namespace LdapForNet.Adsddl.utils
             }
 
             return res;
+        }
+        
+        private static T[] copyOfRange<T>(T[] src, int start, int end)
+        {
+            int len = end - start;
+            var dest = new T[len];
+            for (int i = 0; i < len; i++)
+            {
+                dest[i] = src[start + i]; // so 0..n = 0+x..n+x
+            }
+            return dest;
         }
     }
 }

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using LdapForNet.Adsddl.data;
@@ -42,7 +44,7 @@ namespace LdapForNet.Adsddl
         /// <summary>
         ///     A GUID (16 bytes) that identifies the type of child object that can inherit the ACE.
         /// </summary>
-        private byte[] inheritedObjectType;
+        private Guid? inheritedObjectType;
 
         /// <summary>
         ///     AceObjectFlags
@@ -52,7 +54,7 @@ namespace LdapForNet.Adsddl
         /// <summary>
         ///     A GUID (16 bytes) that identifies a property set, property, extended right, or type of child object.
         /// </summary>
-        private byte[] objectType;
+        private Guid? objectType;
 
         /// <summary>
         ///     AceRights
@@ -87,61 +89,45 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        public int parse(IntBuffer buff, int start)
+        public void parse(BinaryReader buff)
         {
-            int pos = start;
-
-            byte[] bytes = NumberFacility.getBytes(buff.get(pos));
-            this.type = AceType.parseValue(bytes[0]);
-            this.flags = AceFlag.parseValue(bytes[1]);
+            var start = buff.BaseStream.Position;
+            byte[] bytes = NumberFacility.getBytes(buff.ReadInt32());
+            this.type = AceTypeExtension.parseValue(bytes[0]);
+            this.flags = AceFlagExtension.parseValue(bytes[1]);
 
             int size = NumberFacility.getInt(bytes[3], bytes[2]);
-
-            pos++;
-            this.rights = AceRights.parseValue(NumberFacility.getReverseInt(buff.get(pos)));
+            
+            this.rights = AceRights.parseValue(NumberFacility.getReverseInt(buff.ReadInt32()));
 
             if (this.type == AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE || this.type == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE)
             {
-                pos++;
-                this.objectFlags = AceObjectFlags.parseValue(NumberFacility.getReverseInt(buff.get(pos)));
+                this.objectFlags = AceObjectFlags.parseValue(NumberFacility.getReverseInt(buff.ReadInt32()));
 
-                if (this.objectFlags.getFlags().contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
+                if (this.objectFlags.getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
                 {
-                    this.objectType = new byte[16];
-                    for (var j = 0; j < 4; j++)
-                    {
-                        pos++;
-                        System.arraycopy(NumberFacility.getBytes(buff.get(pos)), 0, this.objectType, j * 4, 4);
-                    }
+                    this.objectType = new Guid(buff.ReadBytes(16));
                 }
 
-                if (this.objectFlags.getFlags().contains(AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT))
+                if (this.objectFlags.getFlags().Contains(AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT))
                 {
-                    this.inheritedObjectType = new byte[16];
-                    for (var j = 0; j < 4; j++)
-                    {
-                        pos++;
-                        System.arraycopy(NumberFacility.getBytes(buff.get(pos)), 0, this.inheritedObjectType, j * 4, 4);
-                    }
+                    this.inheritedObjectType = new Guid(buff.ReadBytes(16));
                 }
             }
-
-            pos++;
+            
             this.sid = new SID();
-            pos = this.sid.parse(buff, pos);
+            this.sid.parse(buff);
 
-            int lastPos = start + size / 4 - 1;
-            this.applicationData = new byte[4 * (lastPos - pos)];
-
-            var index = 0;
-            while (pos < lastPos)
+            if (size > 0)
             {
-                pos++;
-                System.arraycopy(NumberFacility.getBytes(buff.get(pos)), 0, this.applicationData, index, 4);
-                index += 4;
-            }
+                var lastPos = start + size;
+                this.applicationData = new byte[lastPos - buff.BaseStream.Position];
 
-            return pos;
+                for (var i = 0; i < applicationData.Length; i++)
+                {
+                    this.applicationData[i] = buff.ReadByte();
+                }
+            }
         }
 
         /// <summary>
@@ -202,10 +188,7 @@ namespace LdapForNet.Adsddl
         ///     will be ignored. For more information on access checks and object access, see [MS-ADTS] section 5.1.3.3.3.
         ///     @return ObjectType; null if not available.
         /// </summary>
-        public byte[] getObjectType()
-            => this.objectType == null || this.objectType.Length == 0
-                ? null
-                : this.objectType.Copy();
+        public Guid? getObjectType() => this.objectType;
 
         /// <summary>
         ///     A GUID (16 bytes) that identifies the type of child object that can inherit the ACE. Inheritance is also
@@ -214,10 +197,7 @@ namespace LdapForNet.Adsddl
         ///     member. Otherwise, the InheritedObjectType field is ignored.
         ///     @return InheritedObjectType; null if not available.
         /// </summary>
-        public byte[] getInheritedObjectType()
-            => this.inheritedObjectType == null || this.inheritedObjectType.Length == 0
-                ? null
-                : this.inheritedObjectType.Copy();
+        public Guid? getInheritedObjectType() => this.inheritedObjectType;
 
         /// <summary>
         ///     The SID of a trustee. The length of the SID MUST be a multiple of 4.
@@ -273,19 +253,13 @@ namespace LdapForNet.Adsddl
         ///     object.
         ///     @param objectType ACE object type.
         /// </summary>
-        public void setObjectType(byte[] objectType)
-            => this.objectType = objectType == null || objectType.Length == 0
-                ? null
-                : objectType.Copy();
+        public void setObjectType(Guid? objectType) => this.objectType = objectType;
 
         /// <summary>
         ///     Sets inherited object type, a GUID (16 bytes) that identifies the type of child object that can inherit the ACE.
         ///     @param inheritedObjectType Inherited object type.
         /// </summary>
-        public void setInheritedObjectType(byte[] inheritedObjectType)
-            => this.inheritedObjectType = inheritedObjectType == null || inheritedObjectType.Length == 0
-                ? null
-                : inheritedObjectType.Copy();
+        public void setInheritedObjectType(Guid? inheritedObjectType) => this.inheritedObjectType = inheritedObjectType;
 
         /// <summary>
         ///     Sets the SID of a trustee.
@@ -302,56 +276,53 @@ namespace LdapForNet.Adsddl
         {
             int size = this.getSize();
 
-            ByteBuffer buff = ByteBuffer.allocate(size);
+            using var ms = new MemoryStream(size);
+            var buff = new BinaryWriter(ms);
 
             // Add type byte
-            buff.put((byte) this.type);
+            buff.Write((byte) this.type);
 
             // add flags byte
-            byte flagSRC = 0x00;
-            foreach (AceFlag flag in this.getFlags())
-            {
-                flagSRC |= (byte) flag;
-            }
+            byte flagSrc = this.getFlags().Aggregate<AceFlag, byte>(0x00, (current, flag) => (byte) (current | (byte) flag));
 
-            buff.put(flagSRC);
+            buff.Write(flagSrc);
 
             // add size bytes (2 reversed)
-            byte[] sizeSRC = NumberFacility.getBytes(size);
-            buff.put(sizeSRC[3]);
-            buff.put(sizeSRC[2]);
+            byte[] sizeSrc = NumberFacility.getBytes(size);
+            buff.Write(sizeSrc[3]);
+            buff.Write(sizeSrc[2]);
 
             // add right mask
-            buff.put(Hex.reverse(NumberFacility.getUIntBytes(this.rights.asUInt())));
+            buff.Write(Hex.reverse(NumberFacility.getUIntBytes(this.rights.asUInt())));
 
             // add object flags (from int to byte[] + reversed)
             if (this.objectFlags != null)
             {
-                buff.put(Hex.reverse(NumberFacility.getUIntBytes(this.objectFlags.asUInt())));
+                buff.Write(Hex.reverse(NumberFacility.getUIntBytes(this.objectFlags.asUInt())));
             }
 
             // add object type
             if (this.objectType != null)
             {
-                buff.put(this.objectType);
+                buff.Write(this.objectType.Value.ToByteArray());
             }
 
             // add inherited object type
             if (this.inheritedObjectType != null)
             {
-                buff.put(this.inheritedObjectType);
+                buff.Write(this.inheritedObjectType.Value.ToByteArray());
             }
 
             // add sid
-            buff.put(this.sid.toByteArray());
+            buff.Write(this.sid.toByteArray());
 
             // add application data
             if (this.applicationData != null)
             {
-                buff.put(this.applicationData);
+                buff.Write(this.applicationData);
             }
 
-            return buff.array();
+            return ms.ToArray();
         }
 
         public override bool Equals(object ace)
@@ -392,7 +363,7 @@ namespace LdapForNet.Adsddl
             if (this.getObjectType() != null && ext.getObjectType() == null
                 || this.getObjectType() == null && ext.getObjectType() != null
                 || this.getObjectType() != null && ext.getObjectType() != null
-                && !this.getObjectType().SequenceEqual(ext.getObjectType()))
+                && this.getObjectType() != ext.getObjectType())
             {
                 return false;
             }
@@ -400,7 +371,7 @@ namespace LdapForNet.Adsddl
             if (this.getInheritedObjectType() != null && ext.getInheritedObjectType() == null
                 || this.getInheritedObjectType() == null && ext.getInheritedObjectType() != null
                 || this.getInheritedObjectType() != null && ext.getInheritedObjectType() != null
-                && !this.getInheritedObjectType().SequenceEqual(ext.getInheritedObjectType()))
+                && this.getInheritedObjectType() != ext.getInheritedObjectType())
             {
                 return false;
             }
@@ -417,12 +388,12 @@ namespace LdapForNet.Adsddl
         {
             StringBuilder bld = new StringBuilder();
             bld.Append('(');
-            bld.Append(this.type.ToString());
+            bld.Append(this.type.GetString());
             bld.Append(';');
 
             foreach (AceFlag flag in this.flags)
             {
-                bld.Append(flag);
+                bld.Append(flag.GetString());
             }
 
             bld.Append(';');
@@ -443,14 +414,14 @@ namespace LdapForNet.Adsddl
 
             if (this.objectType != null)
             {
-                bld.Append(GUID.getGuidAsString(this.objectType));
+                bld.Append(this.objectType.ToString());
             }
 
             bld.Append(';');
 
             if (this.inheritedObjectType != null)
             {
-                bld.Append(GUID.getGuidAsString(this.inheritedObjectType));
+                bld.Append(this.inheritedObjectType.ToString());
             }
 
             bld.Append(';');

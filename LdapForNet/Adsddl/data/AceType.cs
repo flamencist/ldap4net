@@ -135,7 +135,7 @@ namespace LdapForNet.Adsddl.data
 
 public static class AceTypeExtension
 {
-    public static string ToString(this AceType type)
+    public static string GetString(this AceType type)
     {
         switch (type)
         {
@@ -198,6 +198,6 @@ public static class AceTypeExtension
             }
         }
 
-        return null;
+        return AceType.UNEXPECTED;
     }
 }

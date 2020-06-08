@@ -26,6 +26,11 @@ namespace LdapForNet.Adsddl.data
     public enum AceFlag
     {
         /// <summary>
+        ///     0x00 - None used
+        /// </summary>
+        NONE = 0x00,
+        
+        /// <summary>
         ///     0x02 - Child objects that are containers, such as directories, inherit the ACE as an effective ACE. The inherited
         ///     ACE is inheritable unless the NO_PROPAGATE_INHERIT_ACE bit flag is also set.
         /// </summary>
@@ -72,7 +77,7 @@ namespace LdapForNet.Adsddl.data
 
     public static class AceFlagExtension
     {
-        public static string ToString(this AceFlag flag)
+        public static string GetString(this AceFlag flag)
         {
             switch (flag)
             {
@@ -90,6 +95,8 @@ namespace LdapForNet.Adsddl.data
                     return "OI";
                 case AceFlag.SUCCESSFUL_ACCESS_ACE_FLAG:
                     return "SA";
+                case AceFlag.NONE:
+                    return string.Empty;
                 default:
                     return flag.ToString();
             }

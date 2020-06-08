@@ -140,23 +140,26 @@ namespace LdapForNet.Adsddl.data
             ///     ADS_RIGHT_DS_WRITE_PROP - The ObjectType GUID identifies a property set or property of the object.
             ///     The ACE controls the trustee's right to write the property or property set.
             /// </summary>
-            WP = 0x00000020
+            WP = 0x00000020,
 
-            // FA(0x001F01FF),
-            // FX(0x001200A0),
-            // FW(0x00100116),
-            // FR(0x00120089),
-            // KA(0x00000019),
-            // KR(0x0000003F),
-            // KX(0x00000019),
-            // KW(0x00000006),
-            // LO(0x00000080),
-            // DT(0x00000040),
-            // RP(0x00000010),
-            // SW(0x00000008),
-            // LC(0x00000004),
-            // DC(0x00000002),
-            // CC(0x00000001);
+            /// <summary>
+            ///     Others
+            /// </summary>
+            //FA = 0x001F01FF,
+            //FX = 0x001200A0,
+            //FW = 0x00100116,
+            //FR = 0x00120089,
+            //KA = 0x00000019,
+            //KR = 0x0000003F,
+            //KX = 0x00000019,
+            //KW = 0x00000006,
+            LO = 0x00000080,
+            DT = 0x00000040,
+            RP = 0x00000010,
+            SW = 0x00000008,
+            LC = 0x00000004,
+            DC = 0x00000002,
+            CC = 0x00000001
         }
 
         /// <summary>

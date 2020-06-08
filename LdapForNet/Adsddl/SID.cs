@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using LdapForNet.Adsddl.utils;
@@ -84,9 +85,10 @@ namespace LdapForNet.Adsddl
         /// </summary>
         public static SID parse(byte[] src)
         {
-            ByteBuffer sddlBuffer = ByteBuffer.wrap(src);
+            using var ms = new MemoryStream(src);
+            using var sddlBuffer = new BinaryReader(ms);
             SID sid = new SID();
-            sid.parse(sddlBuffer.asIntBuffer(), 0);
+            sid.parse(sddlBuffer, 0);
             return sid;
         }
 
@@ -96,12 +98,15 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        private int parse(IntBuffer buff, int start)
+        public void parse(BinaryReader buff, long? start = null)
         {
-            int pos = start;
+            if (start != null)
+            {
+                buff.BaseStream.Seek(start.Value, SeekOrigin.Begin);
+            }
 
             // Check for a SID (http://msdn.microsoft.com/en-us/library/cc230371.aspx)
-            byte[] sidHeader = NumberFacility.getBytes(buff.get(pos));
+            byte[] sidHeader = NumberFacility.getBytes(buff.ReadInt32());
 
             // Revision(1 byte): An 8-bit unsigned integer that specifies the revision level of the SID.
             // This value MUST be set to 0x01.
@@ -115,22 +120,20 @@ namespace LdapForNet.Adsddl
             // authority under which the SID was created. It describes the entity that created the SID. 
             // The Identifier Authority value {0,0,0,0,0,5} denotes SIDs created by the NT SID authority.
             this.identifierAuthority = new byte[6];
-
-            System.arraycopy(sidHeader, 2, this.identifierAuthority, 0, 2);
-
-            pos++;
-            System.arraycopy(NumberFacility.getBytes(buff.get(pos)), 0, this.identifierAuthority, 2, 4);
+            this.identifierAuthority[0] = sidHeader[2];
+            this.identifierAuthority[1] = sidHeader[3];
+            for (int i = 0; i < 4; i++)
+            {
+                this.identifierAuthority[i + 2] = buff.ReadByte();
+            }
 
             // SubAuthority (variable): A variable length array of unsigned 32-bit integers that uniquely 
             // identifies a principal relative to the IdentifierAuthority. Its length is determined by 
             // SubAuthorityCount.
             for (var j = 0; j < subAuthorityCount; j++)
             {
-                pos++;
-                this.subAuthorities.Add(Hex.reverse(NumberFacility.getBytes(buff.get(pos))));
+                this.subAuthorities.Add(Hex.reverse(NumberFacility.getBytes(buff.ReadInt32())));
             }
-
-            return pos;
         }
 
         /// <summary>
@@ -227,16 +230,17 @@ namespace LdapForNet.Adsddl
         public byte[] toByteArray()
         {
             // variable content size depending on sub authorities number
-            ByteBuffer buff = ByteBuffer.allocate(this.getSize());
-            buff.put(this.revision);
-            buff.put(NumberFacility.getBytes(this.subAuthorities.Count)[3]);
-            buff.put(this.identifierAuthority);
+            using var ms = new MemoryStream(this.getSize());
+            var buff = new BinaryWriter(ms);
+            buff.Write(this.revision);
+            buff.Write(NumberFacility.getBytes(this.subAuthorities.Count)[3]);
+            buff.Write(this.identifierAuthority);
             foreach (byte[] sub in this.subAuthorities)
             {
-                buff.put(Hex.reverse(sub));
+                buff.Write(Hex.reverse(sub));
             }
 
-            return buff.array();
+            return ms.ToArray();
         }
 
         public override string ToString()

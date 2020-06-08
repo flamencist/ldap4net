@@ -53,12 +53,12 @@ namespace LdapForNet.Adsddl.dacl
         ///     Inherited Object type GUID. Must be set if Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT is one of the
         ///     AceObjectFlags; otherwise null.
         /// </summary>
-        private readonly string inheritedObjectType;
+        private readonly Guid? inheritedObjectType;
 
         /// <summary>
         ///     Object type GUID. Must be set if Flag.ACE_OBJECT_TYPE_PRESENT is one of the AceObjectFlags; otherwise null.
         /// </summary>
-        private readonly string objectType;
+        private readonly Guid? objectType;
 
         /// <summary>
         ///     Single AceFlag that stipulates an ACE must contain it; may be null.
@@ -79,7 +79,7 @@ namespace LdapForNet.Adsddl.dacl
         /// </param>
         /// <param name="requiredFlag">Single AceFlag that stipulates an ACE must contain it; may be null.</param>
         /// <param name="excludedFlag">Single AceFlag that stipulates an ACE must NOT contain it; may be null.</param>
-        public AceAssertion(AceRights aceRight, AceObjectFlags aceObjFlags, string objectType, string inheritedObjectType,
+        public AceAssertion(AceRights aceRight, AceObjectFlags aceObjFlags, Guid? objectType, Guid? inheritedObjectType,
             AceFlag requiredFlag, AceFlag excludedFlag)
         {
             this.aceRight = aceRight;
@@ -106,13 +106,13 @@ namespace LdapForNet.Adsddl.dacl
         ///     Gets the object type GUID. Present only if Flag.ACE_OBJECT_TYPE_PRESENT is in getObjectFlags
         /// </summary>
         /// <returns></returns>
-        public string getObjectType() => this.objectType;
+        public Guid? getObjectType() => this.objectType;
 
         /// <summary>
         ///     Gets the inherited object type GUID. Present only if Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT is in getObjectFlags
         /// </summary>
         /// <returns>Inherited object type GUID string or null if none</returns>
-        public string getInheritedObjectType() => this.inheritedObjectType;
+        public Guid? getInheritedObjectType() => this.inheritedObjectType;
 
         /// <summary>
         ///     Gets single AceFlag that stipulates an ACE must contain it; may be null.
@@ -134,8 +134,8 @@ namespace LdapForNet.Adsddl.dacl
             result = (int) (prime * result + (this.aceRight == null ? 0 : this.aceRight.asUInt()));
             result = prime * result + (this.inheritedObjectType == null ? 0 : this.inheritedObjectType.GetHashCode());
             result = prime * result + (this.objectType == null ? 0 : this.objectType.GetHashCode());
-            result = prime * result + (this.requiredFlag == null ? 0 : this.requiredFlag.GetHashCode());
-            result = prime * result + (this.excludedFlag == null ? 0 : this.excludedFlag.GetHashCode());
+            result = prime * result + (this.requiredFlag == AceFlag.NONE ? 0 : this.requiredFlag.GetHashCode());
+            result = prime * result + (this.excludedFlag == AceFlag.NONE ? 0 : this.excludedFlag.GetHashCode());
             return result;
         }
 
@@ -218,14 +218,14 @@ namespace LdapForNet.Adsddl.dacl
                 return false;
             }
 
-            if (this.requiredFlag == null)
+            if (this.requiredFlag == AceFlag.NONE)
             {
-                if (other.requiredFlag != null)
+                if (other.requiredFlag != AceFlag.NONE)
                 {
                     return false;
                 }
             }
-            else if (other.requiredFlag == null)
+            else if (other.requiredFlag == AceFlag.NONE)
             {
                 return false;
             }
@@ -234,14 +234,14 @@ namespace LdapForNet.Adsddl.dacl
                 return false;
             }
 
-            if (this.excludedFlag == null)
+            if (this.excludedFlag == AceFlag.NONE)
             {
-                if (other.excludedFlag != null)
+                if (other.excludedFlag != AceFlag.NONE)
                 {
                     return false;
                 }
             }
-            else if (other.excludedFlag == null)
+            else if (other.excludedFlag == AceFlag.NONE)
             {
                 return false;
             }
@@ -257,8 +257,8 @@ namespace LdapForNet.Adsddl.dacl
         {
             string right = this.aceRight == null ? "null" : this.aceRight.asUInt().ToString();
             string objFlags = this.aceObjectFlags == null ? "null" : this.aceObjectFlags.asUInt().ToString();
-            string reqFlag = this.requiredFlag == null ? "null" : this.requiredFlag.ToString();
-            string exFlag = this.excludedFlag == null ? "null" : this.excludedFlag.ToString();
+            string reqFlag = this.requiredFlag == AceFlag.NONE ? "null" : this.requiredFlag.GetString();
+            string exFlag = this.excludedFlag == AceFlag.NONE ? "null" : this.excludedFlag.GetString();
 
             return "AceAssertion [aceRight=" + right + this.getRightsAbbrevStringForToString() + ", aceObjectFlags=" + objFlags
                 + ", objectType="
