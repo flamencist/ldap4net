@@ -9,6 +9,7 @@
         //common
         public const string Cn = "cn";
         public const string DistinguishedName = "distinguishedName";
+        public const string NtSecurityDescriptor = "nTSecurityDescriptor";
         public const string Name = "name";
         public const string ObjectClass = "objectClass";
         public const string IpaUniqueID = "ipaUniqueID";
