@@ -10,7 +10,7 @@ namespace LdapForNetTests
 {
     public class AdsddlTest
     {
-        [Fact]
+        [Fact(Skip = "not supported in openldap")]
         public async Task LdapConnection_GetNtSecurityDescriptor()
         {
             using (var connection = new LdapConnection())
