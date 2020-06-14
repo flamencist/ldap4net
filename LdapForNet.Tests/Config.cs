@@ -21,6 +21,6 @@ namespace LdapForNetTests
         internal static string GetExeDirectory() =>
             new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
 
-        internal static string GetLocation(string filename) => Path.Combine(GetExeDirectory(), filename);
+        public static string GetLocation(string filename) => Path.Combine(GetExeDirectory(), filename);
     }
 }

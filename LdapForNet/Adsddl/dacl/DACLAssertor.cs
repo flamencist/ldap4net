@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LdapForNet.Adsddl.data;
-using LdapForNet.Adsddl.utils;
 using LdapForNet.Utils;
 
 namespace LdapForNet.Adsddl.dacl
@@ -70,7 +69,7 @@ namespace LdapForNet.Adsddl.dacl
         /// <summary>
         ///     Pre-connected LdapContext.
         /// </summary>
-        private LdapConnection ldapContext;
+        private readonly LdapConnection ldapContext;
 
         /// <summary>
         ///     List of any unsatisfied AceAssertions after doAssert runs.
@@ -141,6 +140,10 @@ namespace LdapForNet.Adsddl.dacl
 
             if (this.dacl == null)
             {
+                if (this.ldapContext == null)
+                {
+                    return false;
+                }
                 this.GetDacl();
             }
 
@@ -163,18 +166,21 @@ namespace LdapForNet.Adsddl.dacl
         /// </summary>
         private void GetDacl()
         {
-            var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "",
-                    Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE){ Attributes = {LdapAttributes.NtSecurityDescriptor}};
-                directoryRequest.Controls.Add(new SecurityDescriptorFlagControl(SecurityMasks.Owner | SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Sacl));
-                var response = (SearchResponse)this.ldapContext.SendRequest(directoryRequest);
-                var entry = response.Entries.FirstOrDefault();
-                if (entry == null)
-                {
-                    throw new LdapException("Couldn't find ldap");
-                }
-                byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);
-                Sddl sddl = new Sddl(descbytes);
-                this.dacl = sddl.GetDacl();
+            SearchRequest directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), 
+                "", 
+                Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE) 
+                { Attributes = { LdapAttributes.NtSecurityDescriptor } };
+            directoryRequest.Controls.Add(new SecurityDescriptorFlagControl(SecurityMasks.Owner | SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Sacl));
+            SearchResponse response = (SearchResponse) this.ldapContext.SendRequest(directoryRequest);
+            DirectoryEntry entry = response.Entries.FirstOrDefault();
+            if (entry == null)
+            {
+                throw new LdapException("Couldn't find ldap");
+            }
+
+            byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);
+            Sddl sddl = new Sddl(descbytes);
+            this.dacl = sddl.GetDacl();
         }
 
         /// <summary>
@@ -214,11 +220,10 @@ namespace LdapForNet.Adsddl.dacl
             var unsatisfiedAssertions = new List<AceAssertion>(roleAssertion.GetAssertions());
             var deniedAssertions = new List<AceAssertion>();
             SID principal = roleAssertion.GetPrincipal();
-            List<Ace> principalAces = acesBySIDMap[principal.ToString()];
 
-            if (principalAces != null)
+            if (acesBySIDMap.ContainsKey(principal.ToString()))
             {
-                this.FindUnmatchedAssertions(principalAces, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                this.FindUnmatchedAssertions(acesBySIDMap[principal.ToString()], unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
             }
 
             // There may be denials on groups even if we resolved all assertions - search groups if specified
@@ -239,15 +244,9 @@ namespace LdapForNet.Adsddl.dacl
                     return unsatisfiedAssertions;
                 }
 
-                foreach (SID grpSID in tokenGroupSiDs)
+                foreach (SID grpSID in tokenGroupSiDs.Where(grpSID => acesBySIDMap.ContainsKey(grpSID.ToString())))
                 {
-                    principalAces = acesBySIDMap[grpSID.ToString()];
-                    if (principalAces == null)
-                    {
-                        continue;
-                    }
-
-                    this.FindUnmatchedAssertions(principalAces, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                    this.FindUnmatchedAssertions(acesBySIDMap[grpSID.ToString()], unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
                 }
 
                 this.DoEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());

@@ -143,9 +143,10 @@ namespace LdapForNet.Adsddl
             // OffsetOwner (4 bytes): An unsigned 32-bit integer that specifies the offset to the SID. This SID
             // specifies the owner of the object to which the security descriptor is associated. This must be a valid
             // offset if the OD flag is not set. If this field is set to zero, the OwnerSid field MUST not be present.
+            var offsetOwnerValue = buff.ReadInt32();
             if (!controlFlag[15])
             {
-                this.offsetOwner = NumberFacility.GetReverseUInt(buff.ReadInt32());
+                this.offsetOwner = NumberFacility.GetReverseUInt(offsetOwnerValue);
             }
             else
             {
@@ -155,9 +156,10 @@ namespace LdapForNet.Adsddl
             // OffsetGroup (4 bytes): An unsigned 32-bit integer that specifies the offset to the SID. This SID
             // specifies the group of the object to which the security descriptor is associated. This must be a valid
             // offset if the GD flag is not set. If this field is set to zero, the GroupSid field MUST not be present.
+            var offsetGroupValue = buff.ReadInt32();
             if (!controlFlag[14])
             {
-                this.offsetGroup = NumberFacility.GetReverseUInt(buff.ReadInt32());
+                this.offsetGroup = NumberFacility.GetReverseUInt(offsetGroupValue);
             }
             else
             {
@@ -169,9 +171,10 @@ namespace LdapForNet.Adsddl
             // SYSTEM_AUDIT_CALLBACK_ACE, or SYSTEM_AUDIT_CALLBACK_OBJECT_ACE), and at most one Label ACE (as specified
             // in section 2.4.4.13). This must be a valid offset if the SP flag is set; if the SP flag is not set, this
             // field MUST be set to zero. If this field is set to zero, the Sacl field MUST not be present.
+            var offsetSaclValue = buff.ReadInt32();
             if (controlFlag[11])
             {
-                this.offsetSacl = NumberFacility.GetReverseUInt(buff.ReadInt32());
+                this.offsetSacl = NumberFacility.GetReverseUInt(offsetSaclValue);
             }
             else
             {
@@ -182,9 +185,10 @@ namespace LdapForNet.Adsddl
             // that control access. Typically, the DACL contains ACEs that grant or deny access to principals or groups.
             // This must be a valid offset if the DP flag is set; if the DP flag is not set, this field MUST be set to
             // zero. If this field is set to zero, the Dacl field MUST not be present.
+            var offsetDaclValue = buff.ReadInt32();
             if (controlFlag[13])
             {
-                this.offsetDacl = NumberFacility.GetReverseUInt(buff.ReadInt32());
+                this.offsetDacl = NumberFacility.GetReverseUInt(offsetDaclValue);
             }
             else
             {

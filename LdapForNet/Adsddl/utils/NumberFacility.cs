@@ -55,31 +55,6 @@ namespace LdapForNet.Adsddl.utils
         }
 
         /// <summary>
-        ///     Remove 0x00 bytes from left side.
-        ///     @param bytes source array.
-        ///     @return trimmed array.
-        /// </summary>
-        public static byte[] LeftTrim(byte[] bytes)
-        {
-            var pos = 0;
-            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++) ;
-
-            if (pos < bytes.Length)
-            {
-                return CopyOfRange(bytes, pos, bytes.Length);
-            }
-
-            return new byte[] { 0x00 };
-        }
-
-        /// <summary>
-        ///     Remove 0x00 bytes from right side.
-        ///     @param bytes source array.
-        ///     @return trimmed array.
-        /// </summary>
-        public static byte[] RightTrim(byte[] bytes) => Hex.Reverse(LeftTrim(Hex.Reverse(bytes)));
-
-        /// <summary>
         ///     Gets bits as bool array from a given byte array.
         ///     @param bytes bytes.
         ///     @return bits.
@@ -122,13 +97,6 @@ namespace LdapForNet.Adsddl.utils
 
             return res;
         }
-
-        /// <summary>
-        ///     Reverts bytes and retrieves the corresponding integer value.
-        ///     @param bytes bytes.
-        ///     @return integer.
-        /// </summary>
-        public static int GetReverseInt(byte[] bytes) => (int) GetReverseUInt(bytes);
 
         /// <summary>
         ///     Reverses bytes and retrieves the corresponding unsigned integer value.
