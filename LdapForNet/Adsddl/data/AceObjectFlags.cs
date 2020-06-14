@@ -36,13 +36,13 @@ namespace LdapForNet.Adsddl.data
             /// <summary>
             ///     0x00000001 - ObjectType is valid.
             /// </summary>
-            ACE_OBJECT_TYPE_PRESENT = 0x00000001,
+            AceObjectTypePresent = 0x00000001,
 
             /// <summary>
             ///     0x00000002 - InheritedObjectType is valid. If this value is not specified, all types of child objects can inherit
             ///     the ACE.
             /// </summary>
-            ACE_INHERITED_OBJECT_TYPE_PRESENT = 0x00000002
+            AceInheritedObjectTypePresent = 0x00000002
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace LdapForNet.Adsddl.data
         /// </summary>
         /// <param name="value">value flags given as int value.</param>
         /// <returns>ACE object flags.</returns>
-        public static AceObjectFlags parseValue(int value)
+        public static AceObjectFlags ParseValue(int value)
         {
             AceObjectFlags res = new AceObjectFlags();
 
@@ -98,14 +98,14 @@ namespace LdapForNet.Adsddl.data
         ///     Gets standard ACE object flags.
         ///     @return stabdatd ACE object flags.
         /// </summary>
-        public HashSet<Flag> getFlags() => this.flags;
+        public HashSet<Flag> GetFlags() => this.flags;
 
         /// <summary>
         ///     Adds standard ACE object flag.
         ///     @param flag standard ACE object flag.
         ///     @return the current ACE object flags.
         /// </summary>
-        public AceObjectFlags addFlag(Flag flag)
+        public AceObjectFlags AddFlag(Flag flag)
         {
             if (!this.flags.Contains(flag))
             {
@@ -119,14 +119,14 @@ namespace LdapForNet.Adsddl.data
         ///     Gets custom/other ACE object flags.
         ///     @return custom/other ACE object flags as long value.
         /// </summary>
-        public long getOthers() => this.others;
+        public long GetOthers() => this.others;
 
         /// <summary>
         ///     Sets custom/others ACE object flags.
         ///     @param others custom/other ACE object flags given as int value..
         ///     @return the current ACE object flags.
         /// </summary>
-        public AceObjectFlags setOthers(int others)
+        public AceObjectFlags SetOthers(int others)
         {
             this.others = others;
             return this;
@@ -136,7 +136,7 @@ namespace LdapForNet.Adsddl.data
         ///     Gets custom/other ACE object flags as long value.
         ///     @return custom/other ACE object flags as long value.
         /// </summary>
-        public long asUInt() => this.flags.Aggregate<Flag, long>(this.others, (current, flag) => current + (long) flag);
+        public long AsUInt() => this.flags.Aggregate<Flag, long>(this.others, (current, flag) => current + (long) flag);
     }
 
     public static class FlagExtensions

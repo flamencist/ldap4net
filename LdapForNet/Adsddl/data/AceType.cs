@@ -20,184 +20,184 @@ using LdapForNet.Adsddl.data;
 namespace LdapForNet.Adsddl.data
 {
     /**
- * An unsigned 8-bit integer that specifies the ACE types.
- *
- * <see href="https://msdn.microsoft.com/en-us/library/cc230296.aspx">cc230296</see>
- */
+     * An unsigned 8-bit integer that specifies the ACE types.
+     *
+     * <see href="https://msdn.microsoft.com/en-us/library/cc230296.aspx">cc230296</see>
+     */
     public enum AceType
     {
         /// <summary>
         /// Unexpected value.
         /// </summary>
-        UNEXPECTED = 0xFF,
+        Unexpected = 0xFF,
 
         /// <summary>
         /// 0x00 - Access-allowed ACE that uses the ACCESS_ALLOWED_ACE structure.
         /// </summary>
-        ACCESS_ALLOWED_ACE_TYPE = 0x00,
+        AccessAllowedAceType = 0x00,
 
         /// <summary>
         /// 0x01 - Access-denied ACE that uses the ACCESS_DENIED_ACE structure.
         /// </summary>
-        ACCESS_DENIED_ACE_TYPE = 0x01,
+        AccessDeniedAceType = 0x01,
 
         /// <summary>
         /// 0x02 - System-audit ACE that uses the SYSTEM_AUDIT_ACE structure.
         /// </summary>
-        SYSTEM_AUDIT_ACE_TYPE = 0x02,
+        SystemAuditAceType = 0x02,
 
         /// <summary>
         /// 0x03 - Reserved for future use.
         /// </summary>
-        SYSTEM_ALARM_ACE_TYPE = 0x03,
+        SystemAlarmAceType = 0x03,
 
         /// <summary>
         /// 0x04 - Reserved for future use.
         /// </summary>
-        ACCESS_ALLOWED_COMPOUND_ACE_TYPE = 0x04,
+        AccessAllowedCompoundAceType = 0x04,
 
         /// <summary>
         /// 0x05 - Object-specific access-allowed ACE that uses the ACCESS_ALLOWED_OBJECT_ACE structure.
         /// </summary>
-        ACCESS_ALLOWED_OBJECT_ACE_TYPE = 0x05,
+        AccessAllowedObjectAceType = 0x05,
 
         /// <summary>
         /// 0x06 - Object-specific access-denied ACE that uses the ACCESS_DENIED_OBJECT_ACE structure.
         /// </summary>
-        ACCESS_DENIED_OBJECT_ACE_TYPE = 0x06,
+        AccessDeniedObjectAceType = 0x06,
 
         /// <summary>
         /// 0x07 - Object-specific system-audit ACE that uses the SYSTEM_AUDIT_OBJECT_ACE structure.
         /// </summary>
-        SYSTEM_AUDIT_OBJECT_ACE_TYPE = 0x07,
+        SystemAuditObjectAceType = 0x07,
 
         /// <summary>
         /// 0x09 - Reserved for future use.
         /// </summary>
-        SYSTEM_ALARM_OBJECT_ACE_TYPE = 0x08,
+        SystemAlarmObjectAceType = 0x08,
 
         /// <summary>
         /// 0x09 - Access-allowed callback ACE that uses the ACCESS_ALLOWED_CALLBACK_ACE structure.
         /// </summary>
-        ACCESS_ALLOWED_CALLBACK_ACE_TYPE = 0x09,
+        AccessAllowedCallbackAceType = 0x09,
 
         /// <summary>
         /// 0x0A - Access-denied callback ACE that uses the ACCESS_DENIED_CALLBACK_ACE structure.
         /// </summary>
-        ACCESS_DENIED_CALLBACK_ACE_TYPE = 0x0A,
+        AccessDeniedCallbackAceType = 0x0A,
 
         /// <summary>
         /// 0x0B - Object-specific access-allowed callback ACE that uses the ACCESS_ALLOWED_CALLBACK_OBJECT_ACE structure.
         /// </summary>
-        ACCESS_ALLOWED_CALLBACK_OBJECT_ACE_TYPE = 0x0B,
+        AccessAllowedCallbackObjectAceType = 0x0B,
 
         /// <summary>
         /// 0x0C - Object-specific access-denied callback ACE that uses the ACCESS_DENIED_CALLBACK_OBJECT_ACE structure.
         /// </summary>
-        ACCESS_DENIED_CALLBACK_OBJECT_ACE_TYPE = 0x0C,
+        AccessDeniedCallbackObjectAceType = 0x0C,
 
         /// <summary>
         /// 0x0D - System-audit callback ACE that uses the SYSTEM_AUDIT_CALLBACK_ACE structure.
         /// </summary>
-        SYSTEM_AUDIT_CALLBACK_ACE_TYPE = 0x0D,
+        SystemAuditCallbackAceType = 0x0D,
 
         /// <summary>
         /// 0x0E - Reserved for future use.
         /// </summary>
-        SYSTEM_ALARM_CALLBACK_ACE_TYPE = 0x0E,
+        SystemAlarmCallbackAceType = 0x0E,
 
         /// <summary>
         /// 0x0F - Object-specific system-audit callback ACE that uses the SYSTEM_AUDIT_CALLBACK_OBJECT_ACE structure.
         /// </summary>
-        SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE = 0x0F,
+        SystemAuditCallbackObjectAceType = 0x0F,
 
         /// <summary>
         /// 0x10 - Reserved for future use.
         /// </summary>
-        SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE = 0x10,
+        SystemAlarmCallbackObjectAceType = 0x10,
 
         /// <summary>
         /// 0x11 - Mandatory label ACE that uses the SYSTEM_MANDATORY_LABEL_ACE structure.
         /// </summary>
-        SYSTEM_MANDATORY_LABEL_ACE_TYPE = 0x11,
+        SystemMandatoryLabelAceType = 0x11,
 
         /// <summary>
         /// 0x12 - Resource attribute ACE that uses the SYSTEM_RESOURCE_ATTRIBUTE_ACE.
         /// </summary>
-        SYSTEM_RESOURCE_ATTRIBUTE_ACE_TYPE = 0x12,
+        SystemResourceAttributeAceType = 0x12,
 
         /// <summary>
         /// 0x13 - A central policy ID ACE that uses the SYSTEM_SCOPED_POLICY_ID_ACE.
         /// </summary>
-        SYSTEM_SCOPED_POLICY_ID_ACE_TYPE = 0x13
-    }
-}
-
-public static class AceTypeExtension
-{
-    public static string GetString(this AceType type)
-    {
-        switch (type)
-        {
-            case AceType.ACCESS_ALLOWED_ACE_TYPE:
-                return "A";
-            case AceType.ACCESS_DENIED_ACE_TYPE:
-                return "D";
-            case AceType.SYSTEM_AUDIT_ACE_TYPE:
-                return "AU";
-            case AceType.SYSTEM_ALARM_ACE_TYPE:
-                return "AL";
-            case AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE:
-                return "OA";
-            case AceType.ACCESS_DENIED_OBJECT_ACE_TYPE:
-                return "OD";
-            case AceType.SYSTEM_AUDIT_OBJECT_ACE_TYPE:
-                return "OU";
-            case AceType.SYSTEM_ALARM_OBJECT_ACE_TYPE:
-                return "OL";
-            case AceType.ACCESS_ALLOWED_CALLBACK_ACE_TYPE:
-                return "XA";
-            case AceType.ACCESS_DENIED_CALLBACK_ACE_TYPE:
-                return "XD";
-            case AceType.ACCESS_ALLOWED_CALLBACK_OBJECT_ACE_TYPE:
-                return "ZA";
-            case AceType.ACCESS_DENIED_CALLBACK_OBJECT_ACE_TYPE:
-                return "ZD";
-            case AceType.SYSTEM_AUDIT_CALLBACK_ACE_TYPE:
-                return "XU";
-            case AceType.SYSTEM_ALARM_CALLBACK_ACE_TYPE:
-                return "XL";
-            case AceType.SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE:
-                return "ZU";
-            case AceType.SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE:
-                return "ZL";
-            case AceType.SYSTEM_MANDATORY_LABEL_ACE_TYPE:
-                return "ML";
-            case AceType.SYSTEM_RESOURCE_ATTRIBUTE_ACE_TYPE:
-                return "RA";
-            case AceType.SYSTEM_SCOPED_POLICY_ID_ACE_TYPE:
-                return "SP";
-            default:
-                return type.ToString();
-        }
+        SystemScopedPolicyIDAceType = 0x13
     }
 
-    /// <summary>
-    /// Parses byte value.
-    /// 
-    /// @param value byte value.
-    /// @return ACE type.
-    /// </summary>
-    public static AceType parseValue(byte value)
+    public static class AceTypeExtension
     {
-        foreach (AceType type in Enum.GetValues(typeof(AceType)))
+        public static string GetString(this AceType type)
         {
-            if ((byte) type == value)
+            switch (type)
             {
-                return type;
+                case AceType.AccessAllowedAceType:
+                    return "A";
+                case AceType.AccessDeniedAceType:
+                    return "D";
+                case AceType.SystemAuditAceType:
+                    return "AU";
+                case AceType.SystemAlarmAceType:
+                    return "AL";
+                case AceType.AccessAllowedObjectAceType:
+                    return "OA";
+                case AceType.AccessDeniedObjectAceType:
+                    return "OD";
+                case AceType.SystemAuditObjectAceType:
+                    return "OU";
+                case AceType.SystemAlarmObjectAceType:
+                    return "OL";
+                case AceType.AccessAllowedCallbackAceType:
+                    return "XA";
+                case AceType.AccessDeniedCallbackAceType:
+                    return "XD";
+                case AceType.AccessAllowedCallbackObjectAceType:
+                    return "ZA";
+                case AceType.AccessDeniedCallbackObjectAceType:
+                    return "ZD";
+                case AceType.SystemAuditCallbackAceType:
+                    return "XU";
+                case AceType.SystemAlarmCallbackAceType:
+                    return "XL";
+                case AceType.SystemAuditCallbackObjectAceType:
+                    return "ZU";
+                case AceType.SystemAlarmCallbackObjectAceType:
+                    return "ZL";
+                case AceType.SystemMandatoryLabelAceType:
+                    return "ML";
+                case AceType.SystemResourceAttributeAceType:
+                    return "RA";
+                case AceType.SystemScopedPolicyIDAceType:
+                    return "SP";
+                default:
+                    return type.ToString();
             }
         }
 
-        return AceType.UNEXPECTED;
+        /// <summary>
+        /// Parses byte value.
+        /// 
+        /// @param value byte value.
+        /// @return ACE type.
+        /// </summary>
+        public static AceType ParseValue(byte value)
+        {
+            foreach (AceType type in Enum.GetValues(typeof(AceType)))
+            {
+                if ((byte) type == value)
+                {
+                    return type;
+                }
+            }
+
+            return AceType.Unexpected;
+        }
     }
 }

@@ -70,11 +70,11 @@ namespace LdapForNet.Adsddl
         ///     @param identifier identifier authority (6 bytes only).
         ///     @return the SID instance.
         /// </summary>
-        public static SID newInstance(byte[] identifier)
+        public static SID NewInstance(byte[] identifier)
         {
             SID sid = new SID();
-            sid.setRevision(0x01);
-            sid.setIdentifierAuthority(identifier);
+            sid.SetRevision(0x01);
+            sid.SetIdentifierAuthority(identifier);
             return sid;
         }
 
@@ -83,12 +83,12 @@ namespace LdapForNet.Adsddl
         ///     @param src SID as byte array.
         ///     @return SID instance.
         /// </summary>
-        public static SID parse(byte[] src)
+        public static SID Parse(byte[] src)
         {
             using var ms = new MemoryStream(src);
             using var sddlBuffer = new BinaryReader(ms);
             SID sid = new SID();
-            sid.parse(sddlBuffer, 0);
+            sid.Parse(sddlBuffer, 0);
             return sid;
         }
 
@@ -98,7 +98,7 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        public void parse(BinaryReader buff, long? start = null)
+        public void Parse(BinaryReader buff, long? start = null)
         {
             if (start != null)
             {
@@ -106,7 +106,7 @@ namespace LdapForNet.Adsddl
             }
 
             // Check for a SID (http://msdn.microsoft.com/en-us/library/cc230371.aspx)
-            byte[] sidHeader = NumberFacility.getBytes(buff.ReadInt32());
+            byte[] sidHeader = NumberFacility.GetBytes(buff.ReadInt32());
 
             // Revision(1 byte): An 8-bit unsigned integer that specifies the revision level of the SID.
             // This value MUST be set to 0x01.
@@ -114,7 +114,7 @@ namespace LdapForNet.Adsddl
 
             //SubAuthorityCount (1 byte): An 8-bit unsigned integer that specifies the number of elements 
             //in the SubAuthority array. The maximum number of elements allowed is 15.
-            int subAuthorityCount = NumberFacility.getInt(sidHeader[1]);
+            int subAuthorityCount = NumberFacility.GetInt(sidHeader[1]);
 
             // IdentifierAuthority (6 bytes): A SID_IDENTIFIER_AUTHORITY structure that indicates the 
             // authority under which the SID was created. It describes the entity that created the SID. 
@@ -132,7 +132,7 @@ namespace LdapForNet.Adsddl
             // SubAuthorityCount.
             for (var j = 0; j < subAuthorityCount; j++)
             {
-                this.subAuthorities.Add(Hex.reverse(NumberFacility.getBytes(buff.ReadInt32())));
+                this.subAuthorities.Add(Hex.Reverse(NumberFacility.GetBytes(buff.ReadInt32())));
             }
         }
 
@@ -140,29 +140,29 @@ namespace LdapForNet.Adsddl
         ///     Gets revision level of the SID.
         ///     @return revision.
         /// </summary>
-        public byte getRevision() => this.revision;
+        public byte GetRevision() => this.revision;
 
         /// <summary>
         ///     Gets sub-authority number: an 8-bit unsigned integer that specifies the number of elements in the SubAuthority
         ///     array. The maximum number of elements allowed is 15.
         ///     @return sub-authorities number.
         /// </summary>
-        public int getSubAuthorityCount() => this.subAuthorities == null ? 0 : this.subAuthorities.Count > 15 ? 15 : this.subAuthorities.Count;
+        public int GetSubAuthorityCount() => this.subAuthorities == null ? 0 : this.subAuthorities.Count > 15 ? 15 : this.subAuthorities.Count;
 
         /// <summary>
         ///     Gets identifier authority: 6 bytes describing the entity that created the SID.
         ///     @return identifier authority.
         /// </summary>
-        public byte[] getIdentifierAuthority() => this.identifierAuthority == null ? null : this.identifierAuthority.Copy();
+        public byte[] GetIdentifierAuthority() => this.identifierAuthority == null ? null : this.identifierAuthority.Copy();
 
         /// <summary>
         ///     Gets sub-authorities: a list of unsigned 32-bit integers that uniquely identifies a principal
         ///     relative to the IdentifierAuthority.
         ///     @return sub-authorities.
         /// </summary>
-        public ReadOnlyCollection<byte[]> getSubAuthorities()
+        public ReadOnlyCollection<byte[]> GetSubAuthorities()
         {
-            var res = new List<byte[]>(this.getSubAuthorityCount());
+            var res = new List<byte[]>(this.GetSubAuthorityCount());
             foreach (byte[] sub in this.subAuthorities)
             {
                 if (sub != null)
@@ -178,14 +178,14 @@ namespace LdapForNet.Adsddl
         ///     Gets size of the SID byte array form.
         ///     @return size of SID byte aray form.
         /// </summary>
-        public int getSize() => 8 + this.subAuthorities.Count * 4;
+        public int GetSize() => 8 + this.subAuthorities.Count * 4;
 
         /// <summary>
         ///     Sets revision level of the SID.
         ///     @param revision revision.
         ///     @return the current SID instance.
         /// </summary>
-        public SID setRevision(byte revision)
+        public SID SetRevision(byte revision)
         {
             this.revision = revision;
             return this;
@@ -196,7 +196,7 @@ namespace LdapForNet.Adsddl
         ///     @param identifierAuthority identifier authority.
         ///     @return the current SID instance.
         /// </summary>
-        public SID setIdentifierAuthority(byte[] identifierAuthority)
+        public SID SetIdentifierAuthority(byte[] identifierAuthority)
         {
             if (identifierAuthority == null || identifierAuthority.Length != 6)
             {
@@ -212,7 +212,7 @@ namespace LdapForNet.Adsddl
         ///     @param sub sub-authority.
         ///     @return the current SID instance.
         /// </summary>
-        public SID addSubAuthority(byte[] sub)
+        public SID AddSubAuthority(byte[] sub)
         {
             if (sub == null || sub.Length != 4)
             {
@@ -227,17 +227,17 @@ namespace LdapForNet.Adsddl
         ///     Serializes to byte array.
         ///     @return serialized SID.
         /// </summary>
-        public byte[] toByteArray()
+        public byte[] ToByteArray()
         {
             // variable content size depending on sub authorities number
-            using var ms = new MemoryStream(this.getSize());
+            using var ms = new MemoryStream(this.GetSize());
             var buff = new BinaryWriter(ms);
             buff.Write(this.revision);
-            buff.Write(NumberFacility.getBytes(this.subAuthorities.Count)[3]);
+            buff.Write(NumberFacility.GetBytes(this.subAuthorities.Count)[3]);
             buff.Write(this.identifierAuthority);
             foreach (byte[] sub in this.subAuthorities)
             {
-                buff.Write(Hex.reverse(sub));
+                buff.Write(Hex.Reverse(sub));
             }
 
             return ms.ToArray();
@@ -250,12 +250,12 @@ namespace LdapForNet.Adsddl
 
             if (this.identifierAuthority[0] == 0x00 && this.identifierAuthority[1] == 0x00)
             {
-                bld.Append(NumberFacility.getUInt(
+                bld.Append(NumberFacility.GetUInt(
                     this.identifierAuthority[2], this.identifierAuthority[3], this.identifierAuthority[4], this.identifierAuthority[5]));
             }
             else
             {
-                bld.Append(Hex.get(this.identifierAuthority));
+                bld.Append(Hex.Get(this.identifierAuthority));
             }
 
             if (this.subAuthorities.Count == 0)
@@ -267,7 +267,7 @@ namespace LdapForNet.Adsddl
                 foreach (byte[] sub in this.subAuthorities)
                 {
                     bld.Append("-");
-                    bld.Append(NumberFacility.getUInt(sub));
+                    bld.Append(NumberFacility.GetUInt(sub));
                 }
             }
 
@@ -281,22 +281,22 @@ namespace LdapForNet.Adsddl
                 return false;
             }
 
-            if (this.getSize() != ext.getSize())
+            if (this.GetSize() != ext.GetSize())
             {
                 return false;
             }
 
-            if (this.getSubAuthorityCount() != ext.getSubAuthorityCount())
+            if (this.GetSubAuthorityCount() != ext.GetSubAuthorityCount())
             {
                 return false;
             }
 
-            if (!this.getIdentifierAuthority().SequenceEqual(ext.getIdentifierAuthority()))
+            if (!this.GetIdentifierAuthority().SequenceEqual(ext.GetIdentifierAuthority()))
             {
                 return false;
             }
 
-            return !this.subAuthorities.Where((t, i) => !t.SequenceEqual(ext.getSubAuthorities()[i])).Any();
+            return !this.subAuthorities.Where((t, i) => !t.SequenceEqual(ext.GetSubAuthorities()[i])).Any();
         }
 
         public override int GetHashCode()

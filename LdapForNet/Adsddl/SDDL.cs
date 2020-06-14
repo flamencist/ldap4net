@@ -41,7 +41,7 @@ namespace LdapForNet.Adsddl
     ///     requires no padding.
     ///     <see href="https://msdn.microsoft.com/en-us/library/cc230366.aspx">cc230366</see>
     /// </summary>
-    public class SDDL
+    public class Sddl
     {
         /// <summary>
         ///     An unsigned 16-bit field that specifies control access bit flags. The Self Relative (SR) bit MUST be set when the
@@ -53,7 +53,7 @@ namespace LdapForNet.Adsddl
         ///     The SACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the SP flag
         ///     is set.
         /// </summary>
-        private ACL dacl;
+        private Acl dacl;
 
         /// <summary>
         ///     The SID of the group of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
@@ -67,7 +67,7 @@ namespace LdapForNet.Adsddl
         ///     if the DP flag is set; if the DP flag is not set, this field MUST be set to zero. If this field is set to zero,
         ///     the Dacl field MUST not be present.
         /// </summary>
-        private long offsetDACL;
+        private long offsetDacl;
 
         /// <summary>
         ///     An unsigned 32-bit integer that specifies the offset to the SID. This SID specifies the group of the object to
@@ -90,7 +90,7 @@ namespace LdapForNet.Adsddl
         ///     if the SP flag is not set, this field MUST be set to zero. If this field is set to zero, the Sacl field MUST not
         ///     be present.
         /// </summary>
-        private long offsetSACL;
+        private long offsetSacl;
 
         /// <summary>
         ///     The SID of the owner of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if
@@ -108,17 +108,17 @@ namespace LdapForNet.Adsddl
         ///     The DACL of the object. The length of the SID MUST be a multiple of 4. This field MUST be present if the DP flag
         ///     is set.
         /// </summary>
-        private ACL sacl;
+        private Acl sacl;
 
         /// <summary>
         ///     Constructor.
         ///     @param src source as byte array.
         /// </summary>
-        public SDDL(byte[] src)
+        public Sddl(byte[] src)
         {
             using var ms = new MemoryStream(src);
             using var sddlBuffer = new BinaryReader(ms);
-            this.parse(sddlBuffer, 0);
+            this.Parse(sddlBuffer, 0);
         }
 
         /// <summary>
@@ -127,25 +127,25 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        private void parse(BinaryReader buff, long start)
+        private void Parse(BinaryReader buff, long start)
         {
             // Revision (1 byte): An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR
             // structure. This field MUST be set to one.
             buff.BaseStream.Seek(start, SeekOrigin.Begin);
-            byte[] header = NumberFacility.getBytes(buff.ReadInt32());
+            byte[] header = NumberFacility.GetBytes(buff.ReadInt32());
             this.revision = header[0];
 
             // Control (2 bytes): An unsigned 16-bit field that specifies control access bit flags. The Self Relative
             // (SR) bit MUST be set when the security descriptor is in self-relative format.
             this.controlFlags = new[] { header[3], header[2] };
-            bool[] controlFlag = NumberFacility.getBits(this.controlFlags);
+            bool[] controlFlag = NumberFacility.GetBits(this.controlFlags);
 
             // OffsetOwner (4 bytes): An unsigned 32-bit integer that specifies the offset to the SID. This SID
             // specifies the owner of the object to which the security descriptor is associated. This must be a valid
             // offset if the OD flag is not set. If this field is set to zero, the OwnerSid field MUST not be present.
             if (!controlFlag[15])
             {
-                this.offsetOwner = NumberFacility.getReverseUInt(buff.ReadInt32());
+                this.offsetOwner = NumberFacility.GetReverseUInt(buff.ReadInt32());
             }
             else
             {
@@ -157,7 +157,7 @@ namespace LdapForNet.Adsddl
             // offset if the GD flag is not set. If this field is set to zero, the GroupSid field MUST not be present.
             if (!controlFlag[14])
             {
-                this.offsetGroup = NumberFacility.getReverseUInt(buff.ReadInt32());
+                this.offsetGroup = NumberFacility.GetReverseUInt(buff.ReadInt32());
             }
             else
             {
@@ -171,11 +171,11 @@ namespace LdapForNet.Adsddl
             // field MUST be set to zero. If this field is set to zero, the Sacl field MUST not be present.
             if (controlFlag[11])
             {
-                this.offsetSACL = NumberFacility.getReverseUInt(buff.ReadInt32());
+                this.offsetSacl = NumberFacility.GetReverseUInt(buff.ReadInt32());
             }
             else
             {
-                this.offsetSACL = 0;
+                this.offsetSacl = 0;
             }
 
             // OffsetDacl (4 bytes): An unsigned 32-bit integer that specifies the offset to the ACL that contains ACEs
@@ -184,11 +184,11 @@ namespace LdapForNet.Adsddl
             // zero. If this field is set to zero, the Dacl field MUST not be present.
             if (controlFlag[13])
             {
-                this.offsetDACL = NumberFacility.getReverseUInt(buff.ReadInt32());
+                this.offsetDacl = NumberFacility.GetReverseUInt(buff.ReadInt32());
             }
             else
             {
-                this.offsetDACL = 0;
+                this.offsetDacl = 0;
             }
 
             // OwnerSid (variable): The SID of the owner of the object. The length of the SID MUST be a multiple of 4.
@@ -197,7 +197,7 @@ namespace LdapForNet.Adsddl
             {
                 // read for OwnerSid
                 this.owner = new SID();
-                this.owner.parse(buff, this.offsetOwner);
+                this.owner.Parse(buff, this.offsetOwner);
             }
 
             // GroupSid (variable): The SID of the group of the object. The length of the SID MUST be a multiple of 4.
@@ -206,24 +206,24 @@ namespace LdapForNet.Adsddl
             {
                 // read for GroupSid
                 this.group = new SID();
-                this.group.parse(buff, this.offsetGroup);
+                this.group.Parse(buff, this.offsetGroup);
             }
 
             // Sacl (variable): The SACL of the object. The length of the SID MUST be a multiple of 4. This field MUST
             // be present if the SP flag is set.
-            if (this.offsetSACL > 0)
+            if (this.offsetSacl > 0)
             {
                 // read for Sacl
-                this.sacl = new ACL();
-                this.sacl.parse(buff, this.offsetSACL);
+                this.sacl = new Acl();
+                this.sacl.Parse(buff, this.offsetSacl);
             }
 
             // Dacl (variable): The DACL of the object. The length of the SID MUST be a multiple of 4. This field MUST
             // be present if the DP flag is set.
-            if (this.offsetDACL > 0)
+            if (this.offsetDacl > 0)
             {
-                this.dacl = new ACL(); 
-                this.dacl.parse(buff, this.offsetDACL);
+                this.dacl = new Acl(); 
+                this.dacl.Parse(buff, this.offsetDacl);
             }
         }
 
@@ -231,55 +231,55 @@ namespace LdapForNet.Adsddl
         ///     Gets size in terms of number of bytes.
         ///     @return size.
         /// </summary>
-        public int getSize()
-            => 20 + (this.sacl == null ? 0 : this.sacl.getSize())
-                + (this.dacl == null ? 0 : this.dacl.getSize())
-                + (this.owner == null ? 0 : this.owner.getSize())
-                + (this.group == null ? 0 : this.group.getSize());
+        public int GetSize()
+            => 20 + (this.sacl == null ? 0 : this.sacl.GetSize())
+                + (this.dacl == null ? 0 : this.dacl.GetSize())
+                + (this.owner == null ? 0 : this.owner.GetSize())
+                + (this.group == null ? 0 : this.group.GetSize());
 
         /// <summary>
         ///     Get revison.
         ///     @return An unsigned 8-bit value that specifies the revision of the SECURITY_DESCRIPTOR structure..
         /// </summary>
-        public byte getRevision() => this.revision;
+        public byte GetRevision() => this.revision;
 
         /// <summary>
         ///     Gets control.
         ///     @return An unsigned 16-bit field that specifies control access bit flags.
         /// </summary>
-        public byte[] getControlFlags() => this.controlFlags;
+        public byte[] GetControlFlags() => this.controlFlags;
 
         /// <summary>
         ///     Gets owner.
         ///     @return The SID of the owner of the object.
         /// </summary>
-        public SID getOwner() => this.owner;
+        public SID GetOwner() => this.owner;
 
         /// <summary>
         ///     Gets group.
         ///     @return The SID of the group of the object.
         /// </summary>
-        public SID getGroup() => this.group;
+        public SID GetGroup() => this.group;
 
         /// <summary>
         ///     Gets DACL.
         ///     @return The DACL of the object.
         /// </summary>
-        public ACL getDacl() => this.dacl;
+        public Acl GetDacl() => this.dacl;
 
         /// <summary>
         ///     Gets SACL.
         ///     @return The SACL of the object.
         /// </summary>
-        public ACL getSacl() => this.sacl;
+        public Acl GetSacl() => this.sacl;
 
         /// <summary>
         ///     Serializes SDDL as byte array.
         ///     @return SDL as byte array.
         /// </summary>
-        public byte[] toByteArray()
+        public byte[] ToByteArray()
         {
-            using var ms = new MemoryStream(this.getSize());
+            using var ms = new MemoryStream(this.GetSize());
             var buff = new BinaryWriter(ms);
 
             // add revision
@@ -304,10 +304,10 @@ namespace LdapForNet.Adsddl
             }
             else
             {
-                buff.Write(Hex.reverse(NumberFacility.getBytes(nextAvailablePosition)));
+                buff.Write(Hex.Reverse(NumberFacility.GetBytes(nextAvailablePosition)));
                 buff.Seek(nextAvailablePosition, SeekOrigin.Begin);
-                buff.Write(this.owner.toByteArray());
-                nextAvailablePosition += this.owner.getSize();
+                buff.Write(this.owner.ToByteArray());
+                nextAvailablePosition += this.owner.GetSize();
             }
 
             // add offset group
@@ -320,10 +320,10 @@ namespace LdapForNet.Adsddl
             }
             else
             {
-                buff.Write(Hex.reverse(NumberFacility.getBytes(nextAvailablePosition)));
+                buff.Write(Hex.Reverse(NumberFacility.GetBytes(nextAvailablePosition)));
                 buff.Seek(nextAvailablePosition, SeekOrigin.Begin);
-                buff.Write(this.group.toByteArray());
-                nextAvailablePosition += this.group.getSize();
+                buff.Write(this.group.ToByteArray());
+                nextAvailablePosition += this.group.GetSize();
             }
 
             // add offset sacl
@@ -336,10 +336,10 @@ namespace LdapForNet.Adsddl
             }
             else
             {
-                buff.Write(Hex.reverse(NumberFacility.getBytes(nextAvailablePosition)));
+                buff.Write(Hex.Reverse(NumberFacility.GetBytes(nextAvailablePosition)));
                 buff.Seek(nextAvailablePosition, SeekOrigin.Begin);
-                buff.Write(this.sacl.toByteArray());
-                nextAvailablePosition += this.sacl.getSize();
+                buff.Write(this.sacl.ToByteArray());
+                nextAvailablePosition += this.sacl.GetSize();
             }
 
             // add offset dacl
@@ -352,9 +352,9 @@ namespace LdapForNet.Adsddl
             }
             else
             {
-                buff.Write(Hex.reverse(NumberFacility.getBytes(nextAvailablePosition)));
+                buff.Write(Hex.Reverse(NumberFacility.GetBytes(nextAvailablePosition)));
                 buff.Seek(nextAvailablePosition, SeekOrigin.Begin);
-                buff.Write(this.dacl.toByteArray());
+                buff.Write(this.dacl.ToByteArray());
             }
 
             return ms.ToArray();
@@ -362,37 +362,37 @@ namespace LdapForNet.Adsddl
 
         public override bool Equals(object o)
         {
-            if (!(o is SDDL ext))
+            if (!(o is Sddl ext))
             {
                 return false;
             }
 
-            if (this.getSize() != ext.getSize())
+            if (this.GetSize() != ext.GetSize())
             {
                 return false;
             }
 
-            if (!this.getControlFlags().SequenceEqual(ext.getControlFlags()))
+            if (!this.GetControlFlags().SequenceEqual(ext.GetControlFlags()))
             {
                 return false;
             }
 
-            if (!this.getOwner().Equals(ext.getOwner()))
+            if (!this.GetOwner().Equals(ext.GetOwner()))
             {
                 return false;
             }
 
-            if (!this.getGroup().Equals(ext.getGroup()))
+            if (!this.GetGroup().Equals(ext.GetGroup()))
             {
                 return false;
             }
 
-            if (!this.getDacl().Equals(ext.getDacl()))
+            if (!this.GetDacl().Equals(ext.GetDacl()))
             {
                 return false;
             }
 
-            if (!this.getSacl().Equals(ext.getSacl()))
+            if (!this.GetSacl().Equals(ext.GetSacl()))
             {
                 return false;
             }

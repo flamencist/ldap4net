@@ -94,48 +94,48 @@ namespace LdapForNet.Adsddl.dacl
         ///     Gets the AceRight specifying the right of this assertion.
         /// </summary>
         /// <returns>AceRight object</returns>
-        public AceRights getAceRight() => this.aceRight;
+        public AceRights GetAceRight() => this.aceRight;
 
         /// <summary>
         ///     Gets one or more of the assertion, may be null.
         /// </summary>
         /// <returns>AceObjectFlags object or null if none</returns>
-        public AceObjectFlags getObjectFlags() => this.aceObjectFlags;
+        public AceObjectFlags GetObjectFlags() => this.aceObjectFlags;
 
         /// <summary>
         ///     Gets the object type GUID. Present only if Flag.ACE_OBJECT_TYPE_PRESENT is in getObjectFlags
         /// </summary>
         /// <returns></returns>
-        public Guid? getObjectType() => this.objectType;
+        public Guid? GetObjectType() => this.objectType;
 
         /// <summary>
         ///     Gets the inherited object type GUID. Present only if Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT is in getObjectFlags
         /// </summary>
         /// <returns>Inherited object type GUID string or null if none</returns>
-        public Guid? getInheritedObjectType() => this.inheritedObjectType;
+        public Guid? GetInheritedObjectType() => this.inheritedObjectType;
 
         /// <summary>
         ///     Gets single AceFlag that stipulates an ACE must contain it; may be null.
         ///     @return Gets required flag
         /// </summary>
-        public AceFlag getRequiredFlag() => this.requiredFlag;
+        public AceFlag GetRequiredFlag() => this.requiredFlag;
 
         /// <summary>
         ///     Gets single AceFlag that stipulates an ACE must NOT contain it; may be null.
         ///     @return gets excluded flag
         /// </summary>
-        public AceFlag getExcludedFlag() => this.excludedFlag;
+        public AceFlag GetExcludedFlag() => this.excludedFlag;
 
         public override int GetHashCode()
         {
             var prime = 31;
             var result = 1;
-            result = (int) (prime * result + (this.aceObjectFlags == null ? 0 : this.aceObjectFlags.asUInt()));
-            result = (int) (prime * result + (this.aceRight == null ? 0 : this.aceRight.asUInt()));
+            result = (int) (prime * result + (this.aceObjectFlags == null ? 0 : this.aceObjectFlags.AsUInt()));
+            result = (int) (prime * result + (this.aceRight == null ? 0 : this.aceRight.AsUInt()));
             result = prime * result + (this.inheritedObjectType == null ? 0 : this.inheritedObjectType.GetHashCode());
             result = prime * result + (this.objectType == null ? 0 : this.objectType.GetHashCode());
-            result = prime * result + (this.requiredFlag == AceFlag.NONE ? 0 : this.requiredFlag.GetHashCode());
-            result = prime * result + (this.excludedFlag == AceFlag.NONE ? 0 : this.excludedFlag.GetHashCode());
+            result = prime * result + (this.requiredFlag == AceFlag.None ? 0 : this.requiredFlag.GetHashCode());
+            result = prime * result + (this.excludedFlag == AceFlag.None ? 0 : this.excludedFlag.GetHashCode());
             return result;
         }
 
@@ -169,7 +169,7 @@ namespace LdapForNet.Adsddl.dacl
             }
             else if (this.aceObjectFlags != null && other.aceObjectFlags != null)
             {
-                if (!this.aceObjectFlags.getFlags().All(x => other.aceObjectFlags.getFlags().Contains(x)) || this.aceObjectFlags.getOthers() != other.aceObjectFlags.getOthers())
+                if (!this.aceObjectFlags.GetFlags().All(x => other.aceObjectFlags.GetFlags().Contains(x)) || this.aceObjectFlags.GetOthers() != other.aceObjectFlags.GetOthers())
                 {
                     return false;
                 }
@@ -188,7 +188,7 @@ namespace LdapForNet.Adsddl.dacl
             }
             else if (this.aceRight != null && other.aceRight != null)
             {
-                if (!this.aceRight.getObjectRights().All(x => other.aceRight.getObjectRights().Contains(x)) || this.aceRight.getOthers() != other.aceRight.getOthers())
+                if (!this.aceRight.GetObjectRights().All(x => other.aceRight.GetObjectRights().Contains(x)) || this.aceRight.GetOthers() != other.aceRight.GetOthers())
                 {
                     return false;
                 }
@@ -218,14 +218,14 @@ namespace LdapForNet.Adsddl.dacl
                 return false;
             }
 
-            if (this.requiredFlag == AceFlag.NONE)
+            if (this.requiredFlag == AceFlag.None)
             {
-                if (other.requiredFlag != AceFlag.NONE)
+                if (other.requiredFlag != AceFlag.None)
                 {
                     return false;
                 }
             }
-            else if (other.requiredFlag == AceFlag.NONE)
+            else if (other.requiredFlag == AceFlag.None)
             {
                 return false;
             }
@@ -234,14 +234,14 @@ namespace LdapForNet.Adsddl.dacl
                 return false;
             }
 
-            if (this.excludedFlag == AceFlag.NONE)
+            if (this.excludedFlag == AceFlag.None)
             {
-                if (other.excludedFlag != AceFlag.NONE)
+                if (other.excludedFlag != AceFlag.None)
                 {
                     return false;
                 }
             }
-            else if (other.excludedFlag == AceFlag.NONE)
+            else if (other.excludedFlag == AceFlag.None)
             {
                 return false;
             }
@@ -255,21 +255,21 @@ namespace LdapForNet.Adsddl.dacl
 
         public override string ToString()
         {
-            string right = this.aceRight == null ? "null" : this.aceRight.asUInt().ToString();
-            string objFlags = this.aceObjectFlags == null ? "null" : this.aceObjectFlags.asUInt().ToString();
-            string reqFlag = this.requiredFlag == AceFlag.NONE ? "null" : this.requiredFlag.GetString();
-            string exFlag = this.excludedFlag == AceFlag.NONE ? "null" : this.excludedFlag.GetString();
+            string right = this.aceRight == null ? "null" : this.aceRight.AsUInt().ToString();
+            string objFlags = this.aceObjectFlags == null ? "null" : this.aceObjectFlags.AsUInt().ToString();
+            string reqFlag = this.requiredFlag == AceFlag.None ? "null" : this.requiredFlag.GetString();
+            string exFlag = this.excludedFlag == AceFlag.None ? "null" : this.excludedFlag.GetString();
 
-            return "AceAssertion [aceRight=" + right + this.getRightsAbbrevStringForToString() + ", aceObjectFlags=" + objFlags
+            return "AceAssertion [aceRight=" + right + this.GetRightsAbbrevStringForToString() + ", aceObjectFlags=" + objFlags
                 + ", objectType="
                 + this.objectType
                 + ", inheritedObjectType=" + this.inheritedObjectType + ", requiredFlag=" + reqFlag + ", excludedFlag="
                 + exFlag + "]";
         }
 
-        public string getRightsAbbrevStringForToString() => "(" + this.getRightsAbbrevString() + ")";
+        public string GetRightsAbbrevStringForToString() => "(" + this.GetRightsAbbrevString() + ")";
 
-        public string getRightsAbbrevString()
+        public string GetRightsAbbrevString()
         {
             if (this.aceRight == null)
             {
@@ -279,7 +279,7 @@ namespace LdapForNet.Adsddl.dacl
             var rightsCode = "?";
             foreach (AceRights.ObjectRight rightVal in Enum.GetValues(typeof(AceRights.ObjectRight)))
             {
-                if ((this.aceRight.asUInt() & (uint) rightVal) == (uint) rightVal)
+                if ((this.aceRight.AsUInt() & (uint) rightVal) == (uint) rightVal)
                 {
                     rightsCode = rightVal.ToString();
                     break;
@@ -288,7 +288,7 @@ namespace LdapForNet.Adsddl.dacl
 
             if (rightsCode.Equals("?"))
             {
-                switch ((int) this.aceRight.asUInt())
+                switch ((int) this.aceRight.AsUInt())
                 {
                     case 0x00000001:
                         rightsCode = "CC";

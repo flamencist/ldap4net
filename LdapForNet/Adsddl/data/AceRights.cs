@@ -43,7 +43,7 @@ namespace LdapForNet.Adsddl.data
             ///     translation, the GR bit is cleared. The resulting ACCESS_MASK bits are the actual permissions that are
             ///     granted by this ACE.
             /// </summary>
-            GR = 0x80000000,
+            Gr = 0x80000000,
 
             /// <summary>
             ///     GENERIC_WRITE - When write access to an object is requested, this bit is translated to a combination of bits,
@@ -57,7 +57,7 @@ namespace LdapForNet.Adsddl.data
             ///     that are set are implementation dependent. During this translation, the GW bit is cleared. The resulting
             ///     ACCESS_MASK bits are the actual permissions that are granted by this ACE.
             /// </summary>
-            GW = 0x40000000,
+            Gw = 0x40000000,
 
             /// <summary>
             ///     GENERIC_EXECUTE - When execute access to an object is requested, this bit is translated to a combination of
@@ -71,7 +71,7 @@ namespace LdapForNet.Adsddl.data
             ///     translation, the GX bit is cleared. The resulting ACCESS_MASK bits are the actual permissions that are
             ///     granted by this ACE.
             /// </summary>
-            GX = 0x20000000,
+            Gx = 0x20000000,
 
             /// <summary>
             ///     GENERIC_ALL - When all access permissions to an object are requested, this bit is translated to a combination
@@ -87,7 +87,7 @@ namespace LdapForNet.Adsddl.data
             ///     During this translation, the GA bit is cleared. The resulting ACCESS_MASK bits are the actual permissions
             ///     that are granted by this ACE.
             /// </summary>
-            GA = 0x10000000,
+            Ga = 0x10000000,
 
             /// <summary>
             ///     MAXIMUM_ALLOWED - When requested, this bit grants the requestor the maximum permissions allowed to the
@@ -95,7 +95,7 @@ namespace LdapForNet.Adsddl.data
             ///     Specifying the Maximum Allowed bit in the SECURITY_DESCRIPTOR has no meaning. The MA bit SHOULD NOT be set
             ///     and SHOULD be ignored when part of a SECURITY_DESCRIPTOR structure.
             /// </summary>
-            MA = 0x02000000,
+            Ma = 0x02000000,
 
             /// <summary>
             ///     ACCESS_SYSTEM_SECURITY - When requested, this bit grants the requestor the maximum permissions allowed to the
@@ -103,44 +103,44 @@ namespace LdapForNet.Adsddl.data
             ///     Specifying the Maximum Allowed bit in the SECURITY_DESCRIPTOR has no meaning. The MA bit SHOULD NOT be set
             ///     and SHOULD be ignored when part of a SECURITY_DESCRIPTOR structure.
             /// </summary>
-            AS = 0x01000000,
+            As = 0x01000000,
 
             /// <summary>
             ///     SYNCHRONIZE - Specifies access to the object sufficient to synchronize or wait on the object.
             /// </summary>
-            SY = 0x00100000,
+            Sy = 0x00100000,
 
             /// <summary>
             ///     WRITE_OWNER - Specifies access to change the owner of the object as listed in the security descriptor.
             /// </summary>
-            WO = 0x00080000,
+            Wo = 0x00080000,
 
             /// <summary>
             ///     WRITE_DACL - Specifies access to change the discretionary access control list of the security descriptor of
             ///     an object.
             /// </summary>
-            WD = 0x00040000,
+            Wd = 0x00040000,
 
             /// <summary>
             ///     READ_CONTROL - Specifies access to read the security descriptor of an object.
             /// </summary>
-            RC = 0x00020000,
+            Rc = 0x00020000,
 
             /// <summary>
             ///     DELETE - Specifies access to delete an object.
             /// </summary>
-            SD = 0x00010000,
+            Sd = 0x00010000,
 
             /// <summary>
             ///     ADS_RIGHT_DS_CONTROL_ACCESS - The ObjectType GUID identifies an extended access right.
             /// </summary>
-            CR = 0x00000100,
+            Cr = 0x00000100,
 
             /// <summary>
             ///     ADS_RIGHT_DS_WRITE_PROP - The ObjectType GUID identifies a property set or property of the object.
             ///     The ACE controls the trustee's right to write the property or property set.
             /// </summary>
-            WP = 0x00000020,
+            Wp = 0x00000020,
 
             /// <summary>
             ///     Others
@@ -153,13 +153,13 @@ namespace LdapForNet.Adsddl.data
             //KR = 0x0000003F,
             //KX = 0x00000019,
             //KW = 0x00000006,
-            LO = 0x00000080,
-            DT = 0x00000040,
-            RP = 0x00000010,
+            Lo = 0x00000080,
+            Dt = 0x00000040,
+            Rp = 0x00000010,
             SW = 0x00000008,
-            LC = 0x00000004,
-            DC = 0x00000002,
-            CC = 0x00000001
+            Lc = 0x00000004,
+            Dc = 0x00000002,
+            Cc = 0x00000001
         }
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace LdapForNet.Adsddl.data
         ///     @param value int value representing rights.
         ///     @return ACE rights.
         /// </summary>
-        public static AceRights parseValue(int value)
+        public static AceRights ParseValue(int value)
         {
             AceRights res = new AceRights();
             if (value == 0)
@@ -203,14 +203,14 @@ namespace LdapForNet.Adsddl.data
         ///     Gets custom/other rights.
         ///     @return custom/other rights.
         /// </summary>
-        public long getOthers() => this.others;
+        public long GetOthers() => this.others;
 
         /// <summary>
         ///     Sets custom/other rights.
         ///     @param others custom/other rights.
         ///     @return the current ACE rights.
         /// </summary>
-        public AceRights setOthers(long others)
+        public AceRights SetOthers(long others)
         {
             this.others = others;
             return this;
@@ -220,14 +220,14 @@ namespace LdapForNet.Adsddl.data
         ///     Gets standard ACE rights.
         ///     @return standard ACE rights.
         /// </summary>
-        public List<ObjectRight> getObjectRights() => this.rights;
+        public List<ObjectRight> GetObjectRights() => this.rights;
 
         /// <summary>
         ///     Adds standard ACE right.
         ///     @param right Object right.
         ///     @return the carrent ACE rights.
         /// </summary>
-        public AceRights addOjectRight(ObjectRight right)
+        public AceRights AddOjectRight(ObjectRight right)
         {
             this.rights.Add(right);
             return this;
@@ -237,6 +237,6 @@ namespace LdapForNet.Adsddl.data
         ///     Gets rights as unsigned int.
         ///     @return rights as unsigned int.
         /// </summary>
-        public long asUInt() => this.rights.Aggregate(this.others, (current, right) => current + (int) right);
+        public long AsUInt() => this.rights.Aggregate(this.others, (current, right) => current + (int) right);
     }
 }

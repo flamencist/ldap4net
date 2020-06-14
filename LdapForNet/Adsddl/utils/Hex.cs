@@ -30,12 +30,12 @@ namespace LdapForNet.Adsddl.utils
         ///     @param to to position.
         ///     @return hex string.
         /// </summary>
-        public static string get(byte[] bytes, int from, int to)
+        public static string Get(byte[] bytes, int from, int to)
         {
             StringBuilder bld = new StringBuilder();
             for (int i = from; i < to; i++)
             {
-                bld.Append(get(bytes[i]));
+                bld.Append(Get(bytes[i]));
             }
 
             return bld.ToString();
@@ -46,12 +46,12 @@ namespace LdapForNet.Adsddl.utils
         ///     @param bytes bytes.
         ///     @return hex string.
         /// </summary>
-        public static string get(byte[] bytes)
+        public static string Get(byte[] bytes)
         {
             StringBuilder bld = new StringBuilder();
             foreach (byte b in bytes)
             {
-                bld.Append(get(b));
+                bld.Append(Get(b));
             }
 
             return bld.ToString();
@@ -62,12 +62,12 @@ namespace LdapForNet.Adsddl.utils
         ///     @param bytes bytes.
         ///     @return escaped hex string
         /// </summary>
-        public static string getEscaped(byte[] bytes)
+        public static string GetEscaped(byte[] bytes)
         {
             StringBuilder bld = new StringBuilder();
             foreach (byte b in bytes)
             {
-                bld.Append("\\").Append(get(b));
+                bld.Append("\\").Append(Get(b));
             }
 
             return bld.ToString();
@@ -78,14 +78,14 @@ namespace LdapForNet.Adsddl.utils
         ///     @param b byte.
         ///     @return hex string.
         /// </summary>
-        public static string get(byte b) => string.Format("%02X", b);
+        public static string Get(byte b) => string.Format("%02X", b);
 
         /// <summary>
         ///     Reverses bytes.
         ///     @param bytes bytes.
         ///     @return reversed byte array.
         /// </summary>
-        public static byte[] reverse(byte[] bytes)
+        public static byte[] Reverse(byte[] bytes)
         {
             var res = new byte[bytes.Length];
             var j = 0;
