@@ -10,8 +10,8 @@ namespace LdapForNetTests
 {
     public class DaclAssertorTest
     {
-        private readonly Sddl sdd = new Sddl(File.ReadAllBytes(Config.GetLocation("SddlSampleForAssertor.bin")));
-        private readonly Sddl sddlDenials = new Sddl(File.ReadAllBytes(Config.GetLocation("SddlSampleForAssertor2.bin")));
+        private readonly Sddl sdd = new Sddl(File.ReadAllBytes(Config.GetLocation("sddlSampleForAssertor.bin")));
+        private readonly Sddl sddlDenials = new Sddl(File.ReadAllBytes(Config.GetLocation("sddlSampleForAssertor2.bin")));
         private readonly SID userSID = SID.Parse(GetSidAsByteBuffer("S-1-5-21-1835709989-2027683138-697581538-1139"));
 
         private readonly List<string> groupSIDList = new List<string>
