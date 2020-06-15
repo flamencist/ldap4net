@@ -98,7 +98,6 @@ namespace LdapForNetTests
             yield return new object[] {"e", new object[] {null}};
 
             yield return new object[] {"b", new object[0]};
-            yield return new object[] {"b", new object[0]};
             yield return new object[] {"b", new object[] {"string"}};
             yield return new object[] {"b", new object[] {null}};
 
