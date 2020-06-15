@@ -1,6 +1,6 @@
 # ldap4net
 
-[![Build Status](https://travis-ci.org/flamencist/ldap4net.svg?branch=master)](https://travis-ci.org/flamencist/ldap4net)
+[![Build Status](https://travis-ci.com/flamencist/ldap4net.svg?branch=master)](https://travis-ci.com/flamencist/ldap4net)
 [![Build Status](https://dev.azure.com/achermyanin/ldap4net/_apis/build/status/flamencist.ldap4net?branchName=master)](https://dev.azure.com/achermyanin/ldap4net/_build/latest?definitionId=1&branchName=master)
 [![NuGet](https://img.shields.io/nuget/v/LdapForNet.svg)](https://www.nuget.org/packages/LdapForNet/)
 
