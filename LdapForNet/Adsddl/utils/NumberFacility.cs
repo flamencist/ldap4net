@@ -28,14 +28,14 @@ namespace LdapForNet.Adsddl.utils
         ///     @param value unsigned integer.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getUIntBytes(long value) => copyOfRange(BitConverter.GetBytes(value), 4, 8);
+        public static byte[] GetUIntBytes(long value) => CopyOfRange(BitConverter.GetBytes(value), 4, 8);
 
         /// <summary>
         ///     Gets byte array from integer.
         ///     @param value integer.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getBytes(int value) => BitConverter.GetBytes(value);
+        public static byte[] GetBytes(int value) => BitConverter.GetBytes(value);
 
         /// <summary>
         ///     Gets byte array from integer.
@@ -43,7 +43,7 @@ namespace LdapForNet.Adsddl.utils
         ///     @param length array size.
         ///     @return byte array.
         /// </summary>
-        public static byte[] getBytes(int value, int length)
+        public static byte[] GetBytes(int value, int length)
         {
             var arr = new byte[length];
             var bytes = BitConverter.GetBytes(value);
@@ -55,36 +55,11 @@ namespace LdapForNet.Adsddl.utils
         }
 
         /// <summary>
-        ///     Remove 0x00 bytes from left side.
-        ///     @param bytes source array.
-        ///     @return trimmed array.
-        /// </summary>
-        public static byte[] leftTrim(byte[] bytes)
-        {
-            var pos = 0;
-            for (; pos < bytes.Length && bytes[pos] == 0x00; pos++) ;
-
-            if (pos < bytes.Length)
-            {
-                return copyOfRange(bytes, pos, bytes.Length);
-            }
-
-            return new byte[] { 0x00 };
-        }
-
-        /// <summary>
-        ///     Remove 0x00 bytes from right side.
-        ///     @param bytes source array.
-        ///     @return trimmed array.
-        /// </summary>
-        public static byte[] rightTrim(byte[] bytes) => Hex.reverse(leftTrim(Hex.reverse(bytes)));
-
-        /// <summary>
         ///     Gets bits as bool array from a given byte array.
         ///     @param bytes bytes.
         ///     @return bits.
         /// </summary>
-        public static bool[] getBits(byte[] bytes)
+        public static bool[] GetBits(byte[] bytes)
         {
             if (bytes.Length > 4)
             {
@@ -97,7 +72,7 @@ namespace LdapForNet.Adsddl.utils
 
             foreach (byte b in bytes)
             {
-                foreach (bool boolean in getBits(b))
+                foreach (bool boolean in GetBits(b))
                 {
                     res[pos] = boolean;
                     pos++;
@@ -112,7 +87,7 @@ namespace LdapForNet.Adsddl.utils
         ///     @param b byte.
         ///     @return bits.
         /// </summary>
-        public static bool[] getBits(byte b)
+        public static bool[] GetBits(byte b)
         {
             var res = new bool[8];
             for (var i = 0; i < 8; i++)
@@ -124,18 +99,11 @@ namespace LdapForNet.Adsddl.utils
         }
 
         /// <summary>
-        ///     Reverts bytes and retrieves the corresponding integer value.
-        ///     @param bytes bytes.
-        ///     @return integer.
-        /// </summary>
-        public static int getReverseInt(byte[] bytes) => (int) getReverseUInt(bytes);
-
-        /// <summary>
         ///     Reverses bytes and retrieves the corresponding unsigned integer value.
         ///     @param bytes bytes.
         ///     @return unsigned integer.
         /// </summary>
-        public static long getReverseUInt(byte[] bytes) => getUInt(Hex.reverse(bytes));
+        public static long GetReverseUInt(byte[] bytes) => GetUInt(Hex.Reverse(bytes));
 
         /// <summary>
         ///     Gets byte array corresponding to the given integer value, reverses obtained byte array and retrieves the new
@@ -143,7 +111,7 @@ namespace LdapForNet.Adsddl.utils
         ///     @param value integer value.
         ///     @return reversed integer value.
         /// </summary>
-        public static int getReverseInt(int value) => (int) getReverseUInt(value);
+        public static int GetReverseInt(int value) => (int) GetReverseUInt(value);
 
         /// <summary>
         ///     Gets byte array corresponding to the given integer value, reverses obtained byte array and retrieves the new
@@ -151,21 +119,21 @@ namespace LdapForNet.Adsddl.utils
         ///     @param value integer value.
         ///     @return reversed unsigned integer value.
         /// </summary>
-        public static long getReverseUInt(int value) => getReverseUInt(getBytes(value));
+        public static long GetReverseUInt(int value) => GetReverseUInt(GetBytes(value));
 
         /// <summary>
         ///     Gets integer value corresponding to the given bytes.
         ///     @param bytes bytes.
         ///     @return integer.
         /// </summary>
-        public static int getInt(params byte[] bytes) => (int) getUInt(bytes);
+        public static int GetInt(params byte[] bytes) => (int) GetUInt(bytes);
 
         /// <summary>
         ///     Gets unsigned integer value corresponding to the given bytes.
         ///     @param bytes bytes.
         ///     @return unsigned integer.
         /// </summary>
-        public static long getUInt(params byte[] bytes)
+        public static long GetUInt(params byte[] bytes)
         {
             if (bytes.Length > 4)
             {
@@ -185,7 +153,7 @@ namespace LdapForNet.Adsddl.utils
             return res;
         }
         
-        private static T[] copyOfRange<T>(T[] src, int start, int end)
+        private static T[] CopyOfRange<T>(T[] src, int start, int end)
         {
             int len = end - start;
             var dest = new T[len];

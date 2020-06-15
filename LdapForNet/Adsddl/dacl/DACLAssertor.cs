@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LdapForNet.Adsddl.data;
-using LdapForNet.Adsddl.utils;
 using LdapForNet.Utils;
 
 namespace LdapForNet.Adsddl.dacl
@@ -45,12 +44,12 @@ namespace LdapForNet.Adsddl.dacl
     ///     The 'Everyone' AD group is also evaluted if constructed with searchGroups = true
     ///     <see href="https://msdn.microsoft.com/en-us/library/cc223510.aspx"> cc223510 </see>
     /// </summary>
-    public class DACLAssertor
+    public class DaclAssertor
     {
         /// <summary>
         ///     SID of the 'Everyone' AD group.
         /// </summary>
-        private static readonly string EVERYONE_SID = "S-1-1-0";
+        private static readonly string everyoneSID = "S-1-1-0";
 
         /// <summary>
         ///     LDAP search filter for the object whose DACL will be evaluated.
@@ -65,12 +64,12 @@ namespace LdapForNet.Adsddl.dacl
         /// <summary>
         ///     The parsed DACL.
         /// </summary>
-        private ACL dacl;
+        private Acl dacl;
 
         /// <summary>
         ///     Pre-connected LdapContext.
         /// </summary>
-        private LdapConnection ldapContext;
+        private readonly LdapConnection ldapContext;
 
         /// <summary>
         ///     List of any unsatisfied AceAssertions after doAssert runs.
@@ -90,7 +89,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param ldapContext
         ///     the pre-connected LDAP context
         /// </summary>
-        public DACLAssertor(string searchFilter, bool searchGroups, LdapConnection ldapContext)
+        public DaclAssertor(string searchFilter, bool searchGroups, LdapConnection ldapContext)
         {
             this.searchFilter = searchFilter;
             this.searchGroups = searchGroups;
@@ -104,7 +103,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param searchGroups
         ///     whether to search groups of a user contained in the AdRoleAssertion
         /// </summary>
-        public DACLAssertor(ACL dacl, bool searchGroups)
+        public DaclAssertor(Acl dacl, bool searchGroups)
         {
             this.dacl = dacl;
             this.searchGroups = searchGroups;
@@ -132,7 +131,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @throws SizeLimitExceededException
         ///     if more than one AD object found during DACL search
         /// </summary>
-        public bool doAssert(AdRoleAssertion roleAssertion)
+        public bool DoAssert(AdRoleAssertion roleAssertion)
         {
             if (roleAssertion.GetPrincipal() == null)
             {
@@ -141,10 +140,14 @@ namespace LdapForNet.Adsddl.dacl
 
             if (this.dacl == null)
             {
-                this.getDACL();
+                if (this.ldapContext == null)
+                {
+                    return false;
+                }
+                this.GetDacl();
             }
 
-            this.unsatisfiedAssertions = this.findUnsatisfiedAssertions(roleAssertion);
+            this.unsatisfiedAssertions = this.FindUnsatisfiedAssertions(roleAssertion);
             return this.unsatisfiedAssertions.Count == 0;
         }
 
@@ -152,7 +155,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     Returns list of AceAssertions in the AdRoleAssertion given to {@linkplain doAssert} which are unsatisfied.
         ///     @return list of unsatisfied AceAssertions
         /// </summary>
-        public List<AceAssertion> getUnsatisfiedAssertions() => this.unsatisfiedAssertions;
+        public List<AceAssertion> GetUnsatisfiedAssertions() => this.unsatisfiedAssertions;
 
         /// <summary>
         ///     Fetches the DACL of the object which is evaluated by
@@ -161,20 +164,23 @@ namespace LdapForNet.Adsddl.dacl
         ///     @throws NameNotFoundException
         ///     @throws NamingException
         /// </summary>
-        private void getDACL()
+        private void GetDacl()
         {
-            var directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), "",
-                    Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE){ Attributes = {LdapAttributes.NtSecurityDescriptor}};
-                directoryRequest.Controls.Add(new SecurityDescriptorFlagControl(SecurityMasks.Owner | SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Sacl));
-                var response = (SearchResponse)this.ldapContext.SendRequest(directoryRequest);
-                var entry = response.Entries.FirstOrDefault();
-                if (entry == null)
-                {
-                    throw new LdapException("Couldn't find ldap");
-                }
-                byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);
-                SDDL sddl = new SDDL(descbytes);
-                this.dacl = sddl.getDacl();
+            SearchRequest directoryRequest = new SearchRequest(LdapUtils.GetDnFromHostname(), 
+                "", 
+                Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE) 
+                { Attributes = { LdapAttributes.NtSecurityDescriptor } };
+            directoryRequest.Controls.Add(new SecurityDescriptorFlagControl(SecurityMasks.Owner | SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Sacl));
+            SearchResponse response = (SearchResponse) this.ldapContext.SendRequest(directoryRequest);
+            DirectoryEntry entry = response.Entries.FirstOrDefault();
+            if (entry == null)
+            {
+                throw new LdapException("Couldn't find ldap");
+            }
+
+            byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);
+            Sddl sddl = new Sddl(descbytes);
+            this.dacl = sddl.GetDacl();
         }
 
         /// <summary>
@@ -190,21 +196,21 @@ namespace LdapForNet.Adsddl.dacl
         ///     the AdRoleAssertion to test
         ///     @return List of unsatisfied AceAssertions (if any). Empty if none.
         /// </summary>
-        private List<AceAssertion> findUnsatisfiedAssertions(AdRoleAssertion roleAssertion)
+        private List<AceAssertion> FindUnsatisfiedAssertions(AdRoleAssertion roleAssertion)
         {
-            var acesBySIDMap = new Dictionary<string, List<ACE>>();
+            var acesBySIDMap = new Dictionary<string, List<Ace>>();
 
-            for (var i = 0; i < this.dacl.getAceCount(); i++)
+            for (var i = 0; i < this.dacl.GetAceCount(); i++)
             {
-                ACE ace = this.dacl.getAce(i);
-                if (ace.getSid() != null)
+                Ace ace = this.dacl.GetAce(i);
+                if (ace.GetSid() != null)
                 {
-                    if (!acesBySIDMap.ContainsKey(ace.getSid().ToString()))
+                    if (!acesBySIDMap.ContainsKey(ace.GetSid().ToString()))
                     {
-                        acesBySIDMap.Add(ace.getSid().ToString(), new List<ACE>());
+                        acesBySIDMap.Add(ace.GetSid().ToString(), new List<Ace>());
                     }
 
-                    acesBySIDMap[ace.getSid().ToString()].Add(ace);
+                    acesBySIDMap[ace.GetSid().ToString()].Add(ace);
                 }
             }
 
@@ -214,11 +220,10 @@ namespace LdapForNet.Adsddl.dacl
             var unsatisfiedAssertions = new List<AceAssertion>(roleAssertion.GetAssertions());
             var deniedAssertions = new List<AceAssertion>();
             SID principal = roleAssertion.GetPrincipal();
-            List<ACE> principalAces = acesBySIDMap[principal.ToString()];
 
-            if (principalAces != null)
+            if (acesBySIDMap.ContainsKey(principal.ToString()))
             {
-                this.findUnmatchedAssertions(principalAces, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                this.FindUnmatchedAssertions(acesBySIDMap[principal.ToString()], unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
             }
 
             // There may be denials on groups even if we resolved all assertions - search groups if specified
@@ -226,46 +231,40 @@ namespace LdapForNet.Adsddl.dacl
             {
                 if (roleAssertion.IsGroup())
                 {
-                    this.doEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
-                    this.mergeDenials(unsatisfiedAssertions, deniedAssertions);
+                    this.DoEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                    this.MergeDenials(unsatisfiedAssertions, deniedAssertions);
                     return unsatisfiedAssertions;
                 }
 
-                List<SID> tokenGroupSIDs = roleAssertion.GetTokenGroups();
-                if (tokenGroupSIDs == null)
+                List<SID> tokenGroupSiDs = roleAssertion.GetTokenGroups();
+                if (tokenGroupSiDs == null)
                 {
-                    this.doEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
-                    this.mergeDenials(unsatisfiedAssertions, deniedAssertions);
+                    this.DoEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                    this.MergeDenials(unsatisfiedAssertions, deniedAssertions);
                     return unsatisfiedAssertions;
                 }
 
-                foreach (SID grpSID in tokenGroupSIDs)
+                foreach (SID grpSID in tokenGroupSiDs.Where(grpSID => acesBySIDMap.ContainsKey(grpSID.ToString())))
                 {
-                    principalAces = acesBySIDMap[grpSID.ToString()];
-                    if (principalAces == null)
-                    {
-                        continue;
-                    }
-
-                    this.findUnmatchedAssertions(principalAces, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                    this.FindUnmatchedAssertions(acesBySIDMap[grpSID.ToString()], unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
                 }
 
-                this.doEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
+                this.DoEveryoneGroupScan(acesBySIDMap, unsatisfiedAssertions, deniedAssertions, roleAssertion.GetAssertions());
             }
 
-            this.mergeDenials(unsatisfiedAssertions, deniedAssertions);
+            this.MergeDenials(unsatisfiedAssertions, deniedAssertions);
 
             return unsatisfiedAssertions;
         }
 
-        private void doEveryoneGroupScan(
-            Dictionary<string, List<ACE>> acesBySIDMap,
+        private void DoEveryoneGroupScan(
+            Dictionary<string, List<Ace>> acesBySIDMap,
             List<AceAssertion> unsatisfiedAssertions,
             List<AceAssertion> deniedAssertions,
             List<AceAssertion> roleAssertions)
         {
-            List<ACE> everyoneACEs = acesBySIDMap[EVERYONE_SID];
-            this.findUnmatchedAssertions(everyoneACEs, unsatisfiedAssertions, deniedAssertions, roleAssertions);
+            List<Ace> everyoneAcEs = acesBySIDMap[everyoneSID];
+            this.FindUnmatchedAssertions(everyoneAcEs, unsatisfiedAssertions, deniedAssertions, roleAssertions);
         }
 
         /// <summary>
@@ -282,7 +281,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param roleAssertions
         ///     the AceAssertions from the AdRoleAssertion
         /// </summary>
-        private void findUnmatchedAssertions(List<ACE> aces, List<AceAssertion> unsatisfiedAssertions,
+        private void FindUnmatchedAssertions(List<Ace> aces, List<AceAssertion> unsatisfiedAssertions,
             List<AceAssertion> deniedAssertions, List<AceAssertion> roleAssertions)
         {
             if (aces == null || aces.Count == 0)
@@ -290,40 +289,40 @@ namespace LdapForNet.Adsddl.dacl
                 return;
             }
 
-            foreach (ACE ace in aces)
+            foreach (Ace ace in aces)
             {
-                long rightsMask = ace.getRights().asUInt();
+                long rightsMask = ace.GetRights().AsUInt();
 
-                bool isDenial = ace.getType() == AceType.ACCESS_DENIED_ACE_TYPE
-                    || ace.getType() == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE;
+                bool isDenial = ace.GetAceType() == AceType.AccessDeniedAceType
+                    || ace.GetAceType() == AceType.AccessDeniedObjectAceType;
 
                 // can only match type ACCESS_ALLOWED or ACCESS_ALLOWED_OBJECT, if not a denial
                 if (!isDenial
-                    && ace.getType() != AceType.ACCESS_ALLOWED_ACE_TYPE
-                    && ace.getType() != AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE)
+                    && ace.GetAceType() != AceType.AccessAllowedAceType
+                    && ace.GetAceType() != AceType.AccessAllowedObjectAceType)
                 {
                     continue;
                 }
 
                 foreach (AceAssertion assertion in roleAssertions)
                 {
-                    long assertRight = assertion.getAceRight().asUInt();
+                    long assertRight = assertion.GetAceRight().AsUInt();
 
                     var isMatch = false;
                     if ((rightsMask & assertRight) == assertRight)
                     {
                         // found a rights match
-                        if (this.doObjectFlagsMatch(ace.getObjectFlags(), assertion.getObjectFlags())
-                            && this.doObjectTypesMatch(
-                                ace.getObjectType(),
-                                assertion.getObjectType(),
-                                assertion.getObjectFlags())
-                            && this.doInheritedObjectTypesMatch(
-                                ace.getInheritedObjectType(),
-                                assertion.getInheritedObjectType(),
-                                assertion.getObjectFlags())
-                            && this.doRequiredFlagsMatch(ace.getFlags(), assertion.getRequiredFlag(), isDenial)
-                            && !this.isAceExcluded(ace.getFlags(), assertion.getExcludedFlag(), isDenial))
+                        if (this.DoObjectFlagsMatch(ace.GetObjectFlags(), assertion.GetObjectFlags())
+                            && this.DoObjectTypesMatch(
+                                ace.GetObjectType(),
+                                assertion.GetObjectType(),
+                                assertion.GetObjectFlags())
+                            && this.DoInheritedObjectTypesMatch(
+                                ace.GetInheritedObjectType(),
+                                assertion.GetInheritedObjectType(),
+                                assertion.GetObjectFlags())
+                            && this.DoRequiredFlagsMatch(ace.GetFlags(), assertion.GetRequiredFlag(), isDenial)
+                            && !this.IsAceExcluded(ace.GetFlags(), assertion.GetExcludedFlag(), isDenial))
                         {
                             isMatch = true;
                         }
@@ -337,7 +336,7 @@ namespace LdapForNet.Adsddl.dacl
                         }
                         else
                         {
-                            this.addDeniedAssertion(deniedAssertions, assertion);
+                            this.AddDeniedAssertion(deniedAssertions, assertion);
                         }
                     }
                 }
@@ -353,13 +352,13 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param assertion
         ///     the assertion to add if not present in deniedAssertions
         /// </summary>
-        private void addDeniedAssertion(List<AceAssertion> deniedAssertions, AceAssertion assertion)
+        private void AddDeniedAssertion(List<AceAssertion> deniedAssertions, AceAssertion assertion)
         {
-            long deniedRight = assertion.getAceRight().asUInt();
+            long deniedRight = assertion.GetAceRight().AsUInt();
             var found = false;
             foreach (AceAssertion a in deniedAssertions)
             {
-                if ((a.getAceRight().asUInt() & deniedRight) == deniedRight)
+                if ((a.GetAceRight().AsUInt() & deniedRight) == deniedRight)
                 {
                     found = true;
                     break;
@@ -379,7 +378,7 @@ namespace LdapForNet.Adsddl.dacl
         ///     @param deniedAssertions
         ///     list of denied assertions
         /// </summary>
-        private void mergeDenials(List<AceAssertion> unsatisfiedAssertions, List<AceAssertion> deniedAssertions)
+        private void MergeDenials(List<AceAssertion> unsatisfiedAssertions, List<AceAssertion> deniedAssertions)
         {
             var toAddList = new List<AceAssertion>();
             foreach (AceAssertion denial in deniedAssertions)
@@ -387,7 +386,7 @@ namespace LdapForNet.Adsddl.dacl
                 var found = false;
                 foreach (AceAssertion unsat in unsatisfiedAssertions)
                 {
-                    if (unsat.getAceRight().asUInt() == denial.getAceRight().asUInt())
+                    if (unsat.GetAceRight().AsUInt() == denial.GetAceRight().AsUInt())
                     {
                         found = true;
                         break;
@@ -420,17 +419,17 @@ namespace LdapForNet.Adsddl.dacl
         ///     object flags from the AceAssertion
         ///     @return true if match, false if not
         /// </summary>
-        private bool doObjectFlagsMatch(AceObjectFlags aceObjFlags, AceObjectFlags assertionObjFlags)
+        private bool DoObjectFlagsMatch(AceObjectFlags aceObjFlags, AceObjectFlags assertionObjFlags)
         {
             var res = true;
             if (assertionObjFlags != null)
             {
                 if (aceObjFlags != null
-                    && (aceObjFlags.asUInt() & assertionObjFlags.asUInt()) == assertionObjFlags.asUInt())
+                    && (aceObjFlags.AsUInt() & assertionObjFlags.AsUInt()) == assertionObjFlags.AsUInt())
                 {
                     res = true;
                 }
-                else if (aceObjFlags == null || aceObjFlags.asUInt() == 0)
+                else if (aceObjFlags == null || aceObjFlags.AsUInt() == 0)
                 {
                     // MS docs state that if the object type is _not_ present - which is hinted at by presence of object flags -
                     // then the ACE controls that right on all object classes/attributes of such objects.
@@ -457,15 +456,15 @@ namespace LdapForNet.Adsddl.dacl
         ///     AceObjectFlags from the AceAssertion
         ///     @return true if match, false if not
         /// </summary>
-        private bool doObjectTypesMatch(Guid? aceObjectType, Guid? assertionObjectType, AceObjectFlags assertionObjFlags)
+        private bool DoObjectTypesMatch(Guid? aceObjectType, Guid? assertionObjectType, AceObjectFlags assertionObjFlags)
         {
             if (assertionObjFlags == null)
             {
                 return true;
             }
 
-            if ((assertionObjFlags.asUInt()
-                & (uint) AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT) == (uint) AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT)
+            if ((assertionObjFlags.AsUInt()
+                & (uint) AceObjectFlags.Flag.AceObjectTypePresent) == (uint) AceObjectFlags.Flag.AceObjectTypePresent)
             {
                 if (aceObjectType != null && aceObjectType != assertionObjectType)
                 {
@@ -488,14 +487,14 @@ namespace LdapForNet.Adsddl.dacl
         ///     AceObjectFlags from the AceAssertion
         ///     @return true if match, false if not
         /// </summary>
-        private bool doInheritedObjectTypesMatch(Guid? aceInhObjectType, Guid? assertionInhObjectType, AceObjectFlags assertionObjFlags)
+        private bool DoInheritedObjectTypesMatch(Guid? aceInhObjectType, Guid? assertionInhObjectType, AceObjectFlags assertionObjFlags)
         {
             if (assertionObjFlags == null)
             {
                 return true;
             }
 
-            if ((assertionObjFlags.asUInt() & (uint) AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT) == (uint) AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT)
+            if ((assertionObjFlags.AsUInt() & (uint) AceObjectFlags.Flag.AceInheritedObjectTypePresent) == (uint) AceObjectFlags.Flag.AceInheritedObjectTypePresent)
             {
                 if (aceInhObjectType != null && aceInhObjectType != assertionInhObjectType)
                 {
@@ -519,14 +518,14 @@ namespace LdapForNet.Adsddl.dacl
         ///     and the requiredFlag is ignored.
         ///     @return true if match, false if not
         /// </summary>
-        private bool doRequiredFlagsMatch(List<AceFlag> aceFlags, AceFlag requiredFlag, bool isDenial)
+        private bool DoRequiredFlagsMatch(List<AceFlag> aceFlags, AceFlag requiredFlag, bool isDenial)
         {
             var res = true;
             if (isDenial)
             {
                 // If the AceType is denial, the flags must NOT contain the inherited flag. Such denials are ineffective
                 // when countered by an allowed right, so we only consider non-inherited denials as a match.
-                if (aceFlags == null || !aceFlags.Contains(AceFlag.INHERITED_ACE))
+                if (aceFlags == null || !aceFlags.Contains(AceFlag.InheritedAce))
                 {
                     res = true;
                 }
@@ -535,7 +534,7 @@ namespace LdapForNet.Adsddl.dacl
                     res = false;
                 }
             }
-            else if (requiredFlag != AceFlag.NONE)
+            else if (requiredFlag != AceFlag.None)
             {
                 // aceFlags could be null if the ACE applies to 'this object only' and has no other flags set
                 if (aceFlags == null || aceFlags.Count == 0 || !aceFlags.Contains(requiredFlag))
@@ -563,10 +562,10 @@ namespace LdapForNet.Adsddl.dacl
         ///     whether the AceType is a denial, in which case the excludedFlag evaluation is skipped
         ///     @return true if AceFlags is excluded, false if not
         /// </summary>
-        private bool isAceExcluded(List<AceFlag> aceFlags, AceFlag excludedFlag, bool isDenial)
+        private bool IsAceExcluded(List<AceFlag> aceFlags, AceFlag excludedFlag, bool isDenial)
         {
             var res = false;
-            if (excludedFlag != AceFlag.NONE && !isDenial)
+            if (excludedFlag != AceFlag.None && !isDenial)
             {
                 // aceFlags could be null if the ACE applies to 'this object only' and has no other flags set
                 if (aceFlags != null && aceFlags.Count != 0 && aceFlags.Contains(excludedFlag))

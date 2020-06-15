@@ -29,7 +29,7 @@ namespace LdapForNet.Adsddl
     ///     This
     ///     is generally done by combining an ACCESS_MASK and the SID of the principal.
     /// </summary>
-    public class ACE
+    public class Ace
     {
         /// <summary>
         ///     Optional application data.
@@ -76,10 +76,10 @@ namespace LdapForNet.Adsddl
         ///     @param type ACE type.
         ///     @return ACE.
         /// </summary>
-        public static ACE newInstance(AceType type)
+        public static Ace NewInstance(AceType type)
         {
-            ACE ace = new ACE();
-            ace.setType(type);
+            Ace ace = new Ace();
+            ace.SetType(type);
             return ace;
         }
 
@@ -89,34 +89,34 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        public void parse(BinaryReader buff)
+        public void Parse(BinaryReader buff)
         {
             var start = buff.BaseStream.Position;
-            byte[] bytes = NumberFacility.getBytes(buff.ReadInt32());
-            this.type = AceTypeExtension.parseValue(bytes[0]);
-            this.flags = AceFlagExtension.parseValue(bytes[1]);
+            byte[] bytes = NumberFacility.GetBytes(buff.ReadInt32());
+            this.type = AceTypeExtension.ParseValue(bytes[0]);
+            this.flags = AceFlagExtension.ParseValue(bytes[1]);
 
-            int size = NumberFacility.getInt(bytes[3], bytes[2]);
+            int size = NumberFacility.GetInt(bytes[3], bytes[2]);
             
-            this.rights = AceRights.parseValue(NumberFacility.getReverseInt(buff.ReadInt32()));
+            this.rights = AceRights.ParseValue(NumberFacility.GetReverseInt(buff.ReadInt32()));
 
-            if (this.type == AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE || this.type == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE)
+            if (this.type == AceType.AccessAllowedObjectAceType || this.type == AceType.AccessDeniedObjectAceType)
             {
-                this.objectFlags = AceObjectFlags.parseValue(NumberFacility.getReverseInt(buff.ReadInt32()));
+                this.objectFlags = AceObjectFlags.ParseValue(NumberFacility.GetReverseInt(buff.ReadInt32()));
 
-                if (this.objectFlags.getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
+                if (this.objectFlags.GetFlags().Contains(AceObjectFlags.Flag.AceObjectTypePresent))
                 {
                     this.objectType = new Guid(buff.ReadBytes(16));
                 }
 
-                if (this.objectFlags.getFlags().Contains(AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT))
+                if (this.objectFlags.GetFlags().Contains(AceObjectFlags.Flag.AceInheritedObjectTypePresent))
                 {
                     this.inheritedObjectType = new Guid(buff.ReadBytes(16));
                 }
             }
             
             this.sid = new SID();
-            this.sid.parse(buff);
+            this.sid.Parse(buff);
 
             if (size > 0)
             {
@@ -135,20 +135,20 @@ namespace LdapForNet.Adsddl
         ///     AceType
         ///     @return ACE type.
         /// </summary>
-        public AceType getType() => this.type;
+        public AceType GetAceType() => this.type;
 
         /// <summary>
         ///     Gets ACE flags.
         ///     AceFlag
         ///     @return ACE flags; empty list if no flag has been specified.
         /// </summary>
-        public List<AceFlag> getFlags() => this.flags == null ? new List<AceFlag>() : this.flags;
+        public List<AceFlag> GetFlags() => this.flags == null ? new List<AceFlag>() : this.flags;
 
         /// <summary>
         ///     Optional application data. The size of the application data is determined by the AceSize field.
         ///     @return application data; null if not available.
         /// </summary>
-        public byte[] getApplicationData()
+        public byte[] GetApplicationData()
             => this.applicationData == null || this.applicationData.Length == 0
                 ? null
                 : this.applicationData.Copy();
@@ -157,7 +157,7 @@ namespace LdapForNet.Adsddl
         ///     Sets application data.
         ///     @param applicationData application data.
         /// </summary>
-        public void setApplicationData(byte[] applicationData)
+        public void SetApplicationData(byte[] applicationData)
             => this.applicationData = applicationData == null || applicationData.Length == 0
                 ? null
                 : applicationData.Copy();
@@ -167,7 +167,7 @@ namespace LdapForNet.Adsddl
         ///     AceRights
         ///     @return ACE rights.
         /// </summary>
-        public AceRights getRights() => this.rights;
+        public AceRights GetRights() => this.rights;
 
         /// <summary>
         ///     A 32-bit unsigned integer that specifies a set of bit flags that indicate whether the ObjectType and
@@ -175,7 +175,7 @@ namespace LdapForNet.Adsddl
         ///     AceObjectFlags
         ///     @return Flags.
         /// </summary>
-        public AceObjectFlags getObjectFlags() => this.objectFlags;
+        public AceObjectFlags GetObjectFlags() => this.objectFlags;
 
         /// <summary>
         ///     A GUID (16 bytes) that identifies a property set, property, extended right, or type of child object. The purpose
@@ -188,7 +188,7 @@ namespace LdapForNet.Adsddl
         ///     will be ignored. For more information on access checks and object access, see [MS-ADTS] section 5.1.3.3.3.
         ///     @return ObjectType; null if not available.
         /// </summary>
-        public Guid? getObjectType() => this.objectType;
+        public Guid? GetObjectType() => this.objectType;
 
         /// <summary>
         ///     A GUID (16 bytes) that identifies the type of child object that can inherit the ACE. Inheritance is also
@@ -197,14 +197,14 @@ namespace LdapForNet.Adsddl
         ///     member. Otherwise, the InheritedObjectType field is ignored.
         ///     @return InheritedObjectType; null if not available.
         /// </summary>
-        public Guid? getInheritedObjectType() => this.inheritedObjectType;
+        public Guid? GetInheritedObjectType() => this.inheritedObjectType;
 
         /// <summary>
         ///     The SID of a trustee. The length of the SID MUST be a multiple of 4.
         ///     SID
         ///     @return SID of the trustee.
         /// </summary>
-        public SID getSid() => this.sid;
+        public SID GetSid() => this.sid;
 
         /// <summary>
         ///     An unsigned 16-bit integer that specifies the size, in bytes, of the ACE. The AceSize field can be greater than
@@ -213,11 +213,11 @@ namespace LdapForNet.Adsddl
         ///     implementation-specific. Otherwise, this additional data is not interpreted and MUST be ignored.
         ///     @return ACE size.
         /// </summary>
-        public int getSize()
+        public int GetSize()
             => 8 + (this.objectFlags == null ? 0 : 4)
                 + (this.objectType == null ? 0 : 16)
                 + (this.inheritedObjectType == null ? 0 : 16)
-                + (this.sid == null ? 0 : this.sid.getSize())
+                + (this.sid == null ? 0 : this.sid.GetSize())
                 + (this.applicationData == null ? 0 : this.applicationData.Length);
 
         /// <summary>
@@ -225,56 +225,56 @@ namespace LdapForNet.Adsddl
         ///     @param type ACE type.
         ///     AceType
         /// </summary>
-        public void setType(AceType type) => this.type = type;
+        public void SetType(AceType type) => this.type = type;
 
         /// <summary>
         ///     Adds ACE flag.
         ///     @param flag ACE flag.
         ///     AceFlag
         /// </summary>
-        public void addFlag(AceFlag flag) => this.flags.Add(flag);
+        public void AddFlag(AceFlag flag) => this.flags.Add(flag);
 
         /// <summary>
         ///     Sets ACE rights.
         ///     @param rights ACE rights.
         ///     AceRights
         /// </summary>
-        public void setRights(AceRights rights) => this.rights = rights;
+        public void SetRights(AceRights rights) => this.rights = rights;
 
         /// <summary>
         ///     Sets object flags.
         ///     @param objectFlags ACE object flags.
         ///     AceObjectFlags
         /// </summary>
-        public void setObjectFlags(AceObjectFlags objectFlags) => this.objectFlags = objectFlags;
+        public void SetObjectFlags(AceObjectFlags objectFlags) => this.objectFlags = objectFlags;
 
         /// <summary>
         ///     Sets object type, a GUID (16 bytes) that identifies a property set, property, extended right, or type of child
         ///     object.
         ///     @param objectType ACE object type.
         /// </summary>
-        public void setObjectType(Guid? objectType) => this.objectType = objectType;
+        public void SetObjectType(Guid? objectType) => this.objectType = objectType;
 
         /// <summary>
         ///     Sets inherited object type, a GUID (16 bytes) that identifies the type of child object that can inherit the ACE.
         ///     @param inheritedObjectType Inherited object type.
         /// </summary>
-        public void setInheritedObjectType(Guid? inheritedObjectType) => this.inheritedObjectType = inheritedObjectType;
+        public void SetInheritedObjectType(Guid? inheritedObjectType) => this.inheritedObjectType = inheritedObjectType;
 
         /// <summary>
         ///     Sets the SID of a trustee.
         ///     @param sid SID of the trustee.
         ///     SID
         /// </summary>
-        public void setSid(SID sid) => this.sid = sid;
+        public void SetSid(SID sid) => this.sid = sid;
 
         /// <summary>
         ///     Serializes to byte array.
         ///     @return serialized ACE.
         /// </summary>
-        public byte[] toByteArray()
+        public byte[] ToByteArray()
         {
-            int size = this.getSize();
+            int size = this.GetSize();
 
             using var ms = new MemoryStream(size);
             var buff = new BinaryWriter(ms);
@@ -283,22 +283,22 @@ namespace LdapForNet.Adsddl
             buff.Write((byte) this.type);
 
             // add flags byte
-            byte flagSrc = this.getFlags().Aggregate<AceFlag, byte>(0x00, (current, flag) => (byte) (current | (byte) flag));
+            byte flagSrc = this.GetFlags().Aggregate<AceFlag, byte>(0x00, (current, flag) => (byte) (current | (byte) flag));
 
             buff.Write(flagSrc);
 
             // add size bytes (2 reversed)
-            byte[] sizeSrc = NumberFacility.getBytes(size);
+            byte[] sizeSrc = NumberFacility.GetBytes(size);
             buff.Write(sizeSrc[3]);
             buff.Write(sizeSrc[2]);
 
             // add right mask
-            buff.Write(Hex.reverse(NumberFacility.getUIntBytes(this.rights.asUInt())));
+            buff.Write(Hex.Reverse(NumberFacility.GetUIntBytes(this.rights.AsUInt())));
 
             // add object flags (from int to byte[] + reversed)
             if (this.objectFlags != null)
             {
-                buff.Write(Hex.reverse(NumberFacility.getUIntBytes(this.objectFlags.asUInt())));
+                buff.Write(Hex.Reverse(NumberFacility.GetUIntBytes(this.objectFlags.AsUInt())));
             }
 
             // add object type
@@ -314,7 +314,7 @@ namespace LdapForNet.Adsddl
             }
 
             // add sid
-            buff.Write(this.sid.toByteArray());
+            buff.Write(this.sid.ToByteArray());
 
             // add application data
             if (this.applicationData != null)
@@ -327,61 +327,61 @@ namespace LdapForNet.Adsddl
 
         public override bool Equals(object ace)
         {
-            if (!(ace is ACE ext))
+            if (!(ace is Ace ext))
             {
                 return false;
             }
 
-            if (this.getSize() != ext.getSize())
+            if (this.GetSize() != ext.GetSize())
             {
                 return false;
             }
 
-            if (this.getType() != ext.getType())
+            if (this.GetAceType() != ext.GetAceType())
             {
                 return false;
             }
 
-            if (!this.getApplicationData().SequenceEqual(ext.getApplicationData()))
+            if (!this.GetApplicationData().SequenceEqual(ext.GetApplicationData()))
             {
                 return false;
             }
 
-            if (!this.getSid().Equals(ext.getSid()))
+            if (!this.GetSid().Equals(ext.GetSid()))
             {
                 return false;
             }
 
-            if (this.getObjectFlags() == null && ext.getObjectFlags() != null
-                || this.getObjectFlags() != null && ext.getObjectFlags() == null
-                || this.getObjectFlags() != null && ext.getObjectFlags() != null
-                && this.getObjectFlags().asUInt() != ext.getObjectFlags().asUInt())
+            if (this.GetObjectFlags() == null && ext.GetObjectFlags() != null
+                || this.GetObjectFlags() != null && ext.GetObjectFlags() == null
+                || this.GetObjectFlags() != null && ext.GetObjectFlags() != null
+                && this.GetObjectFlags().AsUInt() != ext.GetObjectFlags().AsUInt())
             {
                 return false;
             }
 
-            if (this.getObjectType() != null && ext.getObjectType() == null
-                || this.getObjectType() == null && ext.getObjectType() != null
-                || this.getObjectType() != null && ext.getObjectType() != null
-                && this.getObjectType() != ext.getObjectType())
+            if (this.GetObjectType() != null && ext.GetObjectType() == null
+                || this.GetObjectType() == null && ext.GetObjectType() != null
+                || this.GetObjectType() != null && ext.GetObjectType() != null
+                && this.GetObjectType() != ext.GetObjectType())
             {
                 return false;
             }
 
-            if (this.getInheritedObjectType() != null && ext.getInheritedObjectType() == null
-                || this.getInheritedObjectType() == null && ext.getInheritedObjectType() != null
-                || this.getInheritedObjectType() != null && ext.getInheritedObjectType() != null
-                && this.getInheritedObjectType() != ext.getInheritedObjectType())
+            if (this.GetInheritedObjectType() != null && ext.GetInheritedObjectType() == null
+                || this.GetInheritedObjectType() == null && ext.GetInheritedObjectType() != null
+                || this.GetInheritedObjectType() != null && ext.GetInheritedObjectType() != null
+                && this.GetInheritedObjectType() != ext.GetInheritedObjectType())
             {
                 return false;
             }
 
-            if (this.getRights().asUInt() != ext.getRights().asUInt())
+            if (this.GetRights().AsUInt() != ext.GetRights().AsUInt())
             {
                 return false;
             }
 
-            return new HashSet<AceFlag>(this.getFlags()).Equals(new HashSet<AceFlag>(ext.getFlags()));
+            return new HashSet<AceFlag>(this.GetFlags()).Equals(new HashSet<AceFlag>(ext.GetFlags()));
         }
 
         public override string ToString()
@@ -398,15 +398,15 @@ namespace LdapForNet.Adsddl
 
             bld.Append(';');
 
-            foreach (AceRights.ObjectRight right in this.rights.getObjectRights())
+            foreach (AceRights.ObjectRight right in this.rights.GetObjectRights())
             {
                 bld.Append(right.ToString());
             }
 
-            if (this.rights.getOthers() != 0)
+            if (this.rights.GetOthers() != 0)
             {
                 bld.Append('[');
-                bld.Append(this.rights.getOthers());
+                bld.Append(this.rights.GetOthers());
                 bld.Append(']');
             }
 

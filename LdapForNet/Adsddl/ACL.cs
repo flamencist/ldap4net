@@ -44,9 +44,9 @@ namespace LdapForNet.Adsddl
     ///     specifies a particular user or security group to monitor; and an access mask that lists the operations to audit.
     ///     <see href="https://msdn.microsoft.com/en-us/library/cc230297.aspx">cc230297</see>
     /// </summary>
-    public class ACL
+    public class Acl
     {
-        private readonly List<ACE> aces = new List<ACE>();
+        private readonly List<Ace> aces = new List<Ace>();
 
         /// <summary>
         ///     An unsigned 8-bit value that specifies the revision of the ACL. The only two legitimate forms of ACLs supported
@@ -66,23 +66,23 @@ namespace LdapForNet.Adsddl
         ///     @param start start loading position.
         ///     @return last loading position.
         /// </summary>
-        public void parse(BinaryReader buff, long start)
+        public void Parse(BinaryReader buff, long start)
         {
             buff.BaseStream.Seek(start, SeekOrigin.Begin);
 
             // read for Dacl
-            byte[] bytes = NumberFacility.getBytes(buff.ReadInt32());
-            this.revision = AclRevisionExtension.parseValue(bytes[0]);
+            byte[] bytes = NumberFacility.GetBytes(buff.ReadInt32());
+            this.revision = AclRevisionExtension.ParseValue(bytes[0]);
             
-            bytes = NumberFacility.getBytes(buff.ReadInt32());
-            int aceCount = NumberFacility.getInt(bytes[1], bytes[0]);
+            bytes = NumberFacility.GetBytes(buff.ReadInt32());
+            int aceCount = NumberFacility.GetInt(bytes[1], bytes[0]);
 
             for (var i = 0; i < aceCount; i++)
             {
-                ACE ace = new ACE();
+                Ace ace = new Ace();
                 this.aces.Add(ace);
 
-                ace.parse(buff);
+                ace.Parse(buff);
             }
         }
 
@@ -90,26 +90,26 @@ namespace LdapForNet.Adsddl
         ///     Gets ACL revision.
         ///     @return revision.
         /// </summary>
-        public AclRevision getRevision() => this.revision;
+        public AclRevision GetRevision() => this.revision;
 
         /// <summary>
         ///     Gets ACL size in bytes.
         ///     @return ACL size in bytes.
         /// </summary>
-        public int getSize() => 8 + this.aces.Sum(ace => ace.getSize()); // add aces
+        public int GetSize() => 8 + this.aces.Sum(ace => ace.GetSize()); // add aces
 
         /// <summary>
         ///     Gets ACE number: an unsigned 16-bit integer that specifies the count of the number of ACE records in the ACL.
         ///     @return ACEs' number.
         /// </summary>
-        public int getAceCount() => this.aces.Count;
+        public int GetAceCount() => this.aces.Count;
 
         /// <summary>
         ///     Gets ACL ACEs.
         ///     @return list of ACEs.
         ///     ACE
         /// </summary>
-        public List<ACE> getAces() => this.aces;
+        public List<Ace> GetAces() => this.aces;
 
         /// <summary>
         ///     Gets ACL ACE at the given position.
@@ -117,15 +117,15 @@ namespace LdapForNet.Adsddl
         ///     @return ACL ACE.
         ///     ACE
         /// </summary>
-        public ACE getAce(int i) => this.aces[i];
+        public Ace GetAce(int i) => this.aces[i];
 
         /// <summary>
         ///     Serializes to byte array.
         ///     @return serialized ACL.
         /// </summary>
-        public byte[] toByteArray()
+        public byte[] ToByteArray()
         {
-            int size = this.getSize();
+            int size = this.GetSize();
 
             using var ms = new MemoryStream(size);
             var buff = new BinaryWriter(ms);
@@ -137,23 +137,23 @@ namespace LdapForNet.Adsddl
             buff.Write((byte) 0x00);
 
             // add size (2 bytes reversed)
-            byte[] sizeSRC = NumberFacility.getBytes(size);
-            buff.Write(sizeSRC[3]);
-            buff.Write(sizeSRC[2]);
+            byte[] sizeSrc = NumberFacility.GetBytes(size);
+            buff.Write(sizeSrc[3]);
+            buff.Write(sizeSrc[2]);
 
             // add ace count (2 bytes reversed)
-            byte[] aceCountSRC = NumberFacility.getBytes(this.getAceCount());
-            buff.Write(aceCountSRC[3]);
-            buff.Write(aceCountSRC[2]);
+            byte[] aceCountSrc = NumberFacility.GetBytes(this.GetAceCount());
+            buff.Write(aceCountSrc[3]);
+            buff.Write(aceCountSrc[2]);
 
             // add reserved (2 bytes)
             buff.Write((byte) 0x00);
             buff.Write((byte) 0x00);
 
             // add aces
-            foreach (ACE ace in this.aces)
+            foreach (Ace ace in this.aces)
             {
-                buff.Write(ace.toByteArray());
+                buff.Write(ace.ToByteArray());
             }
 
             return ms.ToArray();
@@ -161,24 +161,24 @@ namespace LdapForNet.Adsddl
 
         public override bool Equals(object acl)
         {
-            if (!(acl is ACL ext))
+            if (!(acl is Acl ext))
             {
                 return false;
             }
 
-            if (this.getSize() != ext.getSize())
+            if (this.GetSize() != ext.GetSize())
             {
                 return false;
             }
 
-            if (this.getAceCount() != ext.getAceCount())
+            if (this.GetAceCount() != ext.GetAceCount())
             {
                 return false;
             }
 
             for (var i = 0; i < this.aces.Count; i++)
             {
-                if (!this.getAce(i).Equals(ext.getAce(i)))
+                if (!this.GetAce(i).Equals(ext.GetAce(i)))
                 {
                     return false;
                 }
@@ -192,7 +192,7 @@ namespace LdapForNet.Adsddl
             StringBuilder bld = new StringBuilder();
             bld.Append('P');
 
-            foreach (ACE ace in this.aces)
+            foreach (Ace ace in this.aces)
             {
                 bld.Append(ace);
             }

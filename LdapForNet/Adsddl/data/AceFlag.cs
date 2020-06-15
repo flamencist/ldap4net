@@ -28,51 +28,51 @@ namespace LdapForNet.Adsddl.data
         /// <summary>
         ///     0x00 - None used
         /// </summary>
-        NONE = 0x00,
+        None = 0x00,
         
         /// <summary>
         ///     0x02 - Child objects that are containers, such as directories, inherit the ACE as an effective ACE. The inherited
         ///     ACE is inheritable unless the NO_PROPAGATE_INHERIT_ACE bit flag is also set.
         /// </summary>
-        CONTAINER_INHERIT_ACE = 0x02,
+        ContainerInheritAce = 0x02,
 
         /// <summary>
         ///     0x80 - Used with system-audit ACEs in a system access control list (SACL) to generate audit messages for failed
         ///     access attempts.
         /// </summary>
-        FAILED_ACCESS_ACE_FLAG = 0x80,
+        FailedAccessAceFlag = 0x80,
 
         /// <summary>
         ///     0x08 - Indicates an inherit-only ACE, which does not control access to the object to which it is attached. If
         ///     this flag is not set, the ACE is an effective ACE that controls access to the object to which it is attached.
         ///     Both effective and inherit-only ACEs can be inherited depending on the state of the other inheritance flags.
         /// </summary>
-        INHERIT_ONLY_ACE = 0x08,
+        InheritOnlyAce = 0x08,
 
         /// <summary>
         ///     0x10 - Indicates that the ACE was inherited. The system sets this bit when it propagates an inherited ACE to a
         ///     child object.
         /// </summary>
-        INHERITED_ACE = 0x10,
+        InheritedAce = 0x10,
 
         /// <summary>
         ///     0x04 - If the ACE is inherited by a child object, the system clears the OBJECT_INHERIT_ACE and
         ///     CONTAINER_INHERIT_ACE flags in the inherited ACE. This prevents the ACE from being inherited by subsequent
         ///     generations of objects.
         /// </summary>
-        NO_PROPAGATE_INHERIT_ACE = 0x04,
+        NoPropagateInheritAce = 0x04,
 
         /// <summary>
         ///     0x01 - Noncontainer child objects inherit the ACE as an effective ACE.
         ///     For child objects that are containers, the ACE is inherited as an inherit-only ACE unless the
         ///     NO_PROPAGATE_INHERIT_ACE bit flag is also set.
         /// </summary>
-        OBJECT_INHERIT_ACE = 0x01,
+        ObjectInheritAce = 0x01,
 
         /// <summary>
         ///     0x40 - Used with system-audit ACEs in a SACL to generate audit messages for successful access attempts.
         /// </summary>
-        SUCCESSFUL_ACCESS_ACE_FLAG = 0x40
+        SuccessfulAccessAceFlag = 0x40
     }
 
     public static class AceFlagExtension
@@ -81,21 +81,21 @@ namespace LdapForNet.Adsddl.data
         {
             switch (flag)
             {
-                case AceFlag.CONTAINER_INHERIT_ACE:
+                case AceFlag.ContainerInheritAce:
                     return "CI";
-                case AceFlag.FAILED_ACCESS_ACE_FLAG:
+                case AceFlag.FailedAccessAceFlag:
                     return "FA";
-                case AceFlag.INHERIT_ONLY_ACE:
+                case AceFlag.InheritOnlyAce:
                     return "IO";
-                case AceFlag.INHERITED_ACE:
+                case AceFlag.InheritedAce:
                     return "ID";
-                case AceFlag.NO_PROPAGATE_INHERIT_ACE:
+                case AceFlag.NoPropagateInheritAce:
                     return "NP";
-                case AceFlag.OBJECT_INHERIT_ACE:
+                case AceFlag.ObjectInheritAce:
                     return "OI";
-                case AceFlag.SUCCESSFUL_ACCESS_ACE_FLAG:
+                case AceFlag.SuccessfulAccessAceFlag:
                     return "SA";
-                case AceFlag.NONE:
+                case AceFlag.None:
                     return string.Empty;
                 default:
                     return flag.ToString();
@@ -107,7 +107,7 @@ namespace LdapForNet.Adsddl.data
         ///     @param value byte value.
         ///     @return ACE flags.
         /// </summary>
-        public static List<AceFlag> parseValue(byte value)
+        public static List<AceFlag> ParseValue(byte value)
         {
             var res = new List<AceFlag>();
 

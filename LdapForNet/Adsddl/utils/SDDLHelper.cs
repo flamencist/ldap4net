@@ -25,39 +25,39 @@ namespace LdapForNet.Adsddl.utils
     ///     SDDL helper class.
     ///     Provides facilities to set and unset specific ACLs.
     /// </summary>
-    public class SDDLHelper
+    public class SddlHelper
     {
         /// <summary>
         ///     User cannot change password GUID.
         /// </summary>
-        public static Guid UCP_OBJECT_GUID = new Guid("ab721a53-1e2f-11d0-9819-00aa0040529b");
+        public static Guid ucpObjectGuid = new Guid("ab721a53-1e2f-11d0-9819-00aa0040529b");
 
         /// <summary>
         ///     Check if user canot change password.
         ///     @param sddl SSDL.
         ///     @return <tt>true</tt> if user cannot change password: <tt>false</tt> otherwise.
         /// </summary>
-        public static bool isUserCannotChangePassword(SDDL sddl)
+        public static bool IsUserCannotChangePassword(Sddl sddl)
         {
             var res = false;
 
-            List<ACE> aces = sddl.getDacl().getAces();
+            List<Ace> aces = sddl.GetDacl().GetAces();
             for (var i = 0; !res && i < aces.Count; i++)
             {
-                ACE ace = aces[i];
+                Ace ace = aces[i];
 
-                if (ace.getType() == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE
-                    && ace.getObjectFlags().getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
+                if (ace.GetAceType() == AceType.AccessDeniedObjectAceType
+                    && ace.GetObjectFlags().GetFlags().Contains(AceObjectFlags.Flag.AceObjectTypePresent))
                 {
-                    if (ace.getObjectType() == UCP_OBJECT_GUID)
+                    if (ace.GetObjectType() == ucpObjectGuid)
                     {
-                        SID sid = ace.getSid();
-                        if (sid.getSubAuthorities().Count == 1)
+                        SID sid = ace.GetSid();
+                        if (sid.GetSubAuthorities().Count == 1)
                         {
-                            if (sid.getIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 })
-                                && sid.getSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00 })
-                                || sid.getIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x05 })
-                                && sid.getSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x0a }))
+                            if (sid.GetIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 })
+                                && sid.GetSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00 })
+                                || sid.GetIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x05 })
+                                && sid.GetSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x0a }))
                             {
                                 res = true;
                             }
@@ -75,40 +75,40 @@ namespace LdapForNet.Adsddl.utils
         ///     @param cannot <tt>true</tt> to set the ACL; <tt>false</tt> to unset.
         ///     @return updated SDDL.
         /// </summary>
-        public static SDDL userCannotChangePassword(SDDL sddl, bool cannot)
+        public static Sddl UserCannotChangePassword(Sddl sddl, bool cannot)
         {
-            AceType type = cannot ? AceType.ACCESS_DENIED_OBJECT_ACE_TYPE : AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE;
+            AceType type = cannot ? AceType.AccessDeniedObjectAceType : AceType.AccessAllowedObjectAceType;
 
-            ACE self = null;
-            ACE all = null;
+            Ace self = null;
+            Ace all = null;
 
-            List<ACE> aces = sddl.getDacl().getAces();
+            List<Ace> aces = sddl.GetDacl().GetAces();
             for (var i = 0; (all == null || self == null) && i < aces.Count; i++)
             {
-                ACE ace = aces[i];
+                Ace ace = aces[i];
 
-                if ((ace.getType() == AceType.ACCESS_ALLOWED_OBJECT_ACE_TYPE
-                        || ace.getType() == AceType.ACCESS_DENIED_OBJECT_ACE_TYPE)
-                    && ace.getObjectFlags().getFlags().Contains(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT))
+                if ((ace.GetAceType() == AceType.AccessAllowedObjectAceType
+                        || ace.GetAceType() == AceType.AccessDeniedObjectAceType)
+                    && ace.GetObjectFlags().GetFlags().Contains(AceObjectFlags.Flag.AceObjectTypePresent))
                 {
-                    if (ace.getObjectType() == UCP_OBJECT_GUID)
+                    if (ace.GetObjectType() == ucpObjectGuid)
                     {
-                        SID sid = ace.getSid();
-                        if (sid.getSubAuthorities().Count == 1)
+                        SID sid = ace.GetSid();
+                        if (sid.GetSubAuthorities().Count == 1)
                         {
                             if (self == null
-                                && sid.getIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 })
-                                && sid.getSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00 }))
+                                && sid.GetIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 })
+                                && sid.GetSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00 }))
                             {
                                 self = ace;
-                                self.setType(type);
+                                self.SetType(type);
                             }
                             else if (all == null
-                                && sid.getIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x05 })
-                                && sid.getSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x0a }))
+                                && sid.GetIdentifierAuthority().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x05 })
+                                && sid.GetSubAuthorities().First().SequenceEqual(new byte[] { 0x00, 0x00, 0x00, 0x0a }))
                             {
                                 all = ace;
-                                all.setType(type);
+                                all.SetType(type);
                             }
                         }
                     }
@@ -118,26 +118,26 @@ namespace LdapForNet.Adsddl.utils
             if (self == null)
             {
                 // prepare aces
-                self = ACE.newInstance(type);
-                self.setObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT));
-                self.setObjectType(UCP_OBJECT_GUID);
-                self.setRights(new AceRights().addOjectRight(AceRights.ObjectRight.CR));
-                SID sid = SID.newInstance(NumberFacility.getBytes(0x000000000001, 6));
-                sid.addSubAuthority(NumberFacility.getBytes(0));
-                self.setSid(sid);
-                sddl.getDacl().getAces().Add(self);
+                self = Ace.NewInstance(type);
+                self.SetObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.AceObjectTypePresent));
+                self.SetObjectType(ucpObjectGuid);
+                self.SetRights(new AceRights().AddOjectRight(AceRights.ObjectRight.Cr));
+                SID sid = SID.NewInstance(NumberFacility.GetBytes(0x000000000001, 6));
+                sid.AddSubAuthority(NumberFacility.GetBytes(0));
+                self.SetSid(sid);
+                sddl.GetDacl().GetAces().Add(self);
             }
 
             if (all == null)
             {
-                all = ACE.newInstance(type);
-                all.setObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT));
-                all.setObjectType(UCP_OBJECT_GUID);
-                all.setRights(new AceRights().addOjectRight(AceRights.ObjectRight.CR));
-                SID sid = SID.newInstance(NumberFacility.getBytes(0x000000000005, 6));
-                sid.addSubAuthority(NumberFacility.getBytes(0x0A));
-                all.setSid(sid);
-                sddl.getDacl().getAces().Add(all);
+                all = Ace.NewInstance(type);
+                all.SetObjectFlags(new AceObjectFlags(AceObjectFlags.Flag.AceObjectTypePresent));
+                all.SetObjectType(ucpObjectGuid);
+                all.SetRights(new AceRights().AddOjectRight(AceRights.ObjectRight.Cr));
+                SID sid = SID.NewInstance(NumberFacility.GetBytes(0x000000000005, 6));
+                sid.AddSubAuthority(NumberFacility.GetBytes(0x0A));
+                all.SetSid(sid);
+                sddl.GetDacl().GetAces().Add(all);
             }
 
             return sddl;

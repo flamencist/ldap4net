@@ -37,79 +37,79 @@ namespace LdapForNet.Adsddl.dacl
         /// <summary>
         ///     Schema GUID of "CN=Computer,CN=Schema,CN=Configuration" objects
         /// </summary>
-        protected static Guid COMPUTER_SCHEMA_ID_GUID = new Guid("bf967a86-0de6-11d0-a285-00aa003049e2");
+        protected static Guid computerSchemaIDGuid = new Guid("bf967a86-0de6-11d0-a285-00aa003049e2");
 
         /// <summary>
         ///     Schema GUID of "CN=User-Force-Change-Password,CN=Extended-Rights,CN=Configuration" extended right
         ///     (aka "reset password")
         /// </summary>
-        protected static Guid RESET_PASSWORD_CR_GUID = new Guid("00299570-246d-11d0-a768-00aa006e0529");
+        protected static Guid resetPasswordCrGuid = new Guid("00299570-246d-11d0-a768-00aa006e0529");
 
-        protected static AceAssertion CREATE_COMPUTER = new AceAssertion(
-            AceRights.parseValue(0x00000001),
-            new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT),
-            COMPUTER_SCHEMA_ID_GUID,
+        protected static AceAssertion createComputer = new AceAssertion(
+            AceRights.ParseValue(0x00000001),
+            new AceObjectFlags(AceObjectFlags.Flag.AceObjectTypePresent),
+            computerSchemaIDGuid,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.INHERIT_ONLY_ACE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.InheritOnlyAce);
 
-        protected static AceAssertion DELETE_COMPUTER = new AceAssertion(
-            AceRights.parseValue(0x00000002),
-            new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT),
-            COMPUTER_SCHEMA_ID_GUID,
+        protected static AceAssertion deleteComputer = new AceAssertion(
+            AceRights.ParseValue(0x00000002),
+            new AceObjectFlags(AceObjectFlags.Flag.AceObjectTypePresent),
+            computerSchemaIDGuid,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.INHERIT_ONLY_ACE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.InheritOnlyAce);
 
-        protected static AceAssertion LIST_CONTENTS = new AceAssertion(
-            AceRights.parseValue(0x00000004),
+        protected static AceAssertion listContents = new AceAssertion(
+            AceRights.ParseValue(0x00000004),
             null,
             null,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.INHERIT_ONLY_ACE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.InheritOnlyAce);
 
-        protected static AceAssertion READ_PROPERTIES = new AceAssertion(
-            AceRights.parseValue(0x00000010),
+        protected static AceAssertion readProperties = new AceAssertion(
+            AceRights.ParseValue(0x00000010),
             null,
             null,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.INHERIT_ONLY_ACE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.InheritOnlyAce);
 
-        protected static AceAssertion WRITE_PROPERTIES = new AceAssertion(
-            AceRights.parseValue(0x00000020),
+        protected static AceAssertion writeProperties = new AceAssertion(
+            AceRights.ParseValue(0x00000020),
             null,
             null,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.NONE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.None);
 
-        protected static AceAssertion READ_PERMISSIONS = new AceAssertion(
-            AceRights.parseValue(0x00020000),
+        protected static AceAssertion readPermissions = new AceAssertion(
+            AceRights.ParseValue(0x00020000),
             null,
             null,
             null,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.INHERIT_ONLY_ACE);
+            AceFlag.ContainerInheritAce,
+            AceFlag.InheritOnlyAce);
 
-        protected static AceAssertion RESET_PASSWORD = new AceAssertion(
-            AceRights.parseValue((int) AceRights.ObjectRight.CR),
-            new AceObjectFlags(AceObjectFlags.Flag.ACE_OBJECT_TYPE_PRESENT, AceObjectFlags.Flag.ACE_INHERITED_OBJECT_TYPE_PRESENT),
-            RESET_PASSWORD_CR_GUID,
-            COMPUTER_SCHEMA_ID_GUID,
-            AceFlag.CONTAINER_INHERIT_ACE,
-            AceFlag.NONE);
+        protected static AceAssertion resetPassword = new AceAssertion(
+            AceRights.ParseValue((int) AceRights.ObjectRight.Cr),
+            new AceObjectFlags(AceObjectFlags.Flag.AceObjectTypePresent, AceObjectFlags.Flag.AceInheritedObjectTypePresent),
+            resetPasswordCrGuid,
+            computerSchemaIDGuid,
+            AceFlag.ContainerInheritAce,
+            AceFlag.None);
 
-        protected static readonly AceAssertion[] DOMAIN_JOIN_ASSERTIONS =
+        protected static readonly AceAssertion[] DomainJoinAssertions =
         {
-            CREATE_COMPUTER,
-            DELETE_COMPUTER,
-            LIST_CONTENTS,
-            READ_PROPERTIES,
-            WRITE_PROPERTIES,
-            READ_PERMISSIONS,
-            RESET_PASSWORD
+            createComputer,
+            deleteComputer,
+            listContents,
+            readProperties,
+            writeProperties,
+            readPermissions,
+            resetPassword
         };
 
         /// <summary>
@@ -123,6 +123,6 @@ namespace LdapForNet.Adsddl.dacl
         ///     criteria (when the principal is a user). May be null.
         /// </summary>
         public DomainJoinRoleAssertion(SID principal, bool isGroup, List<SID> tokenGroups)
-            : base(DOMAIN_JOIN_ASSERTIONS.ToList(), principal, isGroup, tokenGroups) { }
+            : base(DomainJoinAssertions.ToList(), principal, isGroup, tokenGroups) { }
     }
 }
