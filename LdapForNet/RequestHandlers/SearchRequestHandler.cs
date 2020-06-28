@@ -122,18 +122,16 @@ namespace LdapForNet.RequestHandlers
                 attr = Native.ldap_next_attribute(ld, entry, ber))
             {
                 var vals = Native.ldap_get_values_len(ld, entry, attr);
-                if (vals != IntPtr.Zero)
+                var attrName = Encoder.Instance.PtrToString(attr);
+                if (attrName != null)
                 {
-                    var attrName = Encoder.Instance.PtrToString(attr);
-                    if (attrName != null)    
+                    var values = vals != IntPtr.Zero ? MarshalUtils.BerValArrayToByteArrays(vals) : Enumerable.Empty<byte[]>();
+                    var directoryAttribute = new DirectoryAttribute
                     {
-                        var directoryAttribute = new DirectoryAttribute
-                        {
-                            Name = attrName
-                        };
-                        directoryAttribute.AddValues(MarshalUtils.BerValArrayToByteArrays(vals));
-                        attributes.Add(directoryAttribute);
-                    }
+                        Name = attrName
+                    };
+                    directoryAttribute.AddValues(values);
+                    attributes.Add(directoryAttribute);
                     Native.ldap_value_free_len(vals);
                 }
 
