@@ -218,6 +218,7 @@ namespace LdapForNet
     public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
     {
         internal SearchResultAttributeCollection()
+            : base(StringComparer.OrdinalIgnoreCase)
         {
         }
 
@@ -232,6 +233,7 @@ namespace LdapForNet
     public class ModifyAttributeCollection : KeyedCollection<string, DirectoryModificationAttribute>
     {
         internal ModifyAttributeCollection()
+            : base(StringComparer.OrdinalIgnoreCase)
         {
         }
 
@@ -239,7 +241,7 @@ namespace LdapForNet
 
         protected override string GetKeyForItem(DirectoryModificationAttribute item)
         {
-            return item.Name + item.LdapModOperation.ToString();
+            return item.Name;
         }
     }
 }
