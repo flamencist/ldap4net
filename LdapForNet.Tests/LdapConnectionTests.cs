@@ -153,7 +153,28 @@ namespace LdapForNetTests
                 Assert.True(entries[0].Attributes["objectClass"].Any());
             }
         }
-        
+
+        [Fact]
+        public void LdapConnection_Connect_Ssl2()
+        {
+	        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+	        {
+		        //todo setup tls/ssl for ldap server on OSX
+		        return;
+	        }
+
+	        using (var connection = new LdapConnection())
+	        {
+		        connection.Connect("dev3.os33.net", 636, LdapSchema.LDAPS);
+		        connection.TrustAllCertificates();
+		        connection.Bind(LdapAuthType.Negotiate, new LdapCredential());
+		        var entries = connection.Search("DC=dev3,DC=os33,DC=NET",
+                    "(&(objectclass=*)(!description=*))",new string[]{ "*" });
+		        var emptyEntries = entries.Where(_ => _.Attributes.Any(x => !x.Value.Any())).ToList();
+		        Assert.True(entries.Count == 1);
+	        }
+        }
+
         [Fact]
         public void LdapConnection_Connect_Tls()
         {
