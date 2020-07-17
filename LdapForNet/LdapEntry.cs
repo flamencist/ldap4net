@@ -241,7 +241,7 @@ namespace LdapForNet
 
         protected override string GetKeyForItem(DirectoryModificationAttribute item)
         {
-            return item.Name + item.LdapModOperation.ToString();
+            return item.Name;
         }
     }
 }
