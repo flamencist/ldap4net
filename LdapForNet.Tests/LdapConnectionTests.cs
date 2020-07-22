@@ -459,6 +459,31 @@ namespace LdapForNetTests
             }
         }
 
+        [Fact]
+        public void AddDuplicatedLdapEntryException()
+        {
+            using (var connection = new LdapConnection())
+            {
+                connection.Connect(Config.LdapHost, Config.LdapPort);
+                connection.Bind(LdapAuthMechanism.SIMPLE, Config.LdapUserDn, Config.LdapPassword);
+                                var ldapEntry = new LdapEntry
+                {
+                    Dn = $"cn=test,{Config.RootDn}",
+                    Attributes = new Dictionary<string, List<string>>
+                    {
+                        {"cn", new List<string> {"test"}},
+                        {"sn", new List<string> {"Winston"}},
+                        {"objectclass", new List<string> {"inetOrgPerson", "top"}},
+                        {"givenname", new List<string> {"винстон"}},
+                        {"description", new List<string> {"test_value"}}
+                    }
+                };
+
+                var response = (AddResponse)connection.SendRequest(new AddRequest(ldapEntry));
+                Assert.Throws<LdapException>(() => connection.SendRequest(new AddRequest(ldapEntry)));
+            }
+        }
+
         private async Task ModifyLdapEntryAsync()
         {
             using (var connection = new LdapConnection())
