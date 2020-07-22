@@ -247,7 +247,7 @@ namespace LdapForNet
 				.ToList();
 		}
 
-		public void Add(LdapEntry entry) => ThrowIfResponseError(SendRequest(new AddRequest(entry)));
+		public void Add(LdapEntry entry) => SendRequest(new AddRequest(entry));
 
 		public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
 			CancellationToken token = default)
@@ -270,7 +270,9 @@ namespace LdapForNet
 		{
 			ThrowIfNotBound();
 			var requestHandler = SendRequest(directoryRequest, out var messageId);
-			return ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+			var directoryResponse = ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+            ThrowIfResponseError(directoryResponse);
+            return directoryResponse;
 		}
 
 		public void StartTransportLayerSecurity(bool trustAll = false)
@@ -299,7 +301,7 @@ namespace LdapForNet
 		public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
 			ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
 
-		public void Modify(LdapModifyEntry entry) => ThrowIfResponseError(SendRequest(new ModifyRequest(entry)));
+		public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
 
 		public void Dispose()
 		{
@@ -316,7 +318,7 @@ namespace LdapForNet
 		public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
 			ThrowIfResponseError(await SendRequestAsync(new DeleteRequest(dn), cancellationToken));
 
-		public void Delete(string dn) => ThrowIfResponseError(SendRequest(new DeleteRequest(dn)));
+		public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
 
 		public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
 			CancellationToken cancellationToken = default) =>
@@ -325,8 +327,7 @@ namespace LdapForNet
 				cancellationToken));
 
 		public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
-			ThrowIfResponseError(
-				SendRequest(new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn }));
+			SendRequest(new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn });
 
 		public void Abandon(AbandonRequest abandonRequest)
 		{
