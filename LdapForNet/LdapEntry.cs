@@ -230,18 +230,8 @@ namespace LdapForNet
         }
     }
 
-    public class ModifyAttributeCollection : KeyedCollection<string, DirectoryModificationAttribute>
+    public class ModifyAttributeCollection : List<DirectoryModificationAttribute>
     {
-        internal ModifyAttributeCollection()
-            : base(StringComparer.OrdinalIgnoreCase)
-        {
-        }
-
-        public ICollection<string> AttributeNames => Dictionary.Keys;
-
-        protected override string GetKeyForItem(DirectoryModificationAttribute item)
-        {
-            return item.Name;
-        }
+       
     }
 }
