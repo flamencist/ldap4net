@@ -257,7 +257,7 @@ namespace LdapForNetTests
                     "(&(objectclass=top)(cn=admin))", LdapSearchScope.LDAP_SCOPE_SUBTREE, "cn", "objectClass"));
                 var entries = response.Entries;
                 Assert.Single(entries);
-                Assert.Equal(2, entries[0].Attributes.AttributeNames.Count);
+                Assert.Equal(2, entries[0].Attributes.AttributeNames.Count());
                 Assert.Equal(Config.LdapUserDn, entries[0].Dn);
                 Assert.Equal("admin", entries[0].Attributes["cn"].GetValues<string>().First());
                 Assert.True(entries[0].Attributes["objectClass"].GetValues<string>().Any());
