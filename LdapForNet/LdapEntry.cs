@@ -270,11 +270,19 @@ namespace LdapForNet
         }
     }
 
-    public class SearchResultAttributeCollection : DirectoryAttributeCollectionBase<DirectoryAttribute>
+    public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
     {
-        internal SearchResultAttributeCollection()
-        {
-        }
+	    internal SearchResultAttributeCollection()
+		    : base(StringComparer.OrdinalIgnoreCase)
+	    {
+	    }
+
+	    public ICollection<string> AttributeNames => Dictionary.Keys;
+
+	    protected override string GetKeyForItem(DirectoryAttribute item)
+	    {
+		    return item.Name;
+	    }
     }
 
     public class ModifyAttributeCollection : DirectoryAttributeCollectionBase<DirectoryModificationAttribute>

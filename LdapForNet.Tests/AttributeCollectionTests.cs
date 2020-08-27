@@ -1,4 +1,5 @@
 ﻿using LdapForNet;
+using LdapForNet.Native;
 using Xunit;
 
 namespace LdapForNetTests
@@ -19,5 +20,20 @@ namespace LdapForNetTests
             Assert.True(modifyCollection.Contains(LdapAttributes.GivenName.ToUpperInvariant()));
 
         }
-    }
+
+        [Fact]
+        public void ModifyAttributeCollection_Should_Allow_Attributes_With_Same_Name()
+        {
+	        var attributeCollection = new ModifyAttributeCollection
+	        {
+		        new DirectoryModificationAttribute {Name = "name", LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD},
+		        new DirectoryModificationAttribute {Name = "name", LdapModOperation = Native.LdapModOperation.LDAP_MOD_REPLACE}
+	        };
+
+	        var attribute = attributeCollection["name"];
+
+	        Assert.Equal(2, attributeCollection.Count);
+	        Assert.Equal("name", attribute.Name);
+        }
+	}
 }
