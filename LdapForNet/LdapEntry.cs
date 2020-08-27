@@ -42,9 +42,9 @@ namespace LdapForNet
                 Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
             };
         }
-        
-        public DirectoryAttribute GetAttribute(string attribute) 
-            => this.Attributes.Contains(attribute) ? this.Attributes[attribute] : null;
+
+        public DirectoryAttribute GetAttribute(string attribute)
+            => this.Attributes.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
 
         private static Guid? GetGuid(byte[] bytes) 
             => bytes != null && bytes.Length == 16 ? (Guid?) new Guid(bytes) : null;
@@ -215,33 +215,72 @@ namespace LdapForNet
             Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
     }
 
-    public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
+    public abstract class DirectoryAttributeCollectionBase<T> : List<T>
+        where T : DirectoryAttribute
     {
-        internal SearchResultAttributeCollection()
-            : base(StringComparer.OrdinalIgnoreCase)
+        public IEnumerable<string> AttributeNames =>
+            this.Select(x => x.Name);
+        
+        public bool Contains(string attribute) =>
+            this.Any(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+
+        public DirectoryAttribute this[string attribute]
         {
+            get
+            {
+                var item = this.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+
+                if (item == null)
+                {
+                    throw new KeyNotFoundException();
+                }
+
+                return item;
+            }
         }
 
-        public ICollection<string> AttributeNames => Dictionary.Keys;
-
-        protected override string GetKeyForItem(DirectoryAttribute item)
+        public bool TryGetValue(string attribute, out DirectoryAttribute item)
         {
-            return item.Name;
+            item = this.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+
+            if (item == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool Remove(string attribute)
+        {
+            var found = false;
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (String.Equals(this[i].Name, attribute, StringComparison.OrdinalIgnoreCase))
+                {
+                    RemoveAt(i);
+                    --i;
+
+                    found = true;
+                }
+            }
+
+            return found;
         }
     }
 
-    public class ModifyAttributeCollection : KeyedCollection<string, DirectoryModificationAttribute>
+    public class SearchResultAttributeCollection : DirectoryAttributeCollectionBase<DirectoryAttribute>
     {
-        internal ModifyAttributeCollection()
-            : base(StringComparer.OrdinalIgnoreCase)
+        internal SearchResultAttributeCollection()
         {
         }
+    }
 
-        public ICollection<string> AttributeNames => Dictionary.Keys;
-
-        protected override string GetKeyForItem(DirectoryModificationAttribute item)
+    public class ModifyAttributeCollection : DirectoryAttributeCollectionBase<DirectoryModificationAttribute>
+    {
+        internal ModifyAttributeCollection()
         {
-            return item.Name;
         }
     }
 }

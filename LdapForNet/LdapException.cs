@@ -5,22 +5,27 @@ namespace LdapForNet
     [Serializable]
     public class LdapException : Exception
     {
+        public Native.Native.ResultCode?  ResultCode { get; }
+
         public LdapException(string message) : base(message)
         {
         }
 
-        public LdapException(string message, int res) : base($"{message} . Result: {res}")
+        public LdapException(string message, int res) : base($"{message}. Result: {res}")
         {
+            ResultCode =(Native.Native.ResultCode)res;
         }
 
         public LdapException(string message, string method, int res) : base(
             $"{message}. Result: {res}. Method: {method}")
         {
+            ResultCode = (Native.Native.ResultCode)res;
         }
 
         public LdapException(string message, string method, int res, string details) : base(
             $"{message}. Result: {res}. Method: {method}. Details: {details}")
         {
+            ResultCode = (Native.Native.ResultCode)res;
         }
     }
 
