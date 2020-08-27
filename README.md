@@ -66,6 +66,7 @@ using (var cn = new LdapConnection())
 	* [Modify](#modify)
 	* [Modify Binary Values](#modify-binary-values)
 	* [Reset password](#reset-password)
+	* [Change password](#change-password)
 	* [ModifyAsync](#modifyAsync)
 	* [Delete](#delete)
 	* [DeleteAsync](#deleteAsync)
@@ -663,6 +664,37 @@ using (var cn = new LdapConnection())
       attribute.Add<byte[]>(encodedBytes);
     
       var response = (ModifyResponse)cn.SendRequest(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", attribute));
+}
+```
+
+### Change password
+
+Microsoft Active Directory
+
+```c#
+using (var cn = new LdapConnection())
+{
+      // need use ssl/tls for reset password
+      cn.Connect("dc.example.com", 636, LdapSchema.LDAPS);
+      cn.Bind();
+
+      var oldPasswordAttribute = new DirectoryModificationAttribute
+      {
+            Name = "unicodePwd",
+            LdapModOperation = Native.LdapModOperation.LDAP_MOD_DELETE
+      };
+
+      oldPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{oldPassword}\""));
+
+      var newPasswordAttribute = new DirectoryModificationAttribute
+      {
+            Name = "unicodePwd",
+            LdapModOperation = Native.LdapModOperation.LDAP_MOD_ADD
+      };
+
+      newPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{newPassword}\""));
+
+      var response = await _ldapConnection.Value.SendRequestAsync(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", oldPasswordAttribute, newPasswordAttribute));
 }
 ```
 
