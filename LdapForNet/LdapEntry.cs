@@ -4,291 +4,284 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using LdapForNet.Utils;
 
 namespace LdapForNet
 {
-    public class LdapEntry
-    {
-        public string Dn { get; set; }
-        public Dictionary<string, List<string>> Attributes { get; set; }
+	public class LdapEntry
+	{
+		public string Dn { get; set; }
 
-        public DirectoryEntry ToDirectoryEntry()
-        {
-            var directoryEntry = new DirectoryEntry {Dn = Dn, Attributes = new SearchResultAttributeCollection()};
-            foreach (var attr in Attributes)
-            {
-                var item = new DirectoryAttribute
-                {
-                    Name = attr.Key
-                };
-                item.AddValues(attr.Value);
-                directoryEntry.Attributes.Add(item);
-            }
+		[Obsolete]
+		public Dictionary<string, List<string>> Attributes
+		{
+			get { return DirectoryAttributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList()); }
+			set
+			{
+				DirectoryAttributes = new SearchResultAttributeCollection();
+				foreach (var attribute in value)
+				{
+					var directoryAttribute = new DirectoryAttribute
+					{
+						Name = attribute.Key
+					};
+					directoryAttribute.AddValues(attribute.Value);
+					DirectoryAttributes.Add(directoryAttribute);
+				}
+			}
+		}
 
-            return directoryEntry;
-        }
-    }
+		public SearchResultAttributeCollection DirectoryAttributes { get; set; }
 
-    public class DirectoryEntry
-    {
-        public string Dn { get; set; }
-        public SearchResultAttributeCollection Attributes { get; set; }
+		public DirectoryEntry ToDirectoryEntry()
+		{
+			return new DirectoryEntry {Dn = Dn, Attributes = DirectoryAttributes};
+		}
+	}
 
-        public LdapEntry ToLdapEntry()
-        {
-            return new LdapEntry
-            {
-                Dn = Dn,
-                Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
-            };
-        }
+	public class DirectoryEntry
+	{
+		public string Dn { get; set; }
+		public SearchResultAttributeCollection Attributes { get; set; }
 
-        public DirectoryAttribute GetAttribute(string attribute)
-            => this.Attributes.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+		public LdapEntry ToLdapEntry()
+		{
+			return new LdapEntry
+			{
+				Dn = Dn,
+				DirectoryAttributes = Attributes
+			};
+		}
 
-        private static Guid? GetGuid(byte[] bytes) 
-            => bytes != null && bytes.Length == 16 ? (Guid?) new Guid(bytes) : null;
+		public DirectoryAttribute GetAttribute(string attribute) => Attributes.FirstOrDefault(x => string.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
 
-        public IEnumerable<string> GetObjectClass() => this.GetStrings(LdapAttributes.ObjectClass);
+		private static Guid? GetGuid(byte[] bytes) => bytes != null && bytes.Length == 16 ? (Guid?) new Guid(bytes) : null;
 
-        public IEnumerable<string> GetSubRefs() => this.GetStrings(LdapAttributes.SubRefs);
+		public string GetObjectSid() => LdapSidConverter.ParseFromBytes(GetBytes("objectSid"));
 
-        public Guid? GetObjectGuid()
-        {
-            var objectGuid = this.GetAttribute(LdapAttributes.ObjectGuid);
-            return objectGuid != null ? GetGuid(objectGuid.GetValue<byte[]>()) : null;
-        }
+		public IEnumerable<string> GetObjectClass() => GetStrings(LdapAttributes.ObjectClass);
 
-        public DateTime? GetWhenChanged()
-        {
-            var whenChanged = this.GetString(LdapAttributes.WhenChanged);
-            if (whenChanged != null)
-            {
-                DateTime date = DateTime.ParseExact(whenChanged, "yyyyMMddHHmmss.f'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
-                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
-            }
-            return null;
-        }
-        
-        public DateTime? GetModifyTimestamp()
-        {
-            var modifyTimestamp = this.GetString(LdapAttributes.ModifyTimestamp);
-            if (modifyTimestamp != null)
-            {
-                DateTime date = DateTime.ParseExact(modifyTimestamp, "yyyyMMddHHmmss'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
-                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
-            }
-            return null;
-        }
+		public IEnumerable<string> GetSubRefs() => GetStrings(LdapAttributes.SubRefs);
 
-        public IEnumerable<string> GetMemberOf() => this.GetStrings(LdapAttributes.MemberOf);
+		public Guid? GetObjectGuid()
+		{
+			var objectGuid = GetAttribute(LdapAttributes.ObjectGuid);
+			return objectGuid != null ? GetGuid(objectGuid.GetValue<byte[]>()) : null;
+		}
 
-        public UserAccountControl GetUserAccountControl()
-        {
-            var attribute = this.GetString(LdapAttributes.UserAccountControl);
-            return attribute == null ? UserAccountControl.NONE : (UserAccountControl) int.Parse(attribute);
-        }
+		public DateTime? GetWhenChanged()
+		{
+			var whenChanged = GetString(LdapAttributes.WhenChanged);
+			if (whenChanged != null)
+			{
+				var date = DateTime.ParseExact(whenChanged, "yyyyMMddHHmmss.f'Z'", CultureInfo.InvariantCulture,
+					DateTimeStyles.AssumeLocal);
+				return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+			}
 
-        public int GetPrimaryGroupID()
-        {
-            var attribute = this.GetString(LdapAttributes.PrimaryGroupID);
-            return attribute == null ? 0 : int.Parse(attribute);
-        }
+			return null;
+		}
 
-        public int GetUserPrimaryID()
-        {
-            var objectSid = this.GetAttribute(LdapAttributes.ObjectSid)?.GetValue<byte[]>();
-            if (objectSid != null)
-            {
-                return BitConverter.ToInt32(objectSid, objectSid.Length - 4); //last 4 bytes are primary group id
-            }
+		public DateTime? GetModifyTimestamp()
+		{
+			var modifyTimestamp = GetString(LdapAttributes.ModifyTimestamp);
+			if (modifyTimestamp != null)
+			{
+				var date = DateTime.ParseExact(modifyTimestamp, "yyyyMMddHHmmss'Z'", CultureInfo.InvariantCulture,
+					DateTimeStyles.AssumeLocal);
+				return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+			}
 
-            return -1;
-        }
+			return null;
+		}
 
-        public string GetString(string attributeName) => this.GetAttribute(attributeName)?.GetValue<string>();
-        
-        public byte[] GetBytes(string attributeName) => this.GetAttribute(attributeName)?.GetValue<byte[]>();
-        
-        public IEnumerable<string> GetStrings(string attributeName) => this.GetAttribute(attributeName)?.GetValues<string>()?? Enumerable.Empty<string>();
+		public IEnumerable<string> GetMemberOf() => GetStrings(LdapAttributes.MemberOf);
 
-        public IEnumerable<byte[]> GetByteArrays(string attributeName) => this.GetAttribute(attributeName)?.GetValues<byte[]>() ?? Enumerable.Empty<byte[]>();
-    }
+		public UserAccountControl GetUserAccountControl()
+		{
+			var attribute = GetString(LdapAttributes.UserAccountControl);
+			return attribute == null ? UserAccountControl.NONE : (UserAccountControl) int.Parse(attribute);
+		}
 
-    public class LdapModifyEntry
-    {
-        public string Dn { get; set; }
-        public List<LdapModifyAttribute> Attributes { get; set; }
-    }
+		public int GetPrimaryGroupID()
+		{
+			var attribute = GetString(LdapAttributes.PrimaryGroupID);
+			return attribute == null ? 0 : int.Parse(attribute);
+		}
 
-    public class LdapModifyAttribute
-    {
-        public string Type { get; set; }
-        public List<string> Values { get; set; }
+		public int GetUserPrimaryID()
+		{
+			var objectSid = GetAttribute(LdapAttributes.ObjectSid)?.GetValue<byte[]>();
+			if (objectSid != null)
+				return BitConverter.ToInt32(objectSid, objectSid.Length - 4); //last 4 bytes are primary group id
 
-        public Native.Native.LdapModOperation LdapModOperation { get; set; } =
-            Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
-    }
+			return -1;
+		}
 
-    public class DirectoryAttribute
-    {
-        private readonly List<object> _values = new List<object>();
+		public string GetString(string attributeName) => GetAttribute(attributeName)?.GetValue<string>();
 
-        public string Name { get; set; }
-        
-        public T GetValue<T>()
-            where T : class, IEnumerable
-        {
-            var items = this.GetValues<T>();
-            var item = items.FirstOrDefault();
-            return item == default(T) ? default : item;
-        }
+		public byte[] GetBytes(string attributeName) => GetAttribute(attributeName)?.GetValue<byte[]>();
 
-        public IEnumerable<T> GetValues<T>() where T : class, IEnumerable
-        {
-            if (!_values.Any())
-            {
-                return Enumerable.Empty<T>();
-            }
+		public IEnumerable<string> GetStrings(string attributeName) => GetAttribute(attributeName)?.GetValues<string>() ?? Enumerable.Empty<string>();
 
-            var type = typeof(T);
-            var valuesType = _values.First().GetType();
-            if (type == valuesType)
-            {
-                return _values.Select(_ => _ as T);
-            }
+		public IEnumerable<byte[]> GetByteArrays(string attributeName) => GetAttribute(attributeName)?.GetValues<byte[]>() ?? Enumerable.Empty<byte[]>();
+	}
 
-            if (type == typeof(byte[]) && valuesType == typeof(sbyte[]))
-            {
-                return _values.Select(_ => _ as T);
-            }
+	public class LdapModifyEntry
+	{
+		public string Dn { get; set; }
+		public List<LdapModifyAttribute> Attributes { get; set; }
+	}
 
-            if (type == typeof(string))
-            {
-                return _values.Select(_ => Utils.Encoder.Instance.GetString((byte[]) _))
-                    .Select(_ => _ as T);
-            }
+	public class LdapModifyAttribute
+	{
+		public string Type { get; set; }
+		public List<string> Values { get; set; }
 
-            if (type == typeof(byte[]))
-            {
-                return _values.Select(_ => Utils.Encoder.Instance.GetBytes((string) _))
-                    .Select(_ => _ as T);
-            }
+		public Native.Native.LdapModOperation LdapModOperation { get; set; } =
+			Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
+	}
 
-            throw new NotSupportedException(
-                $"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
-        }
+	public class DirectoryAttribute
+	{
+		private readonly List<object> _values = new List<object>();
 
-        internal List<object> GetRawValues() => _values;
+		public string Name { get; set; }
 
-        public void Add<T>(T value) where T : class, IEnumerable
-        {
-            ThrowIfWrongType<T>();
-            _values.Add(value);
-        }
+		public T GetValue<T>()
+			where T : class, IEnumerable
+		{
+			var items = GetValues<T>();
+			var item = items.FirstOrDefault();
+			return item == default(T) ? default : item;
+		}
 
-        public void AddValues<T>(IEnumerable<T> values) where T : class, IEnumerable
-        {
-            ThrowIfWrongType<T>();
-            _values.AddRange(values);
-        }
+		public IEnumerable<T> GetValues<T>() where T : class, IEnumerable
+		{
+			if (!_values.Any()) return Enumerable.Empty<T>();
 
-        private void ThrowIfWrongType<T>() where T : class, IEnumerable
-        {
-            var type = typeof(T);
-            if (type != typeof(string) && type != typeof(byte[]) && type != typeof(sbyte[]))
-            {
-                throw new NotSupportedException(
-                    $"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
-            }
+			var type = typeof(T);
+			var valuesType = _values.First().GetType();
+			if (type == valuesType) return _values.Select(_ => _ as T);
 
-            if (_values.Any() && _values.First().GetType() != type)
-            {
-                throw new NotSupportedException($"Not supported type. Type of values is {_values.First().GetType()}");
-            }
-        }
-    }
+			if (type == typeof(byte[]) && valuesType == typeof(sbyte[])) return _values.Select(_ => _ as T);
 
-    public class DirectoryModificationAttribute : DirectoryAttribute
-    {
-        public Native.Native.LdapModOperation LdapModOperation { get; set; } =
-            Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
-    }
+			if (type == typeof(string))
+				return _values.Select(_ => Encoder.Instance.GetString((byte[]) _))
+					.Select(_ => _ as T);
 
-    public abstract class DirectoryAttributeCollectionBase<T> : List<T>
-        where T : DirectoryAttribute
-    {
-        public IEnumerable<string> AttributeNames =>
-            this.Select(x => x.Name);
-        
-        public bool Contains(string attribute) =>
-            this.Any(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+			if (type == typeof(byte[]))
+				return _values.Select(_ => Encoder.Instance.GetBytes((string) _))
+					.Select(_ => _ as T);
 
-        public DirectoryAttribute this[string attribute]
-        {
-            get
-            {
-                var item = this.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+			throw new NotSupportedException(
+				$"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
+		}
 
-                if (item == null)
-                {
-                    throw new KeyNotFoundException();
-                }
+		internal List<object> GetRawValues()
+		{
+			return _values;
+		}
 
-                return item;
-            }
-        }
+		public void Add<T>(T value) where T : class, IEnumerable
+		{
+			ThrowIfWrongType<T>();
+			_values.Add(value);
+		}
 
-        public bool TryGetValue(string attribute, out DirectoryAttribute item)
-        {
-            item = this.FirstOrDefault(x => String.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+		public void AddValues<T>(IEnumerable<T> values) where T : class, IEnumerable
+		{
+			ThrowIfWrongType<T>();
+			_values.AddRange(values);
+		}
 
-            if (item == null)
-            {
-                return false;
-            }
+		private void ThrowIfWrongType<T>() where T : class, IEnumerable
+		{
+			var type = typeof(T);
+			if (type != typeof(string) && type != typeof(byte[]) && type != typeof(sbyte[]))
+				throw new NotSupportedException(
+					$"Not supported type. You could specify 'string' or 'byte[]' of generic methods. Your type is {type.Name}");
 
-            return true;
-        }
+			if (_values.Any() && _values.First().GetType() != type)
+				throw new NotSupportedException($"Not supported type. Type of values is {_values.First().GetType()}");
+		}
+	}
 
-        public bool Remove(string attribute)
-        {
-            var found = false;
+	public class DirectoryModificationAttribute : DirectoryAttribute
+	{
+		public Native.Native.LdapModOperation LdapModOperation { get; set; } =
+			Native.Native.LdapModOperation.LDAP_MOD_REPLACE;
+	}
 
-            for (int i = 0; i < Count; i++)
-            {
-                if (String.Equals(this[i].Name, attribute, StringComparison.OrdinalIgnoreCase))
-                {
-                    RemoveAt(i);
-                    --i;
+	public abstract class DirectoryAttributeCollectionBase<T> : List<T>
+		where T : DirectoryAttribute
+	{
+		public IEnumerable<string> AttributeNames =>
+			this.Select(x => x.Name);
 
-                    found = true;
-                }
-            }
+		public bool Contains(string attribute)
+		{
+			return this.Any(x => string.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
+		}
 
-            return found;
-        }
-    }
+		public DirectoryAttribute this[string attribute]
+		{
+			get
+			{
+				var item = this.FirstOrDefault(
+					x => string.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
 
-    public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
-    {
-	    internal SearchResultAttributeCollection()
-		    : base(StringComparer.OrdinalIgnoreCase)
-	    {
-	    }
+				if (item == null) throw new KeyNotFoundException();
 
-	    public ICollection<string> AttributeNames => Dictionary.Keys;
+				return item;
+			}
+		}
 
-	    protected override string GetKeyForItem(DirectoryAttribute item)
-	    {
-		    return item.Name;
-	    }
-    }
+		public bool TryGetValue(string attribute, out DirectoryAttribute item)
+		{
+			item = this.FirstOrDefault(x => string.Equals(x.Name, attribute, StringComparison.OrdinalIgnoreCase));
 
-    public class ModifyAttributeCollection : DirectoryAttributeCollectionBase<DirectoryModificationAttribute>
-    {
-        internal ModifyAttributeCollection()
-        {
-        }
-    }
+			if (item == null) return false;
+
+			return true;
+		}
+
+		public bool Remove(string attribute)
+		{
+			var found = false;
+
+			for (var i = 0; i < Count; i++)
+				if (string.Equals(this[i].Name, attribute, StringComparison.OrdinalIgnoreCase))
+				{
+					RemoveAt(i);
+					--i;
+
+					found = true;
+				}
+
+			return found;
+		}
+	}
+
+	public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
+	{
+		internal SearchResultAttributeCollection()
+			: base(StringComparer.OrdinalIgnoreCase)
+		{
+		}
+
+		public ICollection<string> AttributeNames => Dictionary.Keys;
+
+		protected override string GetKeyForItem(DirectoryAttribute item)
+		{
+			return item.Name;
+		}
+	}
+
+	public class ModifyAttributeCollection : DirectoryAttributeCollectionBase<DirectoryModificationAttribute>
+	{
+		internal ModifyAttributeCollection()
+		{
+		}
+	}
 }

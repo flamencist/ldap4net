@@ -37,6 +37,47 @@ namespace LdapForNet.Utils
             return builder.ToString();
         }
 
+        internal static string ParseFromBytes(byte[] objectSid)
+        {
+	        var sid = new StringBuilder("S-");
+
+	        // get byte(0) - revision level
+	        sid.AppendFormat("{0}", objectSid[0]);
+
+	        // byte(1) - count of sub-authorities
+	        var countSubAuths = objectSid[1] & 0xFF;
+
+	        // byte(2-7) - 48 bit authority ([Big-Endian])
+	        long authority = 0;
+
+	        for (var i = 2; i <= 7; i++)
+	        {
+		        authority |= (long)objectSid[i] << (8 * (5 - (i - 2)));
+	        }
+
+	        sid.AppendFormat("-{0:X}", authority);
+
+	        // iterate all the sub-auths and then countSubAuths x 32 bit sub authorities ([Little-Endian])
+	        var offset = 8;
+	        var size = 4; //4 bytes for each sub auth
+
+	        for (var j = 0; j < countSubAuths; j++)
+	        {
+		        long subAuthority = 0;
+		        for (var k = 0; k < size; k++)
+		        {
+			        subAuthority |= (long)(objectSid[offset + k] & 0xFF) << (8 * k);
+		        }
+
+		        // format it
+		        sid.AppendFormat("-{0}", subAuthority);
+
+		        offset += size;
+	        }
+
+	        return sid.ToString();
+        }
+
         private static string EndianReverse(string hex)
         {
             var reversed = new char[hex.Length];
