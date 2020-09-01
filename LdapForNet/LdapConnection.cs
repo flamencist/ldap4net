@@ -261,9 +261,11 @@ namespace LdapForNet
 
 			var requestHandler = SendRequest(directoryRequest, out var messageId);
 
-			return await Task.Factory
+			var response =  await Task.Factory
 				.StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token)
 				.ConfigureAwait(false);
+			ThrowIfResponseError(response);
+			return response;
 		}
 
 		public DirectoryResponse SendRequest(DirectoryRequest directoryRequest)
