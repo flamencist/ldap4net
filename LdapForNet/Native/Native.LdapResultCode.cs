@@ -34,6 +34,7 @@ namespace LdapForNet.Native
             InvalidDNSyntax = 34,
             AliasDereferencingProblem = 36,
             InappropriateAuthentication = 48,
+            InvalidCredentials = 49,
             InsufficientAccessRights = 50,
             Busy = 51,
             Unavailable = 52,

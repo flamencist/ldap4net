@@ -44,26 +44,20 @@ namespace LdapForNet
 
         public LdapEntry LdapEntry
         {
-            get
-            {
-                return new LdapEntry
-                {
-                    Dn = DistinguishedName,
-                    Attributes = Attributes.ToDictionary(_ => _.Name, _ => _.GetValues<string>().ToList())
-                };
-            }
+            get =>
+	            new LdapEntry
+	            {
+		            Dn = DistinguishedName,
+		            DirectoryAttributes = Attributes
+	            };
             set
             {
                 DistinguishedName = value.Dn;
                 Attributes.Clear();
-                foreach (var attribute in value.Attributes)
+                
+                foreach (var attribute in value.DirectoryAttributes)
                 {
-                    var item = new DirectoryAttribute
-                    {
-                        Name = attribute.Key
-                    };
-                    item.AddValues(attribute.Value);
-                    Attributes.Add(item);
+	                Attributes.Add(attribute);
                 }
             }
         }
