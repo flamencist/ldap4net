@@ -221,10 +221,6 @@ namespace LdapForNet
 			Native.Native.LdapSearchScope scope = Native.Native.LdapSearchScope.LDAP_SCOPE_SUBTREE)
 		{
 			var response = (SearchResponse)SendRequest(new SearchRequest(@base, filter, scope, attributes));
-			if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
-			{
-				ThrowIfResponseError(response);
-			}
 
 			return response.Entries
 				.Select(_ => _.ToLdapEntry())
@@ -237,10 +233,6 @@ namespace LdapForNet
 		{
 			var response =
 				(SearchResponse)await SendRequestAsync(new SearchRequest(@base, filter, scope, attributes), token);
-			if (response.ResultCode != Native.Native.ResultCode.Success && !response.Entries.Any())
-			{
-				ThrowIfResponseError(response);
-			}
 
 			return response.Entries
 				.Select(_ => _.ToLdapEntry())
@@ -261,18 +253,20 @@ namespace LdapForNet
 
 			var requestHandler = SendRequest(directoryRequest, out var messageId);
 
-			return await Task.Factory
+			var response =  await Task.Factory
 				.StartNew(() => ProcessResponse(directoryRequest, requestHandler, messageId, token), token)
 				.ConfigureAwait(false);
+			ThrowIfResponseError(response);
+			return response;
 		}
 
 		public DirectoryResponse SendRequest(DirectoryRequest directoryRequest)
 		{
 			ThrowIfNotBound();
 			var requestHandler = SendRequest(directoryRequest, out var messageId);
-			var directoryResponse = ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
-            ThrowIfResponseError(directoryResponse);
-            return directoryResponse;
+			var response = ProcessResponse(directoryRequest, requestHandler, messageId, CancellationToken.None);
+            ThrowIfResponseError(response);
+            return response;
 		}
 
 		public void StartTransportLayerSecurity(bool trustAll = false)
@@ -299,7 +293,7 @@ namespace LdapForNet
 
 
 		public async Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default) =>
-			ThrowIfResponseError(await SendRequestAsync(new ModifyRequest(entry), token));
+			await SendRequestAsync(new ModifyRequest(entry), token);
 
 		public void Modify(LdapModifyEntry entry) => SendRequest(new ModifyRequest(entry));
 
@@ -316,15 +310,15 @@ namespace LdapForNet
 		}
 
 		public async Task DeleteAsync(string dn, CancellationToken cancellationToken = default) =>
-			ThrowIfResponseError(await SendRequestAsync(new DeleteRequest(dn), cancellationToken));
+			await SendRequestAsync(new DeleteRequest(dn), cancellationToken);
 
 		public void Delete(string dn) => SendRequest(new DeleteRequest(dn));
 
 		public async Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
 			CancellationToken cancellationToken = default) =>
-			ThrowIfResponseError(await SendRequestAsync(
+			await SendRequestAsync(
 				new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn },
-				cancellationToken));
+				cancellationToken);
 
 		public void Rename(string dn, string newRdn, string newParent, bool isDeleteOldRdn) =>
 			SendRequest(new ModifyDNRequest(dn, newParent, newRdn) { DeleteOldRdn = isDeleteOldRdn });
@@ -336,7 +330,7 @@ namespace LdapForNet
 		}
 
 		public async Task AddAsync(LdapEntry entry, CancellationToken token = default) =>
-			ThrowIfResponseError(await SendRequestAsync(new AddRequest(entry), token));
+			await SendRequestAsync(new AddRequest(entry), token);
 
 
 		private DirectoryResponse ProcessResponse(DirectoryRequest directoryRequest,
