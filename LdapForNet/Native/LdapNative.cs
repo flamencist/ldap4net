@@ -167,7 +167,7 @@ namespace LdapForNet.Native
 
         internal void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string, string> details = default)
         {
-            if (res != (int) ResultCode.Success)
+            if (res != (int) ResultCode.Success && res != (int) ResultCode.CompareFalse && res != (int) ResultCode.CompareTrue && res != (int) ResultCode.Referral && res != (int) ResultCode.ReferralV2)
             {
                 var error = LdapError2String(res);
                 var info = GetAdditionalErrorInfo(ld);
