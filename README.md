@@ -148,7 +148,7 @@ using (var cn = new LdapConnection())
 using (var cn = new LdapConnection())
 {
 	// connect with URI
-	cn.Connect(new URI("ldaps://dc.example.com:636"));
+	cn.Connect(new Uri("ldaps://dc.example.com:636"));
 	....
 }
 
@@ -158,7 +158,7 @@ using (var cn = new LdapConnection())
 using (var cn = new LdapConnection())
 {
 	// connect with ldap version 2
-	cn.Connect(new URI("ldaps://dc.example.com:636",LdapForNet.Native.Native.LdapVersion.LDAP_VERSION2));
+	cn.Connect(new Uri("ldaps://dc.example.com:636",LdapForNet.Native.Native.LdapVersion.LDAP_VERSION2));
 	....
 }
 
