@@ -18,7 +18,7 @@ namespace LdapForNet.RequestHandlers
 
         internal void SetNative(LdapNative native) => Native = native;
 
-        public int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
+        public virtual int SendRequest(SafeHandle handle, DirectoryRequest request, ref int messageId)
         {
             var serverControlArray = AllocControls(request.Controls, true);
             var clientControlArray = AllocControls(request.Controls, false);
