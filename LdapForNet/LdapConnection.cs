@@ -13,11 +13,22 @@ namespace LdapForNet
 {
 	public class LdapConnection : ILdapConnection
 	{
-		private readonly LdapNative _native = LdapNative.Instance;
+		private readonly LdapNative _native;
+		private readonly IRequestHandlerResolver _requestHandlerResolver;
 		private SafeHandle _ld;
 		private bool _bound;
 		private TimeSpan _connectionTimeOut = new TimeSpan(0, 0, 30);
 
+		public LdapConnection():this(LdapNative.Instance, new RequestHandlerResolver())
+		{
+		}
+		
+		internal LdapConnection(LdapNative native, IRequestHandlerResolver requestHandlerResolver)
+		{
+			_native = native;
+			_requestHandlerResolver = requestHandlerResolver;
+		}
+		
 		public TimeSpan Timeout
 		{
 			get => _connectionTimeOut;
@@ -343,38 +354,39 @@ namespace LdapForNet
 			var timeout = GetConnectionTimeval();
 
 			directoryRequest.MessageId = messageId;
-			token.Register(() => Abandon(new AbandonRequest(messageId)));
-
-			DirectoryResponse response = default;
-			while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
+			using(token.Register(() => Abandon(new AbandonRequest(messageId))))
 			{
-				var resType = _native.ldap_result(_ld, messageId, 0, timeout, ref msg);
-				ThrowIfResultError(directoryRequest, resType, response);
-
-				status = requestHandler.Handle(_ld, resType, msg, out response);
-				response.MessageId = messageId;
-
-				if (status == LdapResultCompleteStatus.Unknown)
+				DirectoryResponse response = default;
+				while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
 				{
-					throw new LdapOperationException(response, $"Unknown search type {resType}", nameof(_native.ldap_result), 1);
+					var resType = _native.ldap_result(_ld, messageId, 0, timeout, ref msg);
+					ThrowIfResultError(directoryRequest, resType, response);
+
+					status = requestHandler.Handle(_ld, resType, msg, out response);
+					response.MessageId = messageId;
+
+					if (status == LdapResultCompleteStatus.Unknown)
+					{
+						throw new LdapOperationException(response, $"Unknown search type {resType}", nameof(_native.ldap_result), 1);
+					}
+
+					if (status == LdapResultCompleteStatus.Complete)
+					{
+						var responseReferral = new Uri[0];
+						var responseControl = new DirectoryControl[0];
+						var res = ParseResultError(msg, out var errorMessage, out var matchedDn, ref responseReferral, ref responseControl);
+						response.ResultCode = (Native.Native.ResultCode)res;
+						response.ErrorMessage = errorMessage;
+						response.Referral = responseReferral;
+						response.Controls = responseControl;
+						response.MatchedDN = matchedDn;
+					}
 				}
 
-				if (status == LdapResultCompleteStatus.Complete)
-				{
-					var responseReferral = new Uri[0];
-					var responseControl = new DirectoryControl[0];
-					var res = ParseResultError(msg, out var errorMessage, out var matchedDn, ref responseReferral, ref responseControl);
-					response.ResultCode = (Native.Native.ResultCode)res;
-					response.ErrorMessage = errorMessage;
-					response.Referral = responseReferral;
-					response.Controls = responseControl;
-					response.MatchedDN = matchedDn;
-				}
+				return response;
 			}
-
-			return response;
 		}
-
+	
 		private LDAP_TIMEVAL GetConnectionTimeval()
 		{
 			return new LDAP_TIMEVAL
@@ -385,7 +397,7 @@ namespace LdapForNet
 
 		private RequestHandler SendRequest(DirectoryRequest directoryRequest, out int messageId)
 		{
-			var requestHandler = GetSendRequestHandler(directoryRequest);
+			var requestHandler = _requestHandlerResolver.Resolve(directoryRequest);
 			messageId = 0;
 			_native.ThrowIfError(_ld, requestHandler.SendRequest(_ld, directoryRequest, ref messageId),
 				requestHandler.GetType().Name);
@@ -405,33 +417,6 @@ namespace LdapForNet
 					break;
 				case Native.Native.LdapResultType.LDAP_TIMEOUT:
 					throw new LdapOperationException(directoryResponse, "Timeout exceeded", nameof(_native.ldap_result), 1);
-			}
-		}
-
-		private static RequestHandler GetSendRequestHandler(DirectoryRequest request)
-		{
-			switch (request)
-			{
-				case AddRequest _:
-					return new AddRequestHandler();
-				case ModifyRequest _:
-					return new ModifyRequestHandler();
-				case SearchRequest _:
-					return new SearchRequestHandler();
-				case DeleteRequest _:
-					return new DeleteRequestHandler();
-				case ModifyDNRequest _:
-					return new ModifyDnRequestHandler();
-				case CompareRequest _:
-					return new CompareRequestHandler();
-				case ExtendedRequest _:
-					return new ExtendedRequestHandler();
-				case TransportLayerSecurityRequest _:
-					return new TransportLayerSecurityRequestHandler();
-				case AbandonRequest _:
-					return new AbandonRequestHandler();
-				default:
-					throw new LdapException("Not supported operation of request: " + request?.GetType());
 			}
 		}
 
