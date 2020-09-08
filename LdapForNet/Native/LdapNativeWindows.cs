@@ -128,8 +128,8 @@ namespace LdapForNet.Native
                 if (msgidp == -1)
                 {
                     throw new LdapException(
-                        $"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",
-                        nameof(NativeMethodsWindows.ldap_bind), 1);
+                        new LdapExceptionData($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsWindows.ldap_bind)} returns wrong or empty result",
+                            nameof(NativeMethodsWindows.ldap_bind), 1));
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, timeout, ref result);

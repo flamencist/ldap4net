@@ -104,7 +104,7 @@ namespace LdapForNet.Native
                 var errorName = Encoder.Instance.PtrToString(NativeMethodsLinux.gnutls_strerror_name(res));
                 var errorMessage = Encoder.Instance.PtrToString(NativeMethodsLinux.gnutls_strerror(res));
                 throw new LdapException(
-                    $"GnuTls error name: {errorName}. GnuTls error message: {errorMessage} Result: {res}. Method: {method}");
+                    new LdapExceptionData($"GnuTls error name: {errorName}. GnuTls error message: {errorMessage} Result: {res}. Method: {method}"));
             }
         }
 
@@ -175,8 +175,8 @@ namespace LdapForNet.Native
 
                     if (result == IntPtr.Zero)
                     {
-                        throw new LdapException("Result is not initialized",
-                            nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), 1);
+                        throw new LdapException(new LdapExceptionData("Result is not initialized",
+                            nameof(NativeMethodsLinux.ldap_sasl_interactive_bind), 1));
                     }
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
 
@@ -213,8 +213,8 @@ namespace LdapForNet.Native
                 if (msgidp == -1)
                 {
                     throw new LdapException(
-                        $"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result",
-                        nameof(NativeMethodsLinux.ldap_sasl_bind), 1);
+                        new LdapExceptionData($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsLinux.ldap_sasl_bind)} returns wrong or empty result",
+                            nameof(NativeMethodsLinux.ldap_sasl_bind), 1));
                 }
 
                 var rc = ldap_result(ld, msgidp, 0, timeout, ref result);

@@ -153,10 +153,10 @@ namespace LdapForNet.Native
             {
                 if (details != default)
                 {
-                    throw new LdapException(LdapError2String(res), method, res, DetailsToString(details));
+                    throw new LdapException(new LdapExceptionData(LdapError2String(res), method, res, DetailsToString(details)));
                 }
 
-                throw new LdapException(LdapError2String(res), method, res);
+                throw new LdapException(new LdapExceptionData(LdapError2String(res), method, res));
             }
         }
 
@@ -172,13 +172,18 @@ namespace LdapForNet.Native
                 var error = LdapError2String(res);
                 var info = GetAdditionalErrorInfo(ld);
                 var message = !string.IsNullOrWhiteSpace(info) ? $"{error}. {info}" : error;
-                if (details != default)
-                {
-                    throw new LdapException(message, method, res, DetailsToString(details));
-                }
-
-                throw new LdapException(message, method, res);
+                throw ConstructException(message, method, res, details);
             }
+        }
+
+        private static LdapException ConstructException(string message, string method, int res, IDictionary<string,string> details)
+        {
+            if (details != default)
+            {
+                return new LdapException(new LdapExceptionData(message, method, res, DetailsToString(details)));
+            }
+
+            return new LdapException(new LdapExceptionData(message, method, res));
         }
     }
 }
