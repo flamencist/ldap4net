@@ -204,7 +204,7 @@ namespace LdapForNet
         public static object[] Decode(string format, byte[] value)
         {
             var decodeResult = TryDecode(format, value, out var decodeSucceeded);
-            return decodeSucceeded ? decodeResult : throw new LdapException(new LdapExceptionData("BerConversionException"));
+            return decodeSucceeded ? decodeResult : throw new LdapBerConversionException(new LdapExceptionData("BerConversionException"));
         }
 
         internal static object[] TryDecode(string format, byte[] value, out bool decodeSucceeded)
