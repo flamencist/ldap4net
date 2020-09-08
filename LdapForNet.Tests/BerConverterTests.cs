@@ -209,7 +209,7 @@ namespace LdapForNetTests
         [InlineData("BBB", new byte[] {48, 132, 0, 0, 0, 6, 1, 1, 255, 1, 1, 0})]
         public void Decode_Invalid_ThrowsBerConversionException(string format, byte[] values)
         {
-            Assert.Throws<LdapException>(() => BerConverter.Decode(format, values));
+            Assert.Throws<LdapBerConversionException>(() => BerConverter.Decode(format, values));
         }
 
         public static IEnumerable<object[]> Encode_Decode_TestData()
