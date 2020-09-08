@@ -151,18 +151,13 @@ namespace LdapForNet.Native
         {
             if (res != (int) ResultCode.Success)
             {
-                if (details != default)
-                {
-                    throw new LdapException(new LdapExceptionData(LdapError2String(res), method, res, DetailsToString(details)));
-                }
-
-                throw new LdapException(new LdapExceptionData(LdapError2String(res), method, res));
+                throw ConstructException(LdapError2String(res), method, res, details);
             }
         }
 
         private static string DetailsToString(IDictionary<string, string> details)
         {
-            return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}:{_.Value}"));
+            return string.Join(Environment.NewLine, details.Select(_ => $"{_.Key}: {_.Value}"));
         }
 
         internal void ThrowIfError(SafeHandle ld, int res, string method, IDictionary<string, string> details = default)
@@ -178,12 +173,51 @@ namespace LdapForNet.Native
 
         private static LdapException ConstructException(string message, string method, int res, IDictionary<string,string> details)
         {
-            if (details != default)
+            var data = details != null ? new LdapExceptionData(message, method, res, DetailsToString(details)): new LdapExceptionData(message, method, res);
+            return (ResultCode) res switch
             {
-                return new LdapException(new LdapExceptionData(message, method, res, DetailsToString(details)));
-            }
-
-            return new LdapException(new LdapExceptionData(message, method, res));
+                ResultCode.LDAP_NOT_SUPPORTED => new LdapNotSupportedException(data),
+                ResultCode.LDAP_PARAM_ERROR => new LdapParamErrorException(data),
+                ResultCode.OperationsError => new LdapOperationsErrorException(data),
+                ResultCode.ProtocolError => new LdapProtocolErrorException(data),
+                ResultCode.TimeLimitExceeded => new LdapTimeLimitExceededException(data),
+                ResultCode.SizeLimitExceeded => new LdapSizeLimitExceededException(data),
+                ResultCode.AuthMethodNotSupported => new LdapAuthMethodNotSupportedException(data),
+                ResultCode.StrongAuthRequired => new LdapStrongAuthRequiredException(data),
+                ResultCode.AdminLimitExceeded => new LdapAdminLimitExceededException(data),
+                ResultCode.UnavailableCriticalExtension => new LdapUnavailableCriticalExtensionException(data),
+                ResultCode.ConfidentialityRequired => new LdapConfidentialityRequiredException(data),
+                ResultCode.NoSuchAttribute => new LdapNoSuchAttributeException(data),
+                ResultCode.UndefinedAttributeType => new LdapUndefinedAttributeTypeException(data),
+                ResultCode.InappropriateMatching => new LdapInappropriateMatchingException(data),
+                ResultCode.ConstraintViolation => new LdapConstraintViolationException(data),
+                ResultCode.AttributeOrValueExists => new LdapAttributeOrValueExistsException(data),
+                ResultCode.InvalidAttributeSyntax => new LdapInvalidAttributeSyntaxException(data),
+                ResultCode.NoSuchObject => new LdapNoSuchObjectException(data),
+                ResultCode.AliasProblem => new LdapAliasProblemException(data),
+                ResultCode.InvalidDNSyntax => new LdapInvalidDnSyntaxException(data),
+                ResultCode.AliasDereferencingProblem => new LdapAliasDereferencingProblemException(data),
+                ResultCode.InappropriateAuthentication => new LdapInappropriateAuthenticationException(data),
+                ResultCode.InvalidCredentials => new LdapInvalidCredentialsException(data),
+                ResultCode.InsufficientAccessRights => new LdapInsufficientAccessRightsException(data),
+                ResultCode.Busy => new LdapBusyException(data),
+                ResultCode.Unavailable => new LdapUnavailableException(data),
+                ResultCode.UnwillingToPerform => new LdapUnwillingToPerformException(data),
+                ResultCode.LoopDetect => new LdapLoopDetectException(data),
+                ResultCode.SortControlMissing => new LdapSortControlMissingException(data),
+                ResultCode.OffsetRangeError => new LdapOffsetRangeErrorException(data),
+                ResultCode.NamingViolation => new LdapNamingViolationException(data),
+                ResultCode.ObjectClassViolation => new LdapObjectClassViolationException(data),
+                ResultCode.NotAllowedOnNonLeaf => new LdapNotAllowedOnNonLeafException(data),
+                ResultCode.NotAllowedOnRdn => new LdapNotAllowedOnRdnException(data),
+                ResultCode.EntryAlreadyExists => new LdapEntryAlreadyExistsException(data),
+                ResultCode.ObjectClassModificationsProhibited => new LdapObjectClassModificationsProhibitedException(data),
+                ResultCode.ResultsTooLarge => new LdapResultsTooLargeException(data),
+                ResultCode.AffectsMultipleDsas => new LdapAffectsMultipleDsasException(data),
+                ResultCode.VirtualListViewError => new LdapVirtualListViewErrorException(data),
+                ResultCode.Other => new LdapOtherException(data),
+                _ => new LdapException(data)
+            };
         }
     }
 }
