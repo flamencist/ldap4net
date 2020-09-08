@@ -171,10 +171,19 @@ namespace LdapForNet.Native
             }
         }
 
-        private static LdapException ConstructException(string message, string method, int res, IDictionary<string,string> details)
+        private LdapException ConstructException(string message, string method, int res,
+            IDictionary<string, string> details)
         {
             var data = details != null ? new LdapExceptionData(message, method, res, DetailsToString(details)): new LdapExceptionData(message, method, res);
-            return (ResultCode) res switch
+            return ConstructException(data);
+        }
+        internal LdapException ConstructException(LdapExceptionData data)
+        {
+            if (data.Result == null)
+            {
+                return new LdapException(data);
+            }
+            return (ResultCode) data.Result switch
             {
                 ResultCode.LDAP_NOT_SUPPORTED => new LdapNotSupportedException(data),
                 ResultCode.LDAP_PARAM_ERROR => new LdapParamErrorException(data),

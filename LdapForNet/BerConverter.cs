@@ -150,7 +150,7 @@ namespace LdapForNet
                 if (encodeAction.Action(berElement, fmt, value, valueCount) == -1)
                 {
                     Debug.WriteLine("ber_printf failed\n");
-                    throw new LdapException(new LdapExceptionData($"ber_printf failed. Format: {format}. Current char: {fmt} with index {i}"));
+                    throw new LdapBerConversionException(new LdapExceptionData($"ber_printf failed. Format: {format}. Current char: {fmt} with index {i}"));
                 }
 
                 if (encodeAction.Next)
@@ -171,7 +171,7 @@ namespace LdapForNet
 
                 if (rc == -1)
                 {
-                    throw new LdapException(new LdapExceptionData("ber_flatten failed"));
+                    throw new LdapBerConversionException(new LdapExceptionData("ber_flatten failed"));
                 }
 
                 if (flattenPtr != IntPtr.Zero)

@@ -97,7 +97,7 @@ namespace LdapForNet
 			}
 			else
 			{
-				throw new LdapException(
+				throw new LdapAuthMethodNotSupportedException(
 					new LdapExceptionData($"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. "));
 			}
 
@@ -128,7 +128,7 @@ namespace LdapForNet
 			}
 			else
 			{
-				throw new LdapException(
+				throw new LdapAuthMethodNotSupportedException(
 					new LdapExceptionData($"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. "));
 			}
 
@@ -367,7 +367,7 @@ namespace LdapForNet
 
 					if (status == LdapResultCompleteStatus.Unknown)
 					{
-						throw new LdapOperationException(response, new LdapExceptionData($"Unknown search type {resType}", nameof(_native.ldap_result), 1));
+						throw new LdapException(new LdapExceptionData($"Unknown search type {resType}", nameof(_native.ldap_result), 1){ Response = response});
 					}
 
 					if (status == LdapResultCompleteStatus.Complete)
@@ -412,11 +412,18 @@ namespace LdapForNet
 					var error = _native.LdapGetLastError(_ld);
 					if (error != (int)Native.Native.ResultCode.Success)
 					{
-						throw new LdapOperationException(directoryResponse, new LdapExceptionData(_native.LdapError2String(error), directoryRequest.GetType().Name, error));
+						throw _native.ConstructException(new LdapExceptionData(_native.LdapError2String(error),
+							directoryRequest.GetType().Name, error)
+						{
+							Response = directoryResponse
+						});
 					}
 					break;
 				case Native.Native.LdapResultType.LDAP_TIMEOUT:
-					throw new LdapOperationException(directoryResponse, new LdapExceptionData("Timeout exceeded", nameof(_native.ldap_result), 1));
+					throw new LdapTimeoutException(new LdapExceptionData("Timeout exceeded", nameof(_native.ldap_result), 1)
+					{
+						Response = directoryResponse
+					});
 			}
 		}
 

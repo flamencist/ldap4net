@@ -136,7 +136,7 @@ namespace LdapForNetTests
         [InlineData("{{}}}")]
         public void Encode_InvalidFormat_ThrowsBerConversionException(string format)
         {
-            Assert.Throws<LdapException>(() => BerConverter.Encode(format));
+            Assert.Throws<LdapBerConversionException>(() => BerConverter.Encode(format));
         }
 
         public static IEnumerable<object[]> Decode_TestData()

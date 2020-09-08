@@ -8,26 +8,22 @@ namespace LdapForNet
     {
         public Native.Native.ResultCode?  ResultCode { get; }
         
+        public DirectoryResponse Response { get; }
+        
        public LdapException(LdapExceptionData data) : base(data.ToString())
        {
 	        if (data.Result != null)
 	        {
 		        ResultCode = (Native.Native.ResultCode) data.Result;
 	        }
+
+	        if (data.Response != null)
+	        {
+		        Response = data.Response;
+	        }
 	   }
     }
-
-    [Serializable]
-    public class LdapOperationException : LdapException
-    {
-	    public LdapOperationException(DirectoryResponse response, LdapExceptionData data) : base(data)
-	    {
-		    Response = response;
-	    }
-
-	    public DirectoryResponse Response { get; internal set; }
-    }
-
+    
     [Serializable]
     public class LdapExceptionData
     {
@@ -61,6 +57,8 @@ namespace LdapForNet
 	    public int? Result { get; }
 	    public string Method { get;  }
 	    public string Details { get; }
+	    
+	    public DirectoryResponse Response { get; internal set; }
 
 	    public override string ToString()
 	    {
@@ -398,6 +396,22 @@ namespace LdapForNet
 	public class LdapOtherException : LdapException
 	{
 		public LdapOtherException(LdapExceptionData data) : base(data)
+		{
+		}
+	}
+	
+	[Serializable]
+	public class LdapTimeoutException : LdapException
+	{
+		public LdapTimeoutException(LdapExceptionData data) : base(data)
+		{
+		}
+	}
+	
+	[Serializable]
+	public class LdapBerConversionException : LdapException
+	{
+		public LdapBerConversionException(LdapExceptionData data) : base(data)
 		{
 		}
 	}
