@@ -39,7 +39,7 @@ namespace LdapForNet
                 SetHandle(LdapNative.Instance.ber_init(ptr));
                 if (handle == IntPtr.Zero)
                 {
-                    throw new LdapException("Could not initialized ber value");
+                    throw new LdapException(new LdapExceptionData("Could not initialized ber value"));
                 }
             }
             finally

@@ -25,7 +25,7 @@ namespace LdapForNet.RequestHandlers
                 case AbandonRequest _:
                     return new AbandonRequestHandler();
                 default:
-                    throw new LdapException("Not supported operation of request: " + request?.GetType());
+                    throw new LdapException(new LdapExceptionData("Not supported operation of request: " + request?.GetType()));
             }
         }
     }

@@ -91,8 +91,8 @@ namespace LdapForNet.Native
 
                     if (result == IntPtr.Zero)
                     {
-                        throw new LdapException("Result is not initialized",
-                            nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), 1);
+                        throw new LdapException(new LdapExceptionData("Result is not initialized",
+                            nameof(NativeMethodsOsx.ldap_sasl_interactive_bind), 1));
                     }
                 } while (rc == (int) Native.ResultCode.SaslBindInProgress);
 
@@ -128,8 +128,8 @@ namespace LdapForNet.Native
                 if (msgidp == -1)
                 {
                     throw new LdapException(
-                        $"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsOsx.ldap_sasl_bind)} returns wrong or empty result",
-                        nameof(NativeMethodsOsx.ldap_sasl_bind), 1);
+                        new LdapExceptionData($"{nameof(BindSimpleAsync)} failed. {nameof(NativeMethodsOsx.ldap_sasl_bind)} returns wrong or empty result",
+                            nameof(NativeMethodsOsx.ldap_sasl_bind), 1));
                 }
 
                 var rc = NativeMethodsOsx.ldap_result(ld, msgidp, 0, timeout, ref result);

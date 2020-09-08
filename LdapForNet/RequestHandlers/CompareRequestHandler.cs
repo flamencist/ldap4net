@@ -16,7 +16,7 @@ namespace LdapForNet.RequestHandlers
                     compareRequest.Assertion.GetRawValues().Count != 1
                 )
                 {
-                    throw new LdapException("Wrong assertion");
+                    throw new LdapException(new LdapExceptionData("Wrong assertion"));
                 }
 
                 var value = compareRequest.Assertion.GetRawValues().Single();

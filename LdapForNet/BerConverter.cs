@@ -150,7 +150,7 @@ namespace LdapForNet
                 if (encodeAction.Action(berElement, fmt, value, valueCount) == -1)
                 {
                     Debug.WriteLine("ber_printf failed\n");
-                    throw new LdapException($"ber_printf failed. Format: {format}. Current char: {fmt} with index {i}");
+                    throw new LdapBerConversionException(new LdapExceptionData($"ber_printf failed. Format: {format}. Current char: {fmt} with index {i}"));
                 }
 
                 if (encodeAction.Next)
@@ -171,7 +171,7 @@ namespace LdapForNet
 
                 if (rc == -1)
                 {
-                    throw new LdapException("ber_flatten failed");
+                    throw new LdapBerConversionException(new LdapExceptionData("ber_flatten failed"));
                 }
 
                 if (flattenPtr != IntPtr.Zero)
@@ -204,7 +204,7 @@ namespace LdapForNet
         public static object[] Decode(string format, byte[] value)
         {
             var decodeResult = TryDecode(format, value, out var decodeSucceeded);
-            return decodeSucceeded ? decodeResult : throw new LdapException("BerConversionException");
+            return decodeSucceeded ? decodeResult : throw new LdapBerConversionException(new LdapExceptionData("BerConversionException"));
         }
 
         internal static object[] TryDecode(string format, byte[] value, out bool decodeSucceeded)

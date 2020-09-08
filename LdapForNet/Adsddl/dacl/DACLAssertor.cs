@@ -175,7 +175,7 @@ namespace LdapForNet.Adsddl.dacl
             DirectoryEntry entry = response.Entries.FirstOrDefault();
             if (entry == null)
             {
-                throw new LdapException("Couldn't find ldap");
+                throw new LdapException(new LdapExceptionData("Couldn't find ldap"));
             }
 
             byte[] descbytes = entry.GetBytes(LdapAttributes.NtSecurityDescriptor);

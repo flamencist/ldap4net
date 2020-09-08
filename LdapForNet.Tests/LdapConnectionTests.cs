@@ -480,7 +480,7 @@ namespace LdapForNetTests
 				};
 
 				var response = (AddResponse)connection.SendRequest(new AddRequest(ldapEntry));
-				Assert.Throws<LdapException>(() => connection.SendRequest(new AddRequest(ldapEntry)));
+				Assert.Throws<LdapEntryAlreadyExistsException>(() => connection.SendRequest(new AddRequest(ldapEntry)));
 			}
 		}
 
