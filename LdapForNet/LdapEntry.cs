@@ -265,7 +265,7 @@ namespace LdapForNet
 
 	public class SearchResultAttributeCollection : KeyedCollection<string, DirectoryAttribute>
 	{
-		internal SearchResultAttributeCollection()
+		public SearchResultAttributeCollection()
 			: base(StringComparer.OrdinalIgnoreCase)
 		{
 		}
