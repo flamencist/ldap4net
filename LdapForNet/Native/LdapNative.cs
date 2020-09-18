@@ -20,6 +20,13 @@ namespace LdapForNet.Native
                 return new LdapNativeLinux();
             }
 
+#if NETCOREAPP3_1 || NETCOREAPP5_0
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            {
+                return new LdapNativeLinux();
+            }
+#endif
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 return new LdapNativeOsx();
