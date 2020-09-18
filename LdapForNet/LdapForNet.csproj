@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1</TargetFrameworks>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>2.7.9</Version>
+    <Version>2.7.10</Version>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Library is cross platform. Also supported KERBEROS (passwordless) authentication!.</Description>
@@ -15,7 +15,7 @@
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
     <PackageReleaseNotes>
-      - fix SearchResultAttributeCollection visibility
+      - Add unintrusive platform detection for FreeBSD. Thanks Jannik Voss (@vossjannik)
     </PackageReleaseNotes>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
