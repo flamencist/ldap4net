@@ -29,9 +29,14 @@ namespace LdapForNet
             }
 
             var rootDse = connection.Search(null, "(objectclass=*)", scope: LdapSearchScope.LDAP_SCOPE_BASE).First();
-            foreach (var attribute in rootDse.Attributes)
+            foreach (var attribute in rootDse.DirectoryAttributes)
             {
-                result.Attributes[attribute.Key] = attribute.Value;
+                var index = result.DirectoryAttributes.IndexOf(attribute);
+                if (index != -1)
+                {
+                    result.DirectoryAttributes.RemoveAt(index);
+                }
+                result.DirectoryAttributes.Add(attribute);
             }
 
             return result;
