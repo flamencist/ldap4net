@@ -90,6 +90,7 @@ using (var cn = new LdapConnection())
 ## Supported platforms
 
 * Most of popular Linux distributives
+* FreeBSD
 * OSX
 * Windows
 * Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
@@ -841,7 +842,7 @@ using (var cn = new LdapConnection())
         }
 
         resultRequestControl.Cookie = pageResultResponseControl.Cookie;
-        response = (SearchResponse)connection.SendRequest(directoryRequest);
+        response = (SearchResponse)cn.SendRequest(directoryRequest);
         results.AddRange(response.Entries);
     }
     var entries = results.Select(_=>_.ToLdapEntry()).ToList();
@@ -878,7 +879,7 @@ using (var cn = new LdapConnection())
         dirSyncRequestControl.Cookie = responseControl.Cookie;
 
         Thread.Sleep(60*1000);
-        response = (SearchResponse)connection.SendRequest(directoryRequest);
+        response = (SearchResponse)cn.SendRequest(directoryRequest);
             
         if (response.Entries.Any())
         {
