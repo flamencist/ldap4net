@@ -16,6 +16,13 @@ namespace LdapForNet.Utils
                 return new UnixEncoder();
             }
 
+#if NETCOREAPP3_1 || NETCOREAPP5_0
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            {
+                return new UnixEncoder();
+            }
+#endif
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 return new UnixEncoder();
