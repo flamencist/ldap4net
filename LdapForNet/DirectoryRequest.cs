@@ -266,20 +266,20 @@ namespace LdapForNet
     {
         public CompareRequest(LdapEntry ldapEntry)
         {
-            if (ldapEntry.Attributes.Count != 1)
+            if (ldapEntry.DirectoryAttributes.Count != 1)
             {
                 throw new ArgumentException("Wrong number of attributes");
             }
 
-            var attribute = ldapEntry.Attributes.Single();
-            if (attribute.Value.Count != 1)
+            var attribute = ldapEntry.DirectoryAttributes.Single();
+            if (attribute.GetRawValues().Count != 1)
             {
                 throw new ArgumentException("Wrong number of attribute values");
             }
 
             DistinguishedName = ldapEntry.Dn;
-            Assertion.Name = attribute.Key;
-            Assertion.Add(attribute.Value.Single());
+            Assertion.Name = attribute.Name;
+            Assertion.Add(attribute.GetValues<string>().Single());
         }
 
         public CompareRequest(string distinguishedName, string attributeName, byte[] value)
