@@ -135,22 +135,22 @@ namespace LdapForNet.Adsddl.utils
         /// </summary>
         public static long GetUInt(params byte[] bytes)
         {
-            if (bytes.Length > 4)
+            if (bytes.Length > sizeof(uint))
             {
                 throw new ArgumentOutOfRangeException("Invalid number of bytes");
             }
 
-            long res = 0;
+            uint res = 0;
             for (var i = 0; i < bytes.Length; i++)
             {
-                res |= bytes[i] & 0xFF;
+                res |= bytes[i];
                 if (i < bytes.Length - 1)
                 {
                     res <<= 8;
                 }
             }
 
-            return res;
+            return (long)res;
         }
         
         private static T[] CopyOfRange<T>(T[] src, int start, int end)
