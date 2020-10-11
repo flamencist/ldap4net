@@ -28,9 +28,14 @@ namespace LdapForNet
             LdapSearchScope scope = LdapSearchScope.LDAP_SCOPE_SUBTREE, CancellationToken token = default);
 
         void Add(LdapEntry entry);
+        Task AddAsync(LdapEntry entry, CancellationToken token = default);
         void Modify(LdapModifyEntry entry);
+        Task ModifyAsync(LdapModifyEntry entry, CancellationToken token = default);
         void Delete(string dn);
+        Task DeleteAsync(string dn, CancellationToken cancellationToken = default);
         void Rename(string dn, string newRdn,string newParent, bool isDeleteOldRdn);
+        Task RenameAsync(string dn, string newRdn, string newParent, bool isDeleteOldRdn,
+            CancellationToken cancellationToken = default);
         void Abandon(AbandonRequest abandonRequest);
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
