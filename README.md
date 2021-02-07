@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.com/flamencist/ldap4net.svg?branch=master)](https://travis-ci.com/flamencist/ldap4net)
 [![Build Status](https://dev.azure.com/achermyanin/ldap4net/_apis/build/status/flamencist.ldap4net?branchName=master)](https://dev.azure.com/achermyanin/ldap4net/_build/latest?definitionId=1&branchName=master)
 [![NuGet](https://img.shields.io/nuget/v/LdapForNet.svg)](https://www.nuget.org/packages/LdapForNet/)
+[![Total NuGet downloads](https://img.shields.io/nuget/dt/LdapForNet?color=blue&label=downloads&logo=nuget)](https://www.nuget.org/stats/packages/LdapForNet?groupby=Version&groupby=ClientName&groupby=ClientVersion%20%22Total%20NuGet%20downloads%22)
 
 Cross platform port of OpenLdap Client library (https://www.openldap.org/software/man.cgi?query=ldap)  
 and Windows Ldap (https://docs.microsoft.com/en-us/windows/win32/api/_ldap/) to DotNet Core
