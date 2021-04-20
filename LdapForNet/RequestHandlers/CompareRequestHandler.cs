@@ -18,7 +18,7 @@ namespace LdapForNet.RequestHandlers
                     throw new LdapException(new LdapExceptionData("Wrong assertion"));
                 }
 
-                var value = compareRequest.Assertion.GetRawValues()[0]);
+                var value = compareRequest.Assertion.GetRawValues()[0];
                 var stringValue = value as string;
                 var berValuePtr = IntPtr.Zero;
                 if (value is byte[] binaryValue && binaryValue.Length != 0)
