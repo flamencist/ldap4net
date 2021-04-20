@@ -182,7 +182,7 @@ namespace LdapForNet
                 return (IReadOnlyList<T>)_stringValues;
             }
 
-            if (type == typeof(string))
+            if (type == typeof(byte[]))
             {
                 if (_byteValues == null)
                 {
@@ -217,19 +217,13 @@ namespace LdapForNet
             ThrowIfWrongType<T>();
             if (value is string svalue)
             {
-                if (_stringValues == null)
-                {
-                    _stringValues = new List<string>();
-                }
+                _stringValues ??= new List<string>();
 
                 _stringValues.Add(svalue);
             }
             else if (value is byte[] bvalue)
             {
-                if (_byteValues == null)
-                {
-                    _byteValues = new List<byte[]>();
-                }
+                _byteValues ??= new List<byte[]>();
 
                 _byteValues.Add(bvalue);
             }
@@ -241,13 +235,9 @@ namespace LdapForNet
                     targetValue[i] = (byte)sbvalue[i];
                 }
 
-                if (_byteValues == null)
-                {
-                    _byteValues = new List<byte[]>();
-                }
+                _byteValues ??= new List<byte[]>();
 
                 _byteValues.Add(targetValue);
-
             }
         }
 
