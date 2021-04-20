@@ -1,7 +1,6 @@
-using System;
-using System.Linq;
-using System.Runtime.InteropServices;
 using LdapForNet.Utils;
+using System;
+using System.Runtime.InteropServices;
 
 namespace LdapForNet.RequestHandlers
 {
@@ -19,15 +18,15 @@ namespace LdapForNet.RequestHandlers
                     throw new LdapException(new LdapExceptionData("Wrong assertion"));
                 }
 
-                var value = compareRequest.Assertion.GetRawValues().Single();
+                var value = compareRequest.Assertion.GetRawValues()[0]);
                 var stringValue = value as string;
                 var berValuePtr = IntPtr.Zero;
                 if (value is byte[] binaryValue && binaryValue.Length != 0)
                 {
                     berValuePtr = MarshalUtils.ByteArrayToBerValue(binaryValue);
                 }
-                
-                var result = Native.Compare(handle,compareRequest.DistinguishedName, compareRequest.Assertion.Name, stringValue, berValuePtr, serverControlArray, clientControlArray, ref messageId);
+
+                var result = Native.Compare(handle, compareRequest.DistinguishedName, compareRequest.Assertion.Name, stringValue, berValuePtr, serverControlArray, clientControlArray, ref messageId);
                 MarshalUtils.BerValFree(berValuePtr);
                 return result;
             }
