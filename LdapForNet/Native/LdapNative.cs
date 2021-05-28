@@ -40,8 +40,7 @@ namespace LdapForNet.Native
             throw new PlatformNotSupportedException();
         }
 
-        internal abstract int TrustAllCertificates(SafeHandle ld);
-        internal abstract int TrustAllCertificatesTls(SafeHandle ld);
+        internal abstract int TrustAllCertificates(SafeHandle ld, CertificateOptions certificateType = CertificateOptions.SslTls);
         internal abstract int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate);
         internal abstract int Init(ref IntPtr ld, string url);
         internal abstract void LdapConnect(SafeHandle ld, TimeSpan connectionTimeout);

@@ -40,7 +40,7 @@ namespace LdapForNet
         Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest, CancellationToken token = default);
         DirectoryResponse SendRequest(DirectoryRequest directoryRequest);
         void StartTransportLayerSecurity(bool trustAll = false);
-        void TrustAllCertificates();
+        void TrustAllCertificates(CertificateOptions certificateType = CertificateOptions.SslTls);
         void SetClientCertificate(X509Certificate2 certificate);
     }
 }

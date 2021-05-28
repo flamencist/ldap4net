@@ -13,16 +13,11 @@ namespace LdapForNet.Native
     {
         private readonly IList<string> _tempFiles = new List<string>();
 
-        internal override int TrustAllCertificates(SafeHandle ld)
+        internal override int TrustAllCertificates(SafeHandle ld, CertificateOptions certificateType)
         {
             var value = (int) Native.LdapOption.LDAP_OPT_X_TLS_ALLOW;
             return ldap_set_option(new LdapHandle(IntPtr.Zero), (int) Native.LdapOption.LDAP_OPT_X_TLS_REQUIRE_CERT,
                 ref value);
-        }
-
-        internal override int TrustAllCertificatesTls(SafeHandle ld)
-        {
-            return TrustAllCertificates(ld);
         }
 
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)

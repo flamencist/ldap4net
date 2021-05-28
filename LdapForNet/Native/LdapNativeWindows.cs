@@ -17,24 +17,18 @@ namespace LdapForNet.Native
     {
         private bool _tlsStarted;
 
-        internal override int TrustAllCertificates(SafeHandle ld)
+        internal override int TrustAllCertificates(SafeHandle ld, CertificateOptions certificateType)
         {
             var sslEnabled = 0;
             ThrowIfError(ldap_get_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
                 nameof(ldap_get_option));
-            if (sslEnabled == 0)
+            if (sslEnabled == 0 && certificateType == CertificateOptions.SslTls)
             {
                 sslEnabled = 1;
                 ThrowIfError(ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SSL, ref sslEnabled),
                     nameof(ldap_set_option));
             }
 
-            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE,
-                Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
-        }
-
-        internal override int TrustAllCertificatesTls(SafeHandle ld)
-        {
             return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE,
                 Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
         }
