@@ -17,6 +17,11 @@ namespace LdapForNet.Native
                 ref value);
         }
 
+        internal override int TrustAllCertificatesTls(SafeHandle ld)
+        {
+            return TrustAllCertificates(ld);
+        }
+
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
             const int verifyDepth = 6;

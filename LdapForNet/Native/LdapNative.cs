@@ -41,6 +41,7 @@ namespace LdapForNet.Native
         }
 
         internal abstract int TrustAllCertificates(SafeHandle ld);
+        internal abstract int TrustAllCertificatesTls(SafeHandle ld);
         internal abstract int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate);
         internal abstract int Init(ref IntPtr ld, string url);
         internal abstract void LdapConnect(SafeHandle ld, TimeSpan connectionTimeout);

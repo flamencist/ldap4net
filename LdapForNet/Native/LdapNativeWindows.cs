@@ -33,6 +33,12 @@ namespace LdapForNet.Native
                 Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
         }
 
+        internal override int TrustAllCertificatesTls(SafeHandle ld)
+        {
+            return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_SERVER_CERTIFICATE,
+                Marshal.GetFunctionPointerForDelegate<VERIFYSERVERCERT>((connection, serverCert) => true));
+        }
+
         internal override int SetClientCertificate(SafeHandle ld, X509Certificate2 certificate)
         {
             return ldap_set_option(ld, (int)Native.LdapOption.LDAP_OPT_CLIENT_CERTIFICATE,

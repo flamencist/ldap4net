@@ -285,7 +285,7 @@ namespace LdapForNet
 			ThrowIfNotInitialized();
 			if (trustAll)
 			{
-				TrustAllCertificates();
+				TrustAllCertificatesTls();
 			}
 
 			SendRequest(new TransportLayerSecurityRequest(), out _);
@@ -294,6 +294,11 @@ namespace LdapForNet
 		public void TrustAllCertificates()
 		{
 			_native.ThrowIfError(_native.TrustAllCertificates(_ld), nameof(_native.TrustAllCertificates));
+		}
+
+		public void TrustAllCertificatesTls()
+		{
+			_native.ThrowIfError(_native.TrustAllCertificatesTls(_ld), nameof(_native.TrustAllCertificatesTls));
 		}
 
 		public void SetClientCertificate(X509Certificate2 certificate)
