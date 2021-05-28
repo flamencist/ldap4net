@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1</TargetFrameworks>
     <AssemblyName>LdapForNet</AssemblyName>
     <RootNamespace>LdapForNet</RootNamespace>
-    <Version>2.7.11</Version>
+    <Version>2.7.12</Version>
     <Authors>Alexander Chermyanin</Authors>
     <Company>flamencist</Company>
     <Description>Porting of OpenLdap native lib for .NET Core. Library is cross platform. Also supported KERBEROS (passwordless) authentication!.</Description>
@@ -15,7 +15,7 @@
     <PackageProjectUrl>https://github.com/flamencist/ldap4net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/flamencist/ldap4net</RepositoryUrl>
     <PackageReleaseNotes>
-      - Add async methods to interface. Thanks Greg (@gregbair)
+      - Add TLS specific TrustAllCertificates methods (#120). Thanks ADouglasKreider
     </PackageReleaseNotes>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
