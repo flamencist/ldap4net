@@ -5,6 +5,8 @@
     <AssemblyName>LdapForNet.Tests</AssemblyName>
     <RootNamespace>LdapForNetTests</RootNamespace>
     <LangVersion>7.1</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
@@ -12,6 +14,9 @@
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\key.snk" Link="key.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LdapForNet\LdapForNet.csproj" />
