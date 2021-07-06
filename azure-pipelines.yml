@@ -29,10 +29,11 @@ jobs:
       inputs:
         command: 'install'
         workingDir: '.test_config'
-
-    - task: NuGetCommand@2
+    - task: DotNetCoreCLI@2
       inputs:
-        restoreSolution: '$(solution)'
+        command: 'restore'
+        projects: '$(solution)'
+        feedsToUse: 'select'
 
     - task: VSBuild@1
       inputs:
