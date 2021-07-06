@@ -14,47 +14,53 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
+jobs:
+- job: Build
+  steps:
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          $file = "$env:windir\System32\drivers\etc\hosts"
+          "127.0.0.1 example" | Add-Content -PassThru $file
+          Get-Content -Path $file
+    - task: NuGetToolInstaller@1
+    - task: Npm@1
+      inputs:
+        command: 'install'
+        workingDir: '.test_config'
 
-steps:
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: |
-      $file = "$env:windir\System32\drivers\etc\hosts"
-      "127.0.0.1 example" | Add-Content -PassThru $file
-      Get-Content -Path $file
-- task: NuGetToolInstaller@1
-- task: Npm@1
-  inputs:
-    command: 'install'
-    workingDir: '.test_config'
+    - task: NuGetCommand@2
+      inputs:
+        restoreSolution: '$(solution)'
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
-
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    
-- task: CmdLine@2
-  inputs:
-    script: 'START /B "" node ".test_config\index.js"'
-    
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/*.csproj'
-    versioningScheme: 'off'
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    nuGetFeedType: 'external'
+    - task: VSBuild@1
+      inputs:
+        solution: '$(solution)'
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+        
+    - task: CmdLine@2
+      inputs:
+        script: 'START /B "" node ".test_config\index.js"'
+        
+    - task: VSTest@2
+      inputs:
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'pack'
+        packagesToPack: '**/*.csproj'
+        versioningScheme: 'off'
+- job: Release
+  dependsOn: Build
+  condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  steps:  
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'push'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+        nuGetFeedType: 'external'
+        publishFeedCredentials: 'nuget-api-key' 
