@@ -56,11 +56,8 @@ jobs:
         packagesToPack: 'LdapForNet/LdapForNet.csproj'
         nobuild: true
         versioningScheme: 'off'
-- job: Release
-  dependsOn: Build
-  #condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
-  steps:  
     - task: DotNetCoreCLI@2
+      #condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
       inputs:
         command: 'push'
         packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
