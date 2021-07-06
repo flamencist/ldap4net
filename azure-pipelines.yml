@@ -56,7 +56,8 @@ jobs:
         packagesToPack: 'LdapForNet/LdapForNet.csproj'
         nobuild: true
         versioningScheme: 'off'
-    - task: CmdLine@2
-      #condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+    - task: DotNetCoreCLI@2
       inputs:
-        script: 'dotnet nuget push $(Build.ArtifactStagingDirectory)/LdapForNet*.nupkg -k $(NUGET_API_KEY) -s $(NUGET_SOURCE)'/*.nupkg'
+        command: 'custom'
+        custom: 'nuget'
+        arguments: 'push $(Build.ArtifactStagingDirectory)/LdapForNet*.nupkg       -s $(NUGET_SOURCE)       -k $(NUGET_API_KEY)'
