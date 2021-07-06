@@ -60,4 +60,4 @@ jobs:
       inputs:
         command: 'custom'
         custom: 'nuget'
-        arguments: 'push $(Build.ArtifactStagingDirectory)/LdapForNet*.nupkg       -s $(NUGET_SOURCE)       -k $(NUGET_API_KEY)'
+        arguments: 'push $(Build.ArtifactStagingDirectory)\LdapForNet*.nupkg       -s $(NUGET_SOURCE)       -k $(NUGET_API_KEY)'
