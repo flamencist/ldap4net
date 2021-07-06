@@ -53,7 +53,7 @@ jobs:
     - task: DotNetCoreCLI@2
       inputs:
         command: 'pack'
-        packagesToPack: '**/*.csproj'
+        packagesToPack: 'LdapForNet/LdapForNet.csproj'
         nobuild: true
         versioningScheme: 'off'
 - job: Release
