@@ -57,6 +57,7 @@ jobs:
         nobuild: true
         versioningScheme: 'off'
     - task: DotNetCoreCLI@2
+      condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/') )
       inputs:
         command: 'custom'
         custom: 'nuget'
