@@ -58,7 +58,7 @@ jobs:
         versioningScheme: 'off'
 - job: Release
   dependsOn: Build
-  condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  #condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   steps:  
     - task: DotNetCoreCLI@2
       inputs:
