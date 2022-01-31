@@ -6,8 +6,8 @@ namespace LdapForNet.Native
 {
     internal static class NativeMethodsLinux
     {
-        private const string LIB_LDAP_PATH = "ldap-2.4.so.2";
-        private const string LIB_LBER_PATH = "lber-2.4.so.2";
+        private const string LIB_LDAP_PATH = "ldap.so.2";
+        private const string LIB_LBER_PATH = "lber.so.2";
         private const string LIB_GNUTLS = "libgnutls.so.30";
 
         internal delegate int LDAP_SASL_INTERACT_PROC(IntPtr ld, uint flags, IntPtr defaults, IntPtr interact);
