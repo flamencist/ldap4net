@@ -14,7 +14,8 @@ Help support the project:
 
 For Linux\OSX you must ensure you have the latest OpenLDAP client libraries installed from http://www.openldap.org
 
-  
+For Linux you must also ensure that the appropriate [symlinks for `libldap.so.2` and `liblber.so.2`](linux.md) exist.
+
 It works with any LDAP protocol compatible directory server (including Microsoft Active Directory).
 
 Supported paswordless authentication (Kerberos) on all platforms (on Linux\OSX supported SASL GSSAPI (Kerberos) authentication!).
