@@ -851,6 +851,12 @@ using (var cn = new LdapConnection())
 }
 ```
 
+Note: If you are not getting results beyond the first page, this could because subordinate referrals are turned on as explained [here](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/ldap-paged-queries-subordinate-referrals-not-chased). In that case, one option is to turn off subordinate referrals (as described in option 3 in the link's suggested workarounds). This can be done as follows:
+
+```c#
+cn.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
+```
+
 #### DirSyncRequestControl\DirSyncResponseControl [(1.2.840.113556.1.4.841)](https://ldapwiki.com/wiki/Directory%20Synchronization%20Control)
 Ldap user should have ``DS-Replication-Get-Changes`` extended right (https://docs.microsoft.com/en-us/windows/win32/ad/polling-for-changes-using-the-dirsync-control)
 ```c#
