@@ -20,6 +20,8 @@ It works with any LDAP protocol compatible directory server (including Microsoft
 
 Supported paswordless authentication (Kerberos) on all platforms (on Linux\OSX supported SASL GSSAPI (Kerberos) authentication!).
 
+
+
 Sample usage (Kerberos authentication)
 
 ```cs
@@ -37,88 +39,87 @@ using (var cn = new LdapConnection())
 
 ## Overview
 
-- [Supported platforms](#supported-platforms)
-- [Installation](#installation)
-- [API](#api)
-  - [Connect](#connect)
-  - [Connect TLS](#connect-tls)
-  - [Connect SSL (with self signed certificate)](#connect-ssl-with-self-signed-certificate)
-  - [Connect Timeout](#connect-timeout)
-  - [Bind](#bind)
-  - [BindAsync](#bindAsync)
-  - [Bind Anonymous](#bind-anonymous)
-  - [Bind DIGEST-MD5](#bind-digest-md5)
-  - [Bind SASL EXTERNAL (Client certificate)](#bind-sasl-external-client-certificate)
-  - [Bind SASL EXTERNAL (Client certificate & Active Directory)](#bind-sasl-external-client-certificate--active-directory)
-  - [Bind SASL EXTERNAL (Unix Socket)](#bind-sasl-external-unix-socket)
-  - [Bind SASL proxy](#bind-sasl-proxy)
-  - [Search](#search)
-  - [Search (attributes with binary values)](#search-attributes-with-binary-values)
-  - [Search (retrieve concrete list of attributes)](#search-retrieve-concrete-list-of-attributes)
-  - [SearchAsync](#searchAsync)
-  - [SearchByCn](#searchbycn)
-  - [SearchBySid](#searchbysid)
-  - [GetOption](#getoption)
-  - [SetOption](#setoption)
-  - [Add](#add)
-  - [Add Binary Values](#add-binary-values)
-  - [AddAsync](#addAsync)
-  - [Modify](#modify)
-  - [Modify Binary Values](#modify-binary-values)
-  - [Reset password](#reset-password)
-  - [Change password](#change-password)
-  - [ModifyAsync](#modifyAsync)
-  - [Delete](#delete)
-  - [DeleteAsync](#deleteAsync)
-  - [Rename](#rename)
-  - [RenameAsync](#renameAsync)
-  - [SendRequest](#sendRequest)
-  - [SendRequestAsync](#sendRequestAsync)
-  - [Ldap V3 Controls](#ldap-v3-controls)
-    - [PageResultRequestControl\PageResultResponseControl](#pageresultrequestcontrolpageresultresponsecontrol-1284011355614319)
-    - [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
-    - [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
-    - [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
-    - [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
-    - [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
-  - [GetRootDse](#getRootDse)
-  - [WhoAmI](#whoami)
-  - [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
-  - [License](#license)
-  - [Authors](#authors)
+* [Supported platforms](#supported-platforms)
+* [Installation](#installation)
+* [API](#api)
+	* [Connect](#connect)
+	* [Connect TLS](#connect-tls)
+	* [Connect SSL (with self signed certificate)](#connect-ssl-with-self-signed-certificate)
+	* [Connect Timeout](#connect-timeout)
+	* [Bind](#bind)
+	* [BindAsync](#bindAsync)
+	* [Bind Anonymous](#bind-anonymous)
+	* [Bind DIGEST-MD5](#bind-digest-md5)
+	* [Bind SASL EXTERNAL (Client certificate)](#bind-sasl-external-client-certificate)
+	* [Bind SASL EXTERNAL (Client certificate & Active Directory)](#bind-sasl-external-client-certificate--active-directory)
+	* [Bind SASL EXTERNAL (Unix Socket)](#bind-sasl-external-unix-socket)
+	* [Bind SASL proxy](#bind-sasl-proxy)
+	* [Search](#search)
+	* [Search (attributes with binary values)](#search-attributes-with-binary-values)
+	* [Search (retrieve concrete list of attributes)](#search-retrieve-concrete-list-of-attributes)
+	* [SearchAsync](#searchAsync)
+	* [SearchByCn](#searchbycn)
+	* [SearchBySid](#searchbysid)
+	* [GetOption](#getoption)
+	* [SetOption](#setoption)
+	* [Add](#add)
+	* [Add Binary Values](#add-binary-values)
+	* [AddAsync](#addAsync)
+	* [Modify](#modify)
+	* [Modify Binary Values](#modify-binary-values)
+	* [Reset password](#reset-password)
+	* [Change password](#change-password)
+	* [ModifyAsync](#modifyAsync)
+	* [Delete](#delete)
+	* [DeleteAsync](#deleteAsync)
+	* [Rename](#rename)
+	* [RenameAsync](#renameAsync)
+	* [SendRequest](#sendRequest)
+	* [SendRequestAsync](#sendRequestAsync)
+	* [Ldap V3 Controls](#ldap-v3-controls)
+		* [PageResultRequestControl\PageResultResponseControl](#pageresultrequestcontrolpageresultresponsecontrol-1284011355614319)
+		* [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
+		* [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
+		* [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
+		* [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
+		* [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
+	* [GetRootDse](#getRootDse)
+	* [WhoAmI](#whoami)
+	* [GetNativeLdapPtr (deprecated)](#getnativeldapptr)
+	* [License](#license)
+	* [Authors](#authors)
 
 ## Supported platforms
 
-- Most of popular Linux distributives
-- FreeBSD
-- OSX
-- Windows
-- Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
+* Most of popular Linux distributives
+* FreeBSD
+* OSX
+* Windows
+* Supported on the .NET Standard - minimum required is 2.0 - compatible .NET runtimes: .NET Core, Mono, .NET Framework.
 
 ## Features:
-
-- Supported TLS\SSL
-- Supported Unicode\Binary values
-- Supported authentications:
-  - Simple \ Basic \ Anonymous
-  - SASL:
-    - GSSAPI \ Kerberos V5 \ Negotiate
-    - [DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
-    - [EXTERNAL](https://ldapwiki.com/wiki/SASL%20EXTERNAL)
-  - [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
-- Supported LDAP V3 controls:
-  - [PageResultRequestControl\PageResultResponseControl](#pageresultrequestcontrolpageresultresponsecontrol-1284011355614319)
-  - [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
-  - [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
-  - [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
-  - [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
-  - [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
+* Supported TLS\SSL
+* Supported Unicode\Binary values
+* Supported authentications:
+	- Simple \ Basic \ Anonymous
+	- SASL:
+		- GSSAPI \ Kerberos V5 \ Negotiate 
+		- [DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
+		- [EXTERNAL](https://ldapwiki.com/wiki/SASL%20EXTERNAL)
+	- [SASL proxy authorization](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
+* Supported LDAP V3 controls:
+	- [PageResultRequestControl\PageResultResponseControl](#pageresultrequestcontrolpageresultresponsecontrol-1284011355614319)
+	- [DirSyncRequestControl\DirSyncRequestControl](#dirsyncrequestcontroldirsyncresponsecontrol-1284011355614841)
+	- [SortRequestControl\SortResponseControl](#sortrequestcontrolsortresponsecontrol-12840113556144731284011355614474)
+	- [AsqRequestControl\AsqResponseControl](#asqrequestcontrolasqresponsecontrol-12840113556141504)
+	- [DirectoryNotificationControl](#directorynotificationcontrol-1284011355614528)
+	- [VlvRequestControl\VlvResponseControl](#vlvrequestcontrolvlvresponsecontrol-216840111373034921684011137303410)
 
 ## Installation
 
-`Install-Package LdapForNet`
+``` Install-Package LdapForNet ``` 
 
-`dotnet add package LdapForNet`
+``` dotnet add package LdapForNet ```
 
 ## Api
 
@@ -134,6 +135,7 @@ using (var cn = new LdapConnection())
 }
 
 ```
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -166,21 +168,19 @@ using (var cn = new LdapConnection())
 ```
 
 ### Connect TLS
-
 ```c#
 using (var cn = new LdapConnection())
 {
 	// connect use hostname and port
 	cn.Connect("dc.example.com",389);
 	//set true if use self signed certificate for developing purpose
- 	cn.StartTransportLayerSecurity(true);
+ 	cn.StartTransportLayerSecurity(true); 
 	....
 }
 
 ```
 
 ### Connect SSL (with self signed certificate)
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -192,7 +192,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### Connect Timeout
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -202,6 +201,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -213,6 +213,7 @@ using (var cn = new LdapConnection())
 }
 
 ```
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -240,6 +241,7 @@ using (var cn = new LdapConnection())
 
 ### Bind Anonymous
 
+
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -251,7 +253,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind DIGEST-MD5
-
 [About DIGEST-MD5](https://ldapwiki.com/wiki/DIGEST-MD5)
 
 ```c#
@@ -270,7 +271,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL EXTERNAL (Client certificate)
-
 [About client certificate authentication in openldap](https://jpmens.net/pages/ldap-external/)
 
 ```c#
@@ -289,8 +289,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL EXTERNAL (Client certificate & Active Directory)
-
-[About client certificate authentication](https://techcommunity.microsoft.com/t5/iis-support-blog/client-certificate-authentication-part-1/ba-p/324623#)
+[About client certificate authentication](https://techcommunity.microsoft.com/t5/iis-support-blog/client-certificate-authentication-part-1/ba-p/324623#) 
 
 ```c#
 using (var cn = new LdapConnection())
@@ -308,7 +307,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL EXTERNAL (Unix Socket)
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -320,11 +318,9 @@ using (var cn = new LdapConnection())
 ```
 
 ### Bind SASL proxy
-
 [About SASL auhtorization proxy](https://www.openldap.org/doc/admin24/sasl.html#SASL%20Proxy%20Authorization)
 
 Works on UNIX systems
-
 ```c#
 
 using (var cn = new LdapConnection())
@@ -335,7 +331,7 @@ using (var cn = new LdapConnection())
     {
         UserName = "username",
         Password = "clearTextPassword",
-        AuthorizationId = "dn:cn=admin,dc=example,dc=com"
+        AuthorizationId = "dn:cn=admin,dc=example,dc=com" 
     });
 	...
 }
@@ -343,7 +339,6 @@ using (var cn = new LdapConnection())
 ```
 
 Works on UNIX systems
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -353,7 +348,7 @@ using (var cn = new LdapConnection())
     {
         UserName = "username",
         Password = "clearTextPassword",
-        AuthorizationId = "u:admin"
+        AuthorizationId = "u:admin" 
     });
 	...
 }
@@ -361,7 +356,6 @@ using (var cn = new LdapConnection())
 ```
 
 Works on UNIX systems
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -369,7 +363,7 @@ using (var cn = new LdapConnection())
 
     cn.Bind(LdapAuthType.GssApi, new LdapCredential
     {
-        AuthorizationId = "u:admin"
+        AuthorizationId = "u:admin" 
     });
 	...
 }
@@ -377,7 +371,6 @@ using (var cn = new LdapConnection())
 ```
 
 Works on Windows system
-
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -404,6 +397,7 @@ using (var cn = new LdapConnection())
 	var entries = cn.Search("dc=example,dc=com","(objectClass=*)");
 }
 ```
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -452,7 +446,8 @@ using (var cn = new LdapConnection())
 }
 ```
 
-### SearchByCn
+### SearchByCn  
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -463,6 +458,7 @@ using (var cn = new LdapConnection())
 	var entries = cn.SearchByCn("read-only-admin");
 }
 ```
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -475,7 +471,9 @@ using (var cn = new LdapConnection())
 
 ```
 
-### SearchBySid
+
+### SearchBySid  
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -486,6 +484,7 @@ using (var cn = new LdapConnection())
 	var entries = cn.SearchBySid("S-1-5-21-2127521184-1604012920-1887927527-72713");
 }
 ```
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -513,6 +512,7 @@ using (var cn = new LdapConnection())
 
 ### SetOption
 
+
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -524,7 +524,8 @@ using (var cn = new LdapConnection())
 ```
 
 ### Add
-
+   
+   
 ```c#
 using (var cn = new LdapConnection())
 {
@@ -559,9 +560,11 @@ using (var cn = new LdapConnection())
     directoryEntry.Attributes.Add(image);
     var response = (AddResponse)connection.SendRequest(new AddRequest("cn=test,dc=example,dc=com", image));
 }
-```
+   ```
+
 
 ### AddAsync
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -583,6 +586,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Modify
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -623,6 +627,7 @@ using (var cn = new LdapConnection())
 }
 ```
 
+
 ### Modify Binary Values
 
 ```c#
@@ -650,17 +655,17 @@ using (var cn = new LdapConnection())
       // need use ssl/tls for reset password
       cn.Connect("dc.example.com", 636, LdapSchema.LDAPS);
       cn.Bind();
-
+    
       var attribute = new DirectoryModificationAttribute()
       {
           Name = "unicodePwd",
           LdapModOperation = Native.LdapModOperation.LDAP_MOD_REPLACE
       };
-
+    
       string password = "\"strongPassword\"";
       byte[] encodedBytes = System.Text.Encoding.Unicode.GetBytes(password);
       attribute.Add<byte[]>(encodedBytes);
-
+    
       var response = (ModifyResponse)cn.SendRequest(new ModifyRequest("CN=yourUser,CN=Users,dc=dc,dc=local", attribute));
 }
 ```
@@ -697,6 +702,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### ModifyAsync
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -738,6 +744,7 @@ using (var cn = new LdapConnection())
 ```
 
 ### Delete
+
 
 ```c#
 using (var cn = new LdapConnection())
@@ -782,41 +789,37 @@ using (var cn = new LdapConnection())
 ```
 
 ### SendRequest
-
 Generic method for ldap requests.
 Inspired by .NET Framework LdapConnection.SendRequest
 
-```cs
-using (var cn = new LdapConnection())
-{
-	cn.Connect();
-	cn.Bind();
-	cn.SendRequest(new DeleteRequest("cn=test,dc=example,dc=com"));
-}
-```
+ ```cs
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+ 	cn.SendRequest(new DeleteRequest("cn=test,dc=example,dc=com"));
+ }
+ ```
 
 ### SendRequestAsync
-
 Generic method for ldap requests.
 Inspired by .NET Framework LdapConnection.SendRequest
 
-```cs
-using (var cn = new LdapConnection())
-{
-	cn.Connect();
-	cn.Bind();
-	var cancellationTokenSource = new CancellationTokenSource();
-	//whoami
-	var res = await cn.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"), cancellationTokenSource.Token);
-	var extendedResponse = (ExtendedResponse) res;
-	var name = Encoding.UTF8.GetString(extendedResponse.ResponseValue);
-}
-```
+ ```cs
+ using (var cn = new LdapConnection())
+ {
+ 	cn.Connect();
+ 	cn.Bind();
+ 	var cancellationTokenSource = new CancellationTokenSource();
+ 	//whoami
+ 	var res = await cn.SendRequestAsync(new ExtendedRequest("1.3.6.1.4.1.4203.1.11.3"), cancellationTokenSource.Token);
+ 	var extendedResponse = (ExtendedResponse) res;
+ 	var name = Encoding.UTF8.GetString(extendedResponse.ResponseValue);
+ }
+ ```
 
 ### Ldap V3 Controls
-
 #### PageResultRequestControl\PageResultResponseControl [(1.2.840.113556.1.4.319)](https://ldapwiki.com/wiki/Simple%20Paged%20Results%20Control)
-
 ```c#
 
 using (var cn = new LdapConnection())
@@ -848,16 +851,14 @@ using (var cn = new LdapConnection())
 }
 ```
 
-Note: If you are not getting results beyond the first page, this could because subordinate referrals are turned on as explained [here](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/ldap-paged-queries-subordinate-referrals-not-chased). In that case, one option is to turn off subordinate referrals (as described in option 3 in the Microsoft link). This can be done as follows:
+Note: If you are not getting results beyond the first page, this could because subordinate referrals are turned on as explained [here](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/ldap-paged-queries-subordinate-referrals-not-chased). In that case, one option is to turn off subordinate referrals (as described in option 3 in the link's suggested workarounds). This can be done as follows:
 
 ```c#
 cn.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
 ```
 
 #### DirSyncRequestControl\DirSyncResponseControl [(1.2.840.113556.1.4.841)](https://ldapwiki.com/wiki/Directory%20Synchronization%20Control)
-
-Ldap user should have `DS-Replication-Get-Changes` extended right (https://docs.microsoft.com/en-us/windows/win32/ad/polling-for-changes-using-the-dirsync-control)
-
+Ldap user should have ``DS-Replication-Get-Changes`` extended right (https://docs.microsoft.com/en-us/windows/win32/ad/polling-for-changes-using-the-dirsync-control)
 ```c#
 
 using (var cn = new LdapConnection())
@@ -874,7 +875,7 @@ using (var cn = new LdapConnection())
     directoryRequest.Controls.Add(dirSyncRequestControl);
 
     var response = (SearchResponse)cn.SendRequest(directoryRequest);
-
+        
     while (true)
     {
         var responseControl = (DirSyncResponseControl)response.Controls.FirstOrDefault(_ => _ is DirSyncResponseControl);
@@ -887,7 +888,7 @@ using (var cn = new LdapConnection())
 
         Thread.Sleep(60*1000);
         response = (SearchResponse)cn.SendRequest(directoryRequest);
-
+            
         if (response.Entries.Any())
         {
             //handle changes
@@ -897,7 +898,6 @@ using (var cn = new LdapConnection())
 ```
 
 #### SortRequestControl\SortResponseControl [(1.2.840.113556.1.4.473\1.2.840.113556.1.4.474)](https://ldapwiki.com/wiki/Server%20Side%20Sort%20Control)
-
 ```c#
 
 using (var cn = new LdapConnection())
@@ -913,7 +913,6 @@ using (var cn = new LdapConnection())
 ```
 
 #### AsqRequestControl\AsqResponseControl [(1.2.840.113556.1.4.1504)](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/77d880bf-aadd-4f6f-bb78-076af8e22cd8)
-
 ```c#
 
 // get all members of group 'Domain Admins'
@@ -929,7 +928,6 @@ using (var connection = new LdapConnection())
 ```
 
 #### DirectoryNotificationControl [(1.2.840.113556.1.4.528)](https://ldapwiki.com/wiki/LDAP_SERVER_NOTIFICATION_OID)
-
 ```c#
 
 //get single notification from ldap server
@@ -952,7 +950,7 @@ using (var connection = new LdapConnection())
 
 
     var response = (SearchResponse) connection.SendRequestAsync(directoryRequest,cts.Token).Result;
-
+                
 }
 ```
 
@@ -982,14 +980,13 @@ using (var connection = new LdapConnection())
             break;
         }
     }
-
+                
     var entries = results.Select(_ => _.ToLdapEntry()).ToList();
 }
 
 ```
 
 ### GetRootDse
-
 Information about server https://ldapwiki.com/wiki/RootDSE
 
 ```c#
@@ -1003,7 +1000,6 @@ using (var cn = new LdapConnection())
 ```
 
 ### WhoAmI
-
 Returns authorization id of user https://ldapwiki.com/wiki/Who%20Am%20I%20Extended%20Operation
 
 ```c#
@@ -1023,5 +1019,7 @@ This software is distributed under the terms of the MIT License (MIT).
 ### Authors
 
 Alexander Chermyanin / [LinkedIn](https://www.linkedin.com/in/alexander-chermyanin)
+
+
 
 Contributions and bugs reports are welcome.
