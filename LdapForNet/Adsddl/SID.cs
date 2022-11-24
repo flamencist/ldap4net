@@ -233,7 +233,7 @@ namespace LdapForNet.Adsddl
             using var ms = new MemoryStream(this.GetSize());
             var buff = new BinaryWriter(ms);
             buff.Write(this.revision);
-            buff.Write(NumberFacility.GetBytes(this.subAuthorities.Count)[3]);
+            buff.Write(NumberFacility.GetBytes(this.subAuthorities.Count)[0]);
             buff.Write(this.identifierAuthority);
             foreach (byte[] sub in this.subAuthorities)
             {
