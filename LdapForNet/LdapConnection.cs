@@ -255,10 +255,7 @@ namespace LdapForNet
 		public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest directoryRequest,
 			CancellationToken token = default)
 		{
-			if (token.IsCancellationRequested)
-			{
-				return default;
-			}
+			token.ThrowIfCancellationRequested();
 
 			ThrowIfNotBound();
 
