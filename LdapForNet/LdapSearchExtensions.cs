@@ -14,7 +14,14 @@ namespace LdapForNet
             return connection.Search(
                 null,
                 "(objectclass=*)",
-                new[] { "*", "+", "supportedExtension" },
+                new[]
+                {
+                    "*", "+", "serverName", "dNSHostName", "dsServiceName", "currentTime", "defaultNamingContext",
+                    "rootDomainNamingContext", "configurationNamingContext", "schemaNamingContext", "subschemaSubentry",
+                    "namingContexts", "supportedLDAPVersion", "supportedCapabilities", "supportedControl",
+                    "supportedLDAPPolicies", "supportedSaslMechanisms", "supportedExtension", "vendorName", "vendorVersion",
+                    "domainControllerFunctionality", "domainFunctionality", "forestFunctionality", "isSynchronized", "objectClass"
+                },
                 LdapSearchScope.LDAP_SCOPE_BASE)
                 .First();
         }
@@ -25,7 +32,14 @@ namespace LdapForNet
             return (await connection.SearchAsync(
                 null,
                 "(objectclass=*)",
-                new[] { "*", "+", "supportedExtension" },
+                new[]
+                {
+                    "*", "+", "serverName", "dNSHostName", "dsServiceName", "currentTime", "defaultNamingContext",
+                    "rootDomainNamingContext", "configurationNamingContext", "schemaNamingContext", "subschemaSubentry",
+                    "namingContexts", "supportedLDAPVersion", "supportedCapabilities", "supportedControl",
+                    "supportedLDAPPolicies", "supportedSaslMechanisms", "supportedExtension", "vendorName", "vendorVersion",
+                    "domainControllerFunctionality", "domainFunctionality", "forestFunctionality", "isSynchronized", "objectClass"
+                },
                 LdapSearchScope.LDAP_SCOPE_BASE,
                 token))
                 .First();
