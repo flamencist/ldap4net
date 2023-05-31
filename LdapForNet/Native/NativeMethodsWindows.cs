@@ -335,7 +335,7 @@ namespace LdapForNet.Native
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
         internal static extern int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
-        internal static extern int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
+        internal static extern int ber_scanf_ostring(SafeHandle berElement, string format, ref IntPtr value);
 
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_bvfree", CharSet = CharSet.Unicode)]
         internal static extern int ber_bvfree(IntPtr value);
@@ -354,7 +354,7 @@ namespace LdapForNet.Native
             ref IntPtr control);
 
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ber_scanf", CharSet = CharSet.Unicode)]
-        internal static extern int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
+        internal static extern int ber_scanf_string(SafeHandle berElement, string format, ref IntPtr value, ref int length);
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ber_peek_tag(SafeHandle berElement, ref int length);
         [DllImport(LIB_LDAP_PATH, CallingConvention = CallingConvention.Cdecl)]

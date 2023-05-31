@@ -167,6 +167,7 @@ namespace LdapForNet.Native
                     }
 
                     ldap_msgfree(result);
+                    result = IntPtr.Zero;
 
                     if (ldap_result(ld, msgid, 0, timeout, ref result) == Native.LdapResultType.LDAP_ERROR)
                     {
@@ -355,8 +356,26 @@ namespace LdapForNet.Native
             IntPtr serverctrls, IntPtr clientctrls,
             ref int msgidp)
         {
-            var ptr = bvalue == IntPtr.Zero && value != null ? StringToBerVal(value) : bvalue;
-            return NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, ptr, serverctrls, clientctrls, ref msgidp);
+            bool freeBuffer;
+            
+            if (bvalue == IntPtr.Zero && value != null) 
+            {
+                bvalue = StringToBerVal(value);
+                freeBuffer = true;
+            }
+            else 
+            {
+                freeBuffer = false;
+            }
+            
+            var result = NativeMethodsLinux.ldap_compare_ext(ld, dn, attr, bvalue, serverctrls, clientctrls, ref msgidp);
+
+            if (freeBuffer)
+            {
+                Marshal.FreeHGlobal(bvalue);
+            }
+
+            return result;
         }
 
         private static IntPtr StringToBerVal(string value)
@@ -441,14 +460,14 @@ namespace LdapForNet.Native
         internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
             => NativeMethodsLinux.ber_scanf_ptr(berElement, format, ref value);
 
-        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value) => 
-            NativeMethodsLinux.ber_scanf_ostring(berElement, format, value);
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, ref IntPtr value) => 
+            NativeMethodsLinux.ber_scanf_ostring(berElement, format, ref value);
 
         internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
             => NativeMethodsLinux.ber_scanf_bitstring(berElement, format, ref value, ref length);
 
-        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
-            => NativeMethodsLinux.ber_scanf_string(berElement, format, value, ref  length);
+        internal override int ber_scanf_string(SafeHandle berElement, string format, ref IntPtr value, ref int length) 
+            => NativeMethodsLinux.ber_scanf_string(berElement, format, ref value, ref  length);
 
         internal override int ber_peek_tag(SafeHandle berElement, ref int length) => NativeMethodsLinux.ber_peek_tag(berElement, ref length);
         internal override int ber_bvfree(IntPtr value)
@@ -459,6 +478,43 @@ namespace LdapForNet.Native
 
         internal override IntPtr ber_free(IntPtr berelem, int option)
             => NativeMethodsLinux.ber_free(berelem, option);
+
+        internal override void BerScanfFree(char fmt, IntPtr ptr)
+        {
+            switch (fmt) 
+            {
+                case 'a':
+                case 'A':
+                case 'o':
+                case 'M':
+                    NativeMethodsLinux.ber_memfree(ptr);
+                    break;
+
+                case 'O':
+                    NativeMethodsLinux.ber_bvfree(ptr);
+                    break;
+
+                case 'v':
+                    foreach (var itemPtr in MarshalUtils.GetPointerArray(ptr)) 
+                    {
+                        if (itemPtr != IntPtr.Zero)
+                        {
+                            NativeMethodsLinux.ber_memvfree(ptr);
+                        }
+                    }
+
+                    NativeMethodsLinux.ber_memvfree(ptr);
+                    break;
+
+                case 'V':
+                    NativeMethodsLinux.ber_bvecfree(ptr);
+                    break;
+
+                case 'W':
+                    NativeMethodsLinux.ber_bvarray_free(ptr);
+                    break;
+            }    
+        }
 
         internal override void ber_memfree(IntPtr value) => NativeMethodsLinux.ber_memfree(value);
         internal override bool BerScanfSupports(char fmt) => true;

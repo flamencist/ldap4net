@@ -111,31 +111,41 @@ namespace LdapForNet
 			_native.LdapConnect(_ld, _connectionTimeOut);
 			var timeout = GetConnectionTimeval();
 			var result = IntPtr.Zero;
-			if (authType == Native.Native.LdapAuthType.Simple)
+			try
 			{
-				result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password, timeout);
+				if (authType == Native.Native.LdapAuthType.Simple)
+				{
+					result = await _native.BindSimpleAsync(_ld, ldapCredential.UserName, ldapCredential.Password, timeout);
+				}
+				else if (authType == Native.Native.LdapAuthType.Anonymous)
+				{
+					result = await _native.BindSimpleAsync(_ld, null, null, timeout);
+				}
+				else if (authType == Native.Native.LdapAuthType.ExternalAd)
+				{
+					// no action required
+				}
+				else if (authType != Native.Native.LdapAuthType.Unknown)
+				{
+					result = await _native.BindSaslAsync(_ld, authType, ldapCredential, timeout);
+				}
+				else
+				{
+					throw new LdapAuthMethodNotSupportedException(
+						new LdapExceptionData($"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. "));
+				}
+	
+				if (result != IntPtr.Zero)
+				{
+					ThrowIfParseResultError(result);
+				}
 			}
-			else if (authType == Native.Native.LdapAuthType.Anonymous)
+			finally
 			{
-				result = await _native.BindSimpleAsync(_ld, null, null, timeout);
-			}
-			else if (authType == Native.Native.LdapAuthType.ExternalAd)
-			{
-				// no action required
-			}
-			else if (authType != Native.Native.LdapAuthType.Unknown)
-			{
-				result = await _native.BindSaslAsync(_ld, authType, ldapCredential, timeout);
-			}
-			else
-			{
-				throw new LdapAuthMethodNotSupportedException(
-					new LdapExceptionData($"Not implemented mechanism: {authType.ToString()}. Available: {Native.Native.LdapAuthType.Simple.ToString()} | {Native.Native.LdapAuthType.GssApi}. "));
-			}
-
-			if (result != IntPtr.Zero)
-			{
-				ThrowIfParseResultError(result);
+				if (result != IntPtr.Zero)
+				{
+					_native.ldap_msgfree(result);
+				}
 			}
 
 			_bound = true;
@@ -347,7 +357,6 @@ namespace LdapForNet
 			CancellationToken token)
 		{
 			var status = LdapResultCompleteStatus.Unknown;
-			var msg = Marshal.AllocHGlobal(IntPtr.Size);
 			
 			var timeout = GetConnectionTimeval();
 
@@ -357,39 +366,50 @@ namespace LdapForNet
 				DirectoryResponse response = default;
 				while (status != LdapResultCompleteStatus.Complete && !token.IsCancellationRequested)
 				{
+					var msg = IntPtr.Zero;
 					var resType = _native.ldap_result(_ld, messageId, 0, timeout, ref msg);
-					ThrowIfResultError(directoryRequest, resType, response);
-
-					status = requestHandler.Handle(_ld, resType, msg, out response);
-					response.MessageId = messageId;
-
-					if (status == LdapResultCompleteStatus.Unknown)
+					try
 					{
-						throw new LdapException(new LdapExceptionData($"Unknown search type {resType}", nameof(_native.ldap_result), 1){ Response = response});
+						ThrowIfResultError(directoryRequest, resType, response);
+	
+						status = requestHandler.Handle(_ld, resType, msg, out response);
+						response.MessageId = messageId;
+	
+						if (status == LdapResultCompleteStatus.Unknown)
+						{
+							throw new LdapException(new LdapExceptionData($"Unknown search type {resType}", nameof(_native.ldap_result), 1){ Response = response});
+						}
+	
+						if (status == LdapResultCompleteStatus.Complete)
+						{
+							var responseReferral = new Uri[0];
+							var responseControl = new DirectoryControl[0];
+							var res = ParseResultError(msg, out var errorMessage, out var matchedDn, ref responseReferral, ref responseControl);
+						
+							if (res == (int)Native.Native.ResultCode.SizeLimitExceeded
+								&& directoryRequest is SearchRequest searchRequest
+								&& response is SearchResponse searchResponse
+								&& searchRequest.SizeLimit != 0
+								&& searchResponse.Entries.Count >= searchRequest.SizeLimit)
+							{
+								Debug.WriteLine("ldap_parse_result returned ResultCode.SizeLimitExceeded but the correct number of entries were already returned");
+								res = (int)Native.Native.ResultCode.Success;
+								errorMessage = null;
+							}
+
+                            response.ResultCode = (Native.Native.ResultCode)res;
+							response.ErrorMessage = errorMessage;
+							response.Referral = responseReferral;
+							response.Controls = responseControl;
+							response.MatchedDN = matchedDn;
+						}
 					}
-
-					if (status == LdapResultCompleteStatus.Complete)
+					finally
 					{
-						var responseReferral = new Uri[0];
-						var responseControl = new DirectoryControl[0];
-						var res = ParseResultError(msg, out var errorMessage, out var matchedDn, ref responseReferral, ref responseControl);
-
-                        if (res == (int)Native.Native.ResultCode.SizeLimitExceeded
-                            && directoryRequest is SearchRequest searchRequest
-                            && response is SearchResponse searchResponse
-                            && searchRequest.SizeLimit != 0
-                            && searchResponse.Entries.Count >= searchRequest.SizeLimit)
+						if (msg != IntPtr.Zero)
                         {
-							Debug.WriteLine("ldap_parse_result returned ResultCode.SizeLimitExceeded but the correct number of entries were already returned");
-                            res = (int)Native.Native.ResultCode.Success;
-                            errorMessage = null;
+                            _native.ldap_msgfree(msg);
                         }
-
-                        response.ResultCode = (Native.Native.ResultCode)res;
-						response.ErrorMessage = errorMessage;
-						response.Referral = responseReferral;
-						response.Controls = responseControl;
-						response.MatchedDN = matchedDn;
 					}
 				}
 
@@ -457,7 +477,7 @@ namespace LdapForNet
 			var referrals = IntPtr.Zero;
 			var serverctrls = IntPtr.Zero;
 			_native.ThrowIfError(_ld, _native.ldap_parse_result(_ld, msg, ref rc, ref matchedDnPtr, ref errorMessagePtr,
-				ref referrals, ref serverctrls, 1), nameof(_native.ldap_parse_result));
+				ref referrals, ref serverctrls, 0), nameof(_native.ldap_parse_result));
 			errorMessage = Encoder.Instance.PtrToString(errorMessagePtr);
 			matchedDn = Encoder.Instance.PtrToString(matchedDnPtr);
 			if (referrals != IntPtr.Zero)

@@ -46,20 +46,10 @@ namespace LdapForNet.RequestHandlers
             switch (resType)
             {
                 case LdapForNet.Native.Native.LdapResultType.LDAP_RES_SEARCH_ENTRY:
-                    var ber = Marshal.AllocHGlobal(IntPtr.Size);
-                    try
-                    {
-                        var directoryEntries = GetLdapEntries(handle, msg, ber).ToList();
-                        _response.Entries.AddRange(directoryEntries);
-
-                        OnPartialResult(_response.MessageId, directoryEntries);
-                    }
-                    finally
-                    {
-                        Marshal.FreeHGlobal(ber);
-                        Native.ldap_msgfree(msg);
-                    }
-
+                    
+                    var directoryEntries = GetLdapEntries(handle, msg).ToList();
+                    _response.Entries.AddRange(directoryEntries);
+                    OnPartialResult(_response.MessageId, directoryEntries);
                     resultStatus =  LdapResultCompleteStatus.Partial;
                     break;
 
@@ -101,7 +91,7 @@ namespace LdapForNet.RequestHandlers
 
         }
 
-        private IEnumerable<DirectoryEntry> GetLdapEntries(SafeHandle ld, IntPtr msg, IntPtr ber)
+        private IEnumerable<DirectoryEntry> GetLdapEntries(SafeHandle ld, IntPtr msg)
         {
             for (var entry = Native.ldap_first_entry(ld, msg); entry != IntPtr.Zero;
                 entry = Native.ldap_next_entry(ld, entry))
@@ -109,35 +99,46 @@ namespace LdapForNet.RequestHandlers
                 yield return new DirectoryEntry
                 {
                     Dn = GetLdapDn(ld, entry),
-                    Attributes = GetLdapAttributes(ld, entry, ref ber)
+                    Attributes = GetLdapAttributes(ld, entry)
                 };
             }
         }
         
-        private SearchResultAttributeCollection GetLdapAttributes(SafeHandle ld, IntPtr entry, ref IntPtr ber)
+        private SearchResultAttributeCollection GetLdapAttributes(SafeHandle ld, IntPtr entry)
         {
             var attributes = new SearchResultAttributeCollection();
-            for (var attr = Native.ldap_first_attribute(ld, entry, ref ber);
-                attr != IntPtr.Zero;
-                attr = Native.ldap_next_attribute(ld, entry, ber))
+            var ber = IntPtr.Zero;
+            try
             {
-                var vals = Native.ldap_get_values_len(ld, entry, attr);
-                if (vals != IntPtr.Zero)
+                for (var attr = Native.ldap_first_attribute(ld, entry, ref ber);
+                    attr != IntPtr.Zero;
+                    attr = Native.ldap_next_attribute(ld, entry, ber))
                 {
-                    var attrName = Encoder.Instance.PtrToString(attr);
-                    if (attrName != null)    
+                    var vals = Native.ldap_get_values_len(ld, entry, attr);
+                    if (vals != IntPtr.Zero)
                     {
-                        var directoryAttribute = new DirectoryAttribute
+                        var attrName = Encoder.Instance.PtrToString(attr);
+                        if (attrName != null)    
                         {
-                            Name = attrName
-                        };
-                        directoryAttribute.AddValues(MarshalUtils.BerValArrayToByteArrays(vals));
-                        attributes.Add(directoryAttribute);
+                            var directoryAttribute = new DirectoryAttribute
+                            {
+                                Name = attrName
+                            };
+                            directoryAttribute.AddValues(MarshalUtils.BerValArrayToByteArrays(vals));
+                            attributes.Add(directoryAttribute);
+                        }
+                        Native.ldap_value_free_len(vals);
                     }
-                    Native.ldap_value_free_len(vals);
+    
+                    Native.ldap_memfree(attr);
                 }
-
-                Native.ldap_memfree(attr);
+            }
+            finally
+            {
+                if (ber != IntPtr.Zero)
+                {
+                    Native.ber_free(ber, 0);
+                }
             }
 
             return attributes;
