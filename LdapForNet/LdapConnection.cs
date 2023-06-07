@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -372,7 +373,19 @@ namespace LdapForNet
 						var responseReferral = new Uri[0];
 						var responseControl = new DirectoryControl[0];
 						var res = ParseResultError(msg, out var errorMessage, out var matchedDn, ref responseReferral, ref responseControl);
-						response.ResultCode = (Native.Native.ResultCode)res;
+
+                        if (res == (int)Native.Native.ResultCode.SizeLimitExceeded
+                            && directoryRequest is SearchRequest searchRequest
+                            && response is SearchResponse searchResponse
+                            && searchRequest.SizeLimit != 0
+                            && searchResponse.Entries.Count >= searchRequest.SizeLimit)
+                        {
+							Debug.WriteLine("ldap_parse_result returned ResultCode.SizeLimitExceeded but the correct number of entries were already returned");
+                            res = (int)Native.Native.ResultCode.Success;
+                            errorMessage = null;
+                        }
+
+                        response.ResultCode = (Native.Native.ResultCode)res;
 						response.ErrorMessage = errorMessage;
 						response.Referral = responseReferral;
 						response.Controls = responseControl;
