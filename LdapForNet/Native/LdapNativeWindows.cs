@@ -273,8 +273,8 @@ namespace LdapForNet.Native
                 serverctrls, clientctrls, ref msgidp);
         }
 
-        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) => 
-            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref  oid, ref data, freeIt);
+        internal override int ldap_parse_extended_result(SafeHandle ldapHandle, IntPtr result, ref IntPtr oid, ref IntPtr data, byte freeIt) =>
+            NativeMethodsWindows.ldap_parse_extended_result(ldapHandle, result, ref oid, ref data, freeIt);
         internal override void ldap_controls_free(IntPtr ctrls) => NativeMethodsWindows.ldap_controls_free(ctrls);
         internal override int ldap_control_free(IntPtr control) => NativeMethodsWindows.ldap_control_free(control);
 
@@ -302,7 +302,7 @@ namespace LdapForNet.Native
             => NativeMethodsWindows.ber_init(value);
 
         internal override int ber_scanf(SafeHandle berElement, string format)
-            => NativeMethodsWindows.ber_scanf(berElement,format);
+            => NativeMethodsWindows.ber_scanf(berElement, format);
 
         internal override int ber_scanf_int(SafeHandle berElement, string format, ref int value)
             => NativeMethodsWindows.ber_scanf_int(berElement, format, ref value);
@@ -312,16 +312,16 @@ namespace LdapForNet.Native
         internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
             => NativeMethodsWindows.ber_scanf_ptr(berElement, format, ref value);
 
-        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value)
-            => NativeMethodsWindows.ber_scanf_ostring(berElement, format, value);
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, ref IntPtr value)
+            => NativeMethodsWindows.ber_scanf_ostring(berElement, format, ref value);
 
         internal override int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length)
             => NativeMethodsWindows.ber_scanf_bitstring(berElement, format, ref value, ref length);
 
-        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
-            => NativeMethodsWindows.ber_scanf_string(berElement, format, value, ref  length);
+        internal override int ber_scanf_string(SafeHandle berElement, string format, ref IntPtr value, ref int length)
+            => NativeMethodsWindows.ber_scanf_string(berElement, format, ref value, ref length);
 
-        
+
         internal override int ber_bvfree(IntPtr value)
             => NativeMethodsWindows.ber_bvfree(value);
 
@@ -334,8 +334,39 @@ namespace LdapForNet.Native
         internal override void ber_memfree(IntPtr value)
             => NativeMethodsWindows.ldap_memfree(value);
 
-        internal override bool BerScanfSupports(char fmt) => 
+        internal override bool BerScanfSupports(char fmt) =>
             _supportedFormats.Contains(fmt);
+
+        internal override void BerScanfFree(char fmt, IntPtr ptr)
+        {
+            switch (fmt)
+            {
+                case 'a':
+                case 'B':
+                    NativeMethodsWindows.ldap_memfree(ptr);
+                    break;
+
+                case 'O':
+                    NativeMethodsWindows.ber_bvfree(ptr);
+                    break;
+
+                case 'v':
+                    foreach (var itemPtr in MarshalUtils.GetPointerArray(ptr)) 
+                    {
+                        if (itemPtr != IntPtr.Zero)
+                        {
+                            NativeMethodsWindows.ldap_memfree(ptr);
+                        }
+                    }
+
+                    NativeMethodsWindows.ldap_memfree(ptr);
+                    break;
+
+                case 'V':
+                    NativeMethodsWindows.ber_bvecfree(ptr);
+                    break;
+            }
+        }
 
         internal override int ldap_start_tls_s(SafeHandle ld, ref int serverReturnValue, ref IntPtr message,
             IntPtr serverctrls, IntPtr clientctrls)

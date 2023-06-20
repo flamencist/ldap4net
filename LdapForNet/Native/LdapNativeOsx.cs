@@ -362,11 +362,11 @@ namespace LdapForNet.Native
         internal override int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value)
             => NativeMethodsOsx.ber_scanf_ptr(berElement, format, ref value);
 
-        internal override int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value) => 
-            NativeMethodsOsx.ber_scanf_ostring(berElement, format, value);
+        internal override int ber_scanf_ostring(SafeHandle berElement, string format, ref IntPtr value) => 
+            NativeMethodsOsx.ber_scanf_ostring(berElement, format, ref value);
 
-        internal override int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length) 
-            => NativeMethodsOsx.ber_scanf_string(berElement, format, value, ref  length);
+        internal override int ber_scanf_string(SafeHandle berElement, string format, ref IntPtr value, ref int length) 
+            => NativeMethodsOsx.ber_scanf_string(berElement, format, ref value, ref  length);
 
         internal override void ber_memfree(IntPtr value) => NativeMethodsOsx.ber_memfree(value);
 
@@ -383,6 +383,43 @@ namespace LdapForNet.Native
             => NativeMethodsOsx.ber_free(berelem, option);
         internal override bool BerScanfSupports(char fmt) => true;
         
+        internal override void BerScanfFree(char fmt, IntPtr ptr)
+        {
+            switch (fmt) 
+            {
+                case 'a':
+                case 'A':
+                case 'o':
+                case 'M':
+                    NativeMethodsOsx.ber_memfree(ptr);
+                    break;
+
+                case 'O':
+                    NativeMethodsOsx.ber_bvfree(ptr);
+                    break;
+
+                case 'v':
+                    foreach (var itemPtr in MarshalUtils.GetPointerArray(ptr)) 
+                    {
+                        if (itemPtr != IntPtr.Zero)
+                        {
+                            NativeMethodsOsx.ber_memvfree(ptr);
+                        }
+                    }
+
+                    NativeMethodsOsx.ber_memvfree(ptr);
+                    break;
+
+                case 'V':
+                    NativeMethodsOsx.ber_bvecfree(ptr);
+                    break;
+
+                case 'W':
+                    NativeMethodsOsx.ber_bvarray_free(ptr);
+                    break;
+            }    
+        }
+
         private Native.LdapSaslDefaults GetSaslDefaults(SafeHandle ld, string mech)
         {
             var defaults = new Native.LdapSaslDefaults {mech = mech};

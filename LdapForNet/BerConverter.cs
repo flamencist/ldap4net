@@ -502,8 +502,8 @@ namespace LdapForNet
             byte[] byteArray = null;
             var rc = LdapNative.Instance.ber_scanf_bitstring(berElement, new string(fmt, 1), ref ptrResult, ref length);
 
-            // try
-            // {
+            try
+            {
                 if (rc != -1)
                 {
                     if (ptrResult != IntPtr.Zero)
@@ -525,14 +525,14 @@ namespace LdapForNet
 
                 result = byteArray;
                 }
-            // }
-            // finally
-            // {
-            //     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && ptrResult != IntPtr.Zero)
-            //     {
-            //         LdapNative.Instance.ber_memfree(ptrResult);
-            //     }
-            // }
+            }
+            finally
+            {
+                if (ptrResult != IntPtr.Zero)
+                {
+                    LdapNative.Instance.BerScanfFree(fmt, ptrResult);
+                }
+            }
 
             return rc;
         }
@@ -582,7 +582,7 @@ namespace LdapForNet
             {
                 if (result != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_memfree(result);
+                    LdapNative.Instance.BerScanfFree(fmt, result);
                 }
             }
 
@@ -591,12 +591,12 @@ namespace LdapForNet
         private static int BerScanfString(BerSafeHandle berElement, char fmt, out object result)
         {
             int rc;
-            var ptr = Marshal.AllocHGlobal(IntPtr.Size);
+            var ptr = IntPtr.Zero;
             var length = -1;
             result = null;
             try
             {
-                rc = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ptr, ref length);
+                rc = LdapNative.Instance.ber_scanf_string(berElement, new string(fmt, 1), ref ptr, ref length);
                 if (rc != -1)
                 {
                     var byteArray = new byte[length];
@@ -608,7 +608,7 @@ namespace LdapForNet
             {
                 if (ptr != IntPtr.Zero)
                 {
-                    Marshal.FreeHGlobal(ptr);
+                    LdapNative.Instance.BerScanfFree(fmt, ptr);
                 }
             }
 
@@ -688,11 +688,11 @@ namespace LdapForNet
 
         private static int DecodingBerValOstringHelper(BerSafeHandle berElement, char fmt, out byte[] byteArray)
         {
-            var result = Marshal.AllocHGlobal(IntPtr.Size);
+            var result = IntPtr.Zero;
             var binaryValue = new Native.Native.berval();
             byteArray = null;
 
-            var error = LdapNative.Instance.ber_scanf_ostring(berElement, new string(fmt, 1), result);
+            var error = LdapNative.Instance.ber_scanf_ostring(berElement, new string(fmt, 1), ref result);
 
             try
             {
@@ -708,7 +708,7 @@ namespace LdapForNet
             {
                 if (result != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_memfree(result);
+                    LdapNative.Instance.BerScanfFree(fmt, result);
                 }
             }
 
@@ -742,7 +742,7 @@ namespace LdapForNet
             {
                 if (result != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_bvfree(result);
+                    LdapNative.Instance.BerScanfFree(fmt, result);
                 }
             }
 
@@ -771,6 +771,7 @@ namespace LdapForNet
             }
             return rc;
         }
+        
         private static int EncodingMultiByteArrayHelper(BerSafeHandle berElement, byte[][] value, char fmt)
         {
             var stringArray = IntPtr.Zero;
@@ -947,7 +948,7 @@ namespace LdapForNet
             {
                 if (ptrResult != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_bvecfree(ptrResult);
+                    LdapNative.Instance.BerScanfFree(fmt, ptrResult);
                 }
             }
 
@@ -989,7 +990,7 @@ namespace LdapForNet
             {
                 if (ptrResult != IntPtr.Zero)
                 {
-                    //LdapNative.Instance.ber_bvarrayfree(ptrResult);
+                    LdapNative.Instance.BerScanfFree(fmt, ptrResult);
                 }
             }
 
@@ -1019,7 +1020,7 @@ namespace LdapForNet
             {
                 if (ptrResult != IntPtr.Zero)
                 {
-                    LdapNative.Instance.ber_memfree(ptrResult);
+                    LdapNative.Instance.BerScanfFree(fmt, ptrResult);
                 }
             }
 

@@ -66,6 +66,7 @@ namespace LdapForNet.Native
         internal abstract LdapResultType ldap_result(SafeHandle ld, int msgid, int all, LDAP_TIMEVAL timeout,
             ref IntPtr pMessage);
 
+
         internal abstract int ldap_parse_result(SafeHandle ld, IntPtr result, ref int errcodep, ref IntPtr matcheddnp,
             ref IntPtr errmsgp, ref IntPtr referralsp, ref IntPtr serverctrlsp, int freeit);
 
@@ -140,19 +141,21 @@ namespace LdapForNet.Native
         internal abstract int ber_peek_tag(SafeHandle berElement, ref int length);
 
         internal abstract int ber_scanf_ptr(SafeHandle berElement, string format, ref IntPtr value);
-        internal abstract int ber_scanf_ostring(SafeHandle berElement, string format, IntPtr value);
+        internal abstract int ber_scanf_ostring(SafeHandle berElement, string format, ref IntPtr value);
 
-        internal abstract int ber_scanf_string(SafeHandle berElement, string format, IntPtr value, ref int length);
+        internal abstract int ber_scanf_string(SafeHandle berElement, string format, ref IntPtr value, ref int length);
         internal abstract int ber_scanf_bitstring(SafeHandle berElement, string format, ref IntPtr value, ref int length);
 
         internal abstract int ber_bvfree(IntPtr value);
 
         internal abstract int ber_bvecfree(IntPtr value);
         
-        internal abstract IntPtr ber_free([In] IntPtr berelement, int option);
+        internal abstract IntPtr ber_free(IntPtr berelement, int option);
         internal abstract void ber_memfree(IntPtr value);
 
         internal abstract bool BerScanfSupports(char fmt);
+
+        internal abstract void BerScanfFree(char fmt, IntPtr ptr);
         
         internal void ThrowIfError(int res, string method, IDictionary<string,string> details = default)
         {
