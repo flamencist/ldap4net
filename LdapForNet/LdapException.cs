@@ -423,4 +423,204 @@ namespace LdapForNet
         {
         }
     }
+
+    [Serializable]
+    public class LdapLocalErrorException : LdapException
+    {
+        public LdapLocalErrorException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapEncodingErrorException : LdapException
+    {
+        public LdapEncodingErrorException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapDecodingErrorException : LdapException
+    {
+        public LdapDecodingErrorException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapAuthUnknownException : LdapException
+    {
+        public LdapAuthUnknownException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapFilterErrorException : LdapException
+    {
+        public LdapFilterErrorException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapUserCanceledException : LdapException
+    {
+        public LdapUserCanceledException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapNoMemoryException : LdapException
+    {
+        public LdapNoMemoryException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapConnectErrorException : LdapException
+    {
+        public LdapConnectErrorException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapControlNotFoundException : LdapException
+    {
+        public LdapControlNotFoundException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapNoResultsReturnedException : LdapException
+    {
+        public LdapNoResultsReturnedException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapMoreResultsToReturnException : LdapException
+    {
+        public LdapMoreResultsToReturnException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapClientLoopException : LdapException
+    {
+        public LdapClientLoopException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapReferralLimitExceededException : LdapException
+    {
+        public LdapReferralLimitExceededException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapInvalidResponseException : LdapException
+    {
+        public LdapInvalidResponseException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapAmbiguousResponseException : LdapException
+    {
+        public LdapAmbiguousResponseException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapTlsNotSupportedException : LdapException
+    {
+        public LdapTlsNotSupportedException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapIntermediateResponseException : LdapException
+    {
+        public LdapIntermediateResponseException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapUnknownTypeException : LdapException
+    {
+        public LdapUnknownTypeException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapCanceledException : LdapException
+    {
+        public LdapCanceledException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapNoSuchOperationException : LdapException
+    {
+        public LdapNoSuchOperationException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapTooLateException : LdapException
+    {
+        public LdapTooLateException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapCannotCancelException : LdapException
+    {
+        public LdapCannotCancelException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapAssertionFailedException : LdapException
+    {
+        public LdapAssertionFailedException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapAuthorizationDeniedException : LdapException
+    {
+        public LdapAuthorizationDeniedException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
+
+    [Serializable]
+    public class LdapNoOperationException : LdapException
+    {
+        public LdapNoOperationException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
 }
