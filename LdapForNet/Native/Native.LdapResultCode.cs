@@ -51,7 +51,8 @@ namespace LdapForNet.Native
             ResultsTooLarge = 70,
             AffectsMultipleDsas = 71,
             VirtualListViewError = 76,
-            Other = 80
+            Other = 80,
+            ServerDown = 81
         }
     }
 }

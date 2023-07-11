@@ -415,4 +415,12 @@ namespace LdapForNet
 		{
 		}
 	}
+
+    [Serializable]
+    public class LdapServerDownException : LdapException
+    {
+        public LdapServerDownException(LdapExceptionData data) : base(data)
+        {
+        }
+    }
 }

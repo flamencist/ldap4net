@@ -232,6 +232,7 @@ namespace LdapForNet.Native
                 ResultCode.AffectsMultipleDsas => new LdapAffectsMultipleDsasException(data),
                 ResultCode.VirtualListViewError => new LdapVirtualListViewErrorException(data),
                 ResultCode.Other => new LdapOtherException(data),
+                ResultCode.ServerDown => new LdapServerDownException(data),
                 _ => new LdapException(data)
             };
         }
